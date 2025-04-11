@@ -28,8 +28,10 @@
 #define	NTNET_BUFSET_STATE_CHG	0xA0	/* バッファ状態変化(FULLorニアFULL発生) */
 
 
-/* FREEデータサイズ */
-#define	FREEPKT_DATASIZE		500
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+///* FREEデータサイズ */
+//#define	FREEPKT_DATASIZE		500
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 /* NT-NETブロックデータサイズ */
 #define	NTNET_BLKDATA_MAX		960
@@ -39,29 +41,38 @@
 #define	NTNET_BLKMAX_PRIOR		1		/* 優先データ */
 #define	NTNET_BLKMAX_BROADCAST	1		/* 同報データ */
 
-/* NTUPR_SetRcvPkt()戻り値 */
-typedef enum {
-	NTNET_RRSLT_NORMAL,					/* 正常完了 */
-	NTNET_RRSLT_BLKNO_INVALID,			/* ブロックNo.異常(1NTブロック受信の場合のみ) */
-	NTNET_RRSLT_BLKNO_VALID,			/* ブロックNo.異常(1NTブロック受信の場合のみ) */
-}eNTNET_RRSLT;
-
-/* NTLWR_SendReq()戻り値 */
-typedef enum {
-	NTNET_SRSLT_NORMAL,					/* ARCブロック送受信結果＝00H、01H、86Hのとき */
-										/* FREEデータの場合は送信結果データ受信のとき */
-	NTNET_SRSLT_BUFFULL,				/* ARCブロック送受信結果＝82Hのとき */
-	NTNET_SRSLT_BLKNO,					/* ARCブロック送受信結果＝85Hのとき */
-	NTNET_SRSLT_SENDING,				/* データ送信中(リモートのみ)=90Hのとき  */
-	NTNET_SRSLT_RETRY_OVER				/* リトライオーバー発生 */
-}eNTNET_SRSLT;
-
-/* NTUPR_SetRcvPkt()／NTLWR_SendReq() 引数 */
-typedef enum {
-	NTNET_FREEDATA,						/* FREEデータ */
-	NTNET_ERRDATA,						/* エラーデータ */
-	NTNET_NTDATA						/* NT-NETデータ */
-}eNTNET_DATA_KIND;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+///* NTUPR_SetRcvPkt()戻り値 */
+//typedef enum {
+//	NTNET_RRSLT_NORMAL,					/* 正常完了 */
+//	NTNET_RRSLT_BLKNO_INVALID,			/* ブロックNo.異常(1NTブロック受信の場合のみ) */
+//	NTNET_RRSLT_BLKNO_VALID,			/* ブロックNo.異常(1NTブロック受信の場合のみ) */
+//}eNTNET_RRSLT;
+//
+///* NTLWR_SendReq()戻り値 */
+//typedef enum {
+//	NTNET_SRSLT_NORMAL,					/* ARCブロック送受信結果＝00H、01H、86Hのとき */
+//										/* FREEデータの場合は送信結果データ受信のとき */
+//	NTNET_SRSLT_BUFFULL,				/* ARCブロック送受信結果＝82Hのとき */
+//	NTNET_SRSLT_BLKNO,					/* ARCブロック送受信結果＝85Hのとき */
+//	NTNET_SRSLT_SENDING,				/* データ送信中(リモートのみ)=90Hのとき  */
+//	NTNET_SRSLT_RETRY_OVER				/* リトライオーバー発生 */
+//}eNTNET_SRSLT;
+//
+///* NTUPR_SetRcvPkt()／NTLWR_SendReq() 引数 */
+//typedef enum {
+//	NTNET_FREEDATA,						/* FREEデータ */
+//	NTNET_ERRDATA,						/* エラーデータ */
+//	NTNET_NTDATA						/* NT-NETデータ */
+//}eNTNET_DATA_KIND;
+typedef enum {							// NTNET, NTComタスク間API結果
+	NTNET_NORMAL,						// 正常
+	NTNET_DEL_OLD,						// 最古データ上書き
+	NTNET_ERR_BUFFERFULL,				// バッファフル
+	NTNET_ERR_BLOCKOVER,				// NTNETブロックオーバー（優先、同報：1ブロック、通常、26ブロック以上のデータ）
+	NTNET_ERR_OTHER,					// その他のエラー
+} eNTNET_RESULT;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 /* NT-NETデータバッファ大別 */
 typedef enum {
@@ -117,15 +128,17 @@ typedef enum {
 #define	NTERR_RELEASE	0				/* 解除 */
 #define	NTERR_ONESHOT	2				/* 発生＆解除 */
 
-/* FREEデータ識別コード */
-#define	FREEDATA_SYMBOL			"FREE"
-
-/* FREEデータ要求種別 */
-#define	FREEDATA_KIND_INITDAT	1		/* 初期設定データ要求 */
-#define	FREEDATA_KIND_IBKSTS	2		/* IBK状態要求 */
-#define	FREEDATA_KIND_DATCNT	3		/* 送信データ件数要求 */
-#define	FREEDATA_KIND_TERMSTS	4		/* 端末状態要求 */
-#define	FREEDATA_KIND_DATACLR	5		/* データクリア要求 */
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+///* FREEデータ識別コード */
+//#define	FREEDATA_SYMBOL			"FREE"
+//
+///* FREEデータ要求種別 */
+//#define	FREEDATA_KIND_INITDAT	1		/* 初期設定データ要求 */
+//#define	FREEDATA_KIND_IBKSTS	2		/* IBK状態要求 */
+//#define	FREEDATA_KIND_DATCNT	3		/* 送信データ件数要求 */
+//#define	FREEDATA_KIND_TERMSTS	4		/* 端末状態要求 */
+//#define	FREEDATA_KIND_DATACLR	5		/* データクリア要求 */
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 /* NT-NETバッファ状態 */
 #define	NTBUF_BUFFER_NORMAL		0x00
@@ -168,6 +181,10 @@ typedef struct {
 typedef struct {
 //	uchar	sig[5];						/* "NTCOM" */
 //	uchar	len;						/* データサイズ */
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+	uchar	sig[5];						/* "NTCOM" */
+	uchar	len[2];						/* データサイズ */
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	uchar	vect;						/* 転送方向 */
 	uchar	terminal_no;				/* 端末No. */
 	uchar	lower_terminal_no1;			/* 下位転送用端末No.(1) */
@@ -253,6 +270,16 @@ typedef struct {
 // MH322917(E) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(電文対応)
 }t_NtBufCount;
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+typedef struct {
+	ushort				length;						// データ長
+	uchar				*data;						// データ本体
+	uchar				type;						// データ種別
+	ushort				logid;						// ログID
+	long				buffull_retry;				// IBKバッファFULLによる送信リトライ回数
+	ulong				buffull_timer;				// IBKバッファFULLによる送信リトライ用タイマー
+}t_Ntnet_SendDataCtrl;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 /*--------------------------------------------------------------------------*/
 /*			P R O T O T Y P E S												*/
@@ -261,66 +288,90 @@ typedef struct {
 
 void	NTNET_Init(uchar clr);
 void	NTNET_Err(int errcode, int occur);
-/* アイドル負荷軽減 */
-#define	_NTNET_ChkDispatch()	(NTUPR_ChkDispatch() || _NTLWR_ChkDispatch())
-
-/*------------------------------------------------------------ ntnet_lower.c ----*/
-
-void	NTLWR_Init(void);
-void	NTLWR_Main(MsgBuf *pmsg);
-BOOL	NTLWR_SendReq(uchar *data, ushort len, eNTNET_DATA_KIND kind);
-BOOL	NTLWR_IsSendComplete(eNTNET_SRSLT *result);
-/* アイドル負荷軽減 */
-extern	BOOL	NtLwr_Dispatch;
-#define	_NTLWR_ChkDispatch()	(NtLwr_Dispatch)
-
-/*------------------------------------------------------------ ntnet_upper.c ----*/
-
-void	NTUPR_Init(uchar clr);
-void	NTUPR_Main(void);
-eNTNET_RRSLT	NTUPR_SetRcvPkt(uchar *data, ushort len, eNTNET_DATA_KIND kind);
-/* アイドル負荷軽減 */
-BOOL	NTUPR_ChkDispatch(void);
-
-uchar	NTUPR_SendingPacketKindGet( ushort UpperQueKind );
-
-void	NTUPR_Init2( void );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+///* アイドル負荷軽減 */
+//#define	_NTNET_ChkDispatch()	(NTUPR_ChkDispatch() || _NTLWR_ChkDispatch())
+//
+///*------------------------------------------------------------ ntnet_lower.c ----*/
+//
+//void	NTLWR_Init(void);
+//void	NTLWR_Main(MsgBuf *pmsg);
+//BOOL	NTLWR_SendReq(uchar *data, ushort len, eNTNET_DATA_KIND kind);
+//BOOL	NTLWR_IsSendComplete(eNTNET_SRSLT *result);
+///* アイドル負荷軽減 */
+//extern	BOOL	NtLwr_Dispatch;
+//#define	_NTLWR_ChkDispatch()	(NtLwr_Dispatch)
+//
+///*------------------------------------------------------------ ntnet_upper.c ----*/
+//
+//void	NTUPR_Init(uchar clr);
+//void	NTUPR_Main(void);
+//eNTNET_RRSLT	NTUPR_SetRcvPkt(uchar *data, ushort len, eNTNET_DATA_KIND kind);
+///* アイドル負荷軽減 */
+//BOOL	NTUPR_ChkDispatch(void);
+//
+//uchar	NTUPR_SendingPacketKindGet( ushort UpperQueKind );
+//
+//void	NTUPR_Init2( void );
+extern	void	NTNET_Main(void);
+extern	eNTNET_RESULT	NTNET_SetReceiveData(const uchar* pNtData, ushort size, uchar type);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 /*------------------------------------------------------------ ntnet_buffer.c ----*/
 
 void	NTBUF_Init(uchar clr);
 void	NTBUF_AllClr(void);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+void	NTBUF_AllClr_startup(void);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 uchar	NTBUF_SetSendNtData(const void *data, ushort len, eNTNET_BUF_KIND bufkind);
 ushort	NTBUF_GetRcvNtData(void *data, eNTNET_BUF_KIND bufkind);
 void	NTBUF_ClrRcvNtData_Prepare(eNTNET_BUF_KIND bufkind, t_NtNet_ClrHandle *handle);
 void	NTBUF_ClrRcvNtData_Exec(const t_NtNet_ClrHandle *handle);
 void	NTBUF_CommErr(uchar sts);
-void	NTBUF_DataClr(int req);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//void	NTBUF_DataClr(int req);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
-ushort	NTBUF_GetSndNtData(void *data, eNTNET_BUF_KIND bufkind, ushort *UpperQueKind);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//ushort	NTBUF_GetSndNtData(void *data, eNTNET_BUF_KIND bufkind, ushort *UpperQueKind);
+ushort	NTBUF_GetSndNtData(t_Ntnet_SendDataCtrl* pCtrl, eNTNET_BUF_KIND bufkind);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 uchar	NTBUF_SetRcvNtData(const void *data, ushort len, eNTNET_BUF_KIND bufkind);
-void	NTBUF_ClrSndNtData_Prepare(const void *data, eNTNET_BUF_KIND bufkind, t_NtNet_ClrHandle *handle);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//void	NTBUF_ClrSndNtData_Prepare(const void *data, eNTNET_BUF_KIND bufkind, t_NtNet_ClrHandle *handle);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 void	NTBUF_ClrSndNtData_Exec(const t_NtNet_ClrHandle *handle);
 
-uchar	NTBUF_SetSendFreeData(const void *data);
-uchar	NTBUF_GetRcvFreeData(void *data);
-uchar	NTBUF_SetRcvFreeData(const void *data);
-uchar	NTBUF_GetSndFreeData(void *data);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//uchar	NTBUF_SetSendFreeData(const void *data);
+//uchar	NTBUF_GetRcvFreeData(void *data);
+//uchar	NTBUF_SetRcvFreeData(const void *data);
+//uchar	NTBUF_GetSndFreeData(void *data);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 void	NTBUF_SetRcvErrData(const void *data);
 
 const t_NtBufState	*NTBUF_GetBufState(void);
 
 void NTBUF_SetIBKNearFull(ulong mask, ulong occur);
-void NTBUF_SetIBKNearFullByID(uchar ID);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//void NTBUF_SetIBKNearFullByID(uchar ID);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 void NTBUF_SetIBKPendingByID(uchar ID);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+void	NTBUF_EraseSendData(t_Ntnet_SendDataCtrl* pCtrl, BOOL force);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 
 /* アイドル負荷軽減 */
 extern	BOOL z_NtBuf_SndDataExist;
 #define	_NTBUF_SndDataExist()	(z_NtBuf_SndDataExist)
 
-void	NTBUF_GetBufCount(t_NtBufCount *buf);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//void	NTBUF_GetBufCount(t_NtBufCount *buf);
+void	NTBUF_GetBufCount(t_NtBufCount *buf, BOOL isRemote);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 ushort	ntupr_NtNetDopaSndBufCheck_Del(uchar bufkind, uchar status);
 
@@ -341,10 +392,12 @@ void	BasicDataMake( uchar knd, uchar keep );
 void	NTNET_Snd_Data01( ulong op_lokno );
 void	NTNET_Snd_Data02( ulong op_lokno, ushort pr_lokno, ushort ans );
 void	NTNET_Snd_Data05( ulong op_lokno, uchar loksns, uchar lokst );
-void	NTNET_Snd_Data12( ulong MachineNo );
-void	NTNET_Snd_Data20( ushort pr_lokno );
-void	NTNET_Snd_Data20_frs( ushort pr_lokno, void *data );
-void	NTNET_Snd_Data22_LO( ushort pr_lokno, ushort paymethod, ushort payclass, ushort outkind );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（不要処理削除）
+//void	NTNET_Snd_Data12( ulong MachineNo );
+//void	NTNET_Snd_Data20( ushort pr_lokno );
+//void	NTNET_Snd_Data20_frs( ushort pr_lokno, void *data );
+//void	NTNET_Snd_Data22_LO( ushort pr_lokno, ushort paymethod, ushort payclass, ushort outkind );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（不要処理削除）
 void	NTNET_Snd_DataParkCarNumWeb( uchar kind );
 void	NTNET_Snd_Data58( void );
 void	NTNET_Snd_Data101( ulong MachineNo );
@@ -378,8 +431,10 @@ void	NTNET_Snd_Data99(ulong MachineNo, int CompleteKind);
 void	NTNET_Snd_Data101_2( void );
 void	NTNET_Snd_Data109( ulong req, char value );
 void	NTNET_Snd_Data116( uchar ProcMode, ulong PassId, ulong ParkingId, uchar UseParkingKind, uchar Status, uchar UpdateStatus, date_time_rec *ExitTime );
-void	NTNET_Snd_Data122( uchar kind, uchar code, uchar level, uchar *info, uchar *message );
-void	NTNET_Snd_Data123( uchar kind, uchar code, uchar level, uchar *before, uchar *after, uchar *message );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（不要処理削除）
+//void	NTNET_Snd_Data122( uchar kind, uchar code, uchar level, uchar *info, uchar *message );
+//void	NTNET_Snd_Data123( uchar kind, uchar code, uchar level, uchar *before, uchar *after, uchar *message );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（不要処理削除）
 void	NTNET_Snd_Data208(ulong mac, ushort sts, ushort seg);
 void	_NTNET_Snd_Data208(ulong mac, ushort sts, ushort seg, ushort addr, ushort count);
 void	NTNET_RevData83( void );
@@ -416,7 +471,10 @@ void	NTNET_Snd_Data130( void );
 void	NTNET_Snd_Data132( void );
 void	NTNET_Snd_Data211( void );
 void	NTNET_Snd_Data211_Exec( void );
-void	NTNET_Snd_Data228( ulong MachineNo );
+// GM849100(S) M.Fujikawa 2025/01/15 名鉄協商コールセンター対応（NT-NET端末間通信）
+//void	NTNET_Snd_Data228( ulong MachineNo );
+void	NTNET_Snd_Data228( ulong MachineNo, uchar from );
+// GM849100(E) M.Fujikawa 2025/01/15 名鉄協商コールセンター対応（NT-NET端末間通信）
 void	NTNET_Snd_Data235(char bReq);
 void	NTNET_Snd_Data235_Exec(char bReq);
 void	NTNET_Snd_Data131(void);
@@ -549,13 +607,27 @@ enum {
 uchar NTNET_GetParkingKind(ulong ParkingId, int search);
 
 extern uchar	Ntnet_Remote_Comm;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+extern uchar	Ntnet_Term_Comm;							// NT-NET(名鉄協商コールセンター)使用設定
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
 #define	_ntnet_by_hif		0x10
 #define	_is_ntnet_remote()	((Ntnet_Remote_Comm & 0x0f) == 2)
-#define	_is_ntnet_normal()	((Ntnet_Remote_Comm & 0x0f) == 1)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+//#define	_is_ntnet_normal()	((Ntnet_Remote_Comm & 0x0f) == 1)
+#define	_is_ntnet_normal()	((Ntnet_Term_Comm & 0x0f) == 1)
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
 #define	_is_ntnet			_is_ntnet_normal
-#define	_not_ntnet()		(Ntnet_Remote_Comm == 0)
-#define	_is_ibk_ntnet()		(Ntnet_Remote_Comm == 1)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+//#define	_not_ntnet()		(Ntnet_Remote_Comm == 0)
+#define	_not_ntnet()		(Ntnet_Remote_Comm == 0 && Ntnet_Term_Comm == 0)
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+//#define	_is_ibk_ntnet()		(Ntnet_Remote_Comm == 1)
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
 #define	_is_ibk_ntnet_remote()		(Ntnet_Remote_Comm == 2)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+#define NTNET_TARGET_MAX	2						// 端末間, 遠隔
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
 
 extern	void	Remote_Cal_Data_Restor( void );
 
@@ -564,6 +636,16 @@ extern	void NTNET_RAUResult_Send(uchar systemID, uchar dataType, uchar result);
 
 extern	void	NTNET_Snd_Data65( ulong MachineNo );
 extern	uchar	GetNtDataSeqNo(void);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+// 送信データ制御 0:優先データ 1:通常データ
+extern	t_Ntnet_SendDataCtrl	NTNET_SendCtrl[2];
+
+extern	ushort	NTNET_ConvertLogToNTNETData(ushort logType, uchar* pLogData, uchar* pNtnetData);
+extern	ushort	NTNET_ConvertTotalLogToNTNETData(ushort logType, ushort logID, uchar* pLogData, uchar* pNtnetData);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+// GM849100(S) M.Fujikawa 2025/01/10 名鉄協商コールセンター対応（NT-NET端末間通信）
+void	NTNET_Snd_Data230_T( ulong MachineNo );
+// GM849100(E) M.Fujikawa 2025/01/10 名鉄協商コールセンター対応（NT-NET端末間通信）
 
 #endif	/* ___NTNETH___ */
 

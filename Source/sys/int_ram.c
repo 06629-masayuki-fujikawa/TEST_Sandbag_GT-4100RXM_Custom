@@ -936,6 +936,9 @@ void	Excep_TPU1_TGI1A( void )
 	/*** 10ms interval process ***/
 	++Tim10msCount;							// 10ms積算ｶｳﾝﾀUP
 	++LifeTimer2ms;							// 2ms積算ｶｳﾝﾀUP(Use IFcom)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	NTCom_2msInt();
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	if( 5 <= Tim10msCount ){				// 10ms経過 (Y)
 		SCAN_INP_Exec();					// 拡張I/Oポートスキャン処理（ノイズ対策のため10ms 3回とする）
 		LagChk10ms();						// 関数Call型 Lag timer timeout check
@@ -1016,6 +1019,9 @@ void	Excep_TPU2_TGI2A( void )
 	/*	1ms_Handler内のApri処理		*/
 	/********************************/
 	KSG_RauIntervalTimer();
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	++LifeTimer1ms;							// 1ms積算ｶｳﾝﾀUP
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	++RAU_x_1mLifeTime;						/* timer counter. up to every 1ms */
 	LagChk_1ms();
 	ist = _di2();
@@ -1629,23 +1635,26 @@ void	Excep_SCI7_TEI7( void )
 //#pragma interrupt ( Excep_SCI9_RXI9 )
 void	Excep_SCI9_RXI9( void )
 {
-	volatile unsigned char c;
-	volatile unsigned char ErrCnt =0;
-
-	/************************************************************/
-	/*	RX630のSSRにはRDRFがないので							*/
-	/*	ORER(Overrun) FER(Framing) PER(Parity)のErrorがなければ	*/
-	/*	ReadしてReadDataを格納する(RDRF <-0もなし)				*/
-	/************************************************************/
-	if((SCI9.SSR.BIT.ORER==1)||(SCI9.SSR.BIT.FER==1)||(SCI9.SSR.BIT.PER==1)) {
-		ErrCnt++;
-		return;
-	}
-	c = SCI9.RDR;								// Received Data
-	dummy_Read = SCI9.SSR.BYTE;					// Dummy Read
-	/********************************/
-	/*	SCI9_Handler内のApri処理	*/
-	/********************************/
+// GM849100(S) NTNET通信制御対応（FT-4000N：MH364304参考）
+//	volatile unsigned char c;
+//	volatile unsigned char ErrCnt =0;
+//
+//	/************************************************************/
+//	/*	RX630のSSRにはRDRFがないので							*/
+//	/*	ORER(Overrun) FER(Framing) PER(Parity)のErrorがなければ	*/
+//	/*	ReadしてReadDataを格納する(RDRF <-0もなし)				*/
+//	/************************************************************/
+//	if((SCI9.SSR.BIT.ORER==1)||(SCI9.SSR.BIT.FER==1)||(SCI9.SSR.BIT.PER==1)) {
+//		ErrCnt++;
+//		return;
+//	}
+//	c = SCI9.RDR;								// Received Data
+//	dummy_Read = SCI9.SSR.BYTE;					// Dummy Read
+//	/********************************/
+//	/*	SCI9_Handler内のApri処理	*/
+//	/********************************/
+	NTNET_Int_RXI();
+// GM849100(E) NTNET通信制御対応（FT-4000N：MH364304参考）
 }
 /****************************************************************************/
 /*																			*/
@@ -1662,6 +1671,9 @@ void	Excep_SCI9_TXI9( void )
 	/********************************/
 	/*	SCI9_Handler内のApri処理	*/
 	/********************************/
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	NTNET_Int_TXI();
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 }
 /****************************************************************************/
 /*																			*/
@@ -1675,22 +1687,25 @@ void	Excep_SCI9_TXI9( void )
 //#pragma interrupt ( Excep_SCI9_TEI9 )
 void	Excep_SCI9_TEI9( void )
 {
-	volatile unsigned char	c;
-
-	if( SCI9.SSR.BIT.PER ){			// Parity Err?
-		//	SCI9_Handler内のError処理
-	}
-	if( SCI9.SSR.BIT.FER ){			// Flaming Err?
-		//	SCI9_Handler内のError処理
-	}
-	if( SCI9.SSR.BIT.ORER ){		// Overrun Err?
-		//	SCI9_Handler内のError処理
-	}
-	c = SCI9.RDR;					// Received Data
-	SCI9.SSR.BIT.ORER = 0 ;			// ERROR clear
-	SCI9.SSR.BIT.FER = 0 ;
-	SCI9.SSR.BIT.PER = 0 ;
-	dummy_Read = SCI9.SSR.BYTE;		// Dummy Read
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//	volatile unsigned char	c;
+//
+//	if( SCI9.SSR.BIT.PER ){			// Parity Err?
+//		//	SCI9_Handler内のError処理
+//	}
+//	if( SCI9.SSR.BIT.FER ){			// Flaming Err?
+//		//	SCI9_Handler内のError処理
+//	}
+//	if( SCI9.SSR.BIT.ORER ){		// Overrun Err?
+//		//	SCI9_Handler内のError処理
+//	}
+//	c = SCI9.RDR;					// Received Data
+//	SCI9.SSR.BIT.ORER = 0 ;			// ERROR clear
+//	SCI9.SSR.BIT.FER = 0 ;
+//	SCI9.SSR.BIT.PER = 0 ;
+//	dummy_Read = SCI9.SSR.BYTE;		// Dummy Read
+	NTNET_Int_TEI();
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 }
 
 /****************************************************************************/
@@ -1883,20 +1898,23 @@ void Excep_ICU_GL0( void )
 	// SCI9受信エラーの確認
 	if ( ICU.GRP[GRP_SCI9_ERI9].BIT.IS9 != 0 ) {		// ERI9（SCI9受信エラー）が発生しているか？
 		if ( ICU.IER[IER_ICU_GROUPL0].BIT.IEN2 != 0 ) {	// グループ12割り込みが許可になっているか？
-			if( SCI9.SSR.BIT.PER ){			// Parity Err?
-				//	SCI9_Handler内のError処理
-			}
-			if( SCI9.SSR.BIT.FER ){			// Flaming Err?
-				//	SCI9_Handler内のError処理
-			}
-			if( SCI9.SSR.BIT.ORER ){		// Overrun Err?
-				//	SCI9_Handler内のError処理
-			}
-			dummy_Read = SCI9.RDR;			// Received Data
-			SCI9.SSR.BIT.ORER = 0 ;			// ERROR clear
-			SCI9.SSR.BIT.FER = 0 ;
-			SCI9.SSR.BIT.PER = 0 ;
-			dummy_Read = SCI9.SSR.BYTE;		// Dummy Read
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//			if( SCI9.SSR.BIT.PER ){			// Parity Err?
+//				//	SCI9_Handler内のError処理
+//			}
+//			if( SCI9.SSR.BIT.FER ){			// Flaming Err?
+//				//	SCI9_Handler内のError処理
+//			}
+//			if( SCI9.SSR.BIT.ORER ){		// Overrun Err?
+//				//	SCI9_Handler内のError処理
+//			}
+//			dummy_Read = SCI9.RDR;			// Received Data
+//			SCI9.SSR.BIT.ORER = 0 ;			// ERROR clear
+//			SCI9.SSR.BIT.FER = 0 ;
+//			SCI9.SSR.BIT.PER = 0 ;
+//			dummy_Read = SCI9.SSR.BYTE;		// Dummy Read
+			NTNET_Int_ERI();
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 		}
 	}
 

@@ -33,7 +33,9 @@ static	ST_OIBAN	oiban_work[_OBN_AREA_MAX];
 
 static	const	int		kind_no[][2] = {
 		{PAYMENT_COUNT,		_OBN_PAYMENT}	// 精算追番
-	,	{CANCEL_COUNT,		_OBN_CANCEL}	// 精算中止追番
+// GM849100(S) 名鉄協商コールセンター対応（精算／精算中止の追番を１つにする）（GT-7700：GM747902参考）
+//	,	{CANCEL_COUNT,		_OBN_CANCEL}	// 精算中止追番
+// GM849100(E) 名鉄協商コールセンター対応（精算／精算中止の追番を１つにする）（GT-7700：GM747902参考）
 	,	{DEPOSIT_COUNT,		_OBN_DEPOSIT}	// 預り証追番
 	,	{TURIKAN_COUNT,		_OBN_TURIKAN}	// 釣銭管理合計追い番
 	,	{COIN_SAFE_COUNT,	_OBN_COIN_SAFE}	// ｺｲﾝ金庫追番
@@ -261,14 +263,21 @@ void	CountClear( uchar kind )
 
 	switch( kind ){
 	case CLEAR_COUNT_ALL:										// 追番ｸﾘｱ(全て)
+// GM849100(S) 名鉄協商コールセンター対応（T合計時に精算追番をクリアしない）（GT-7700：GM747902参考）
+// CLEAR_COUNT_ALLは使用されていない
+// GM849100(E) 名鉄協商コールセンター対応（T合計時に精算追番をクリアしない）（GT-7700：GM747902参考）
 		for (i = 1; i <= COUNT_MAX; i++) {
 			PPrmSS[S_P03][i] = 1L;
 		}
 		break;
 
 	case CLEAR_COUNT_T:											// 追番ｸﾘｱ(T合計)
-		PPrmSS[S_P03][PAYMENT_COUNT] = 1L;						// 精算追番
-		PPrmSS[S_P03][CANCEL_COUNT] = 1L;						// 精算中止追番
+// GM849100(S) 名鉄協商コールセンター対応（T合計時に精算追番をクリアしない）（GT-7700：GM747902参考）
+//		PPrmSS[S_P03][PAYMENT_COUNT] = 1L;						// 精算追番
+// GM849100(E) 名鉄協商コールセンター対応（T合計時に精算追番をクリアしない）（GT-7700：GM747902参考）
+// GM849100(S) 名鉄協商コールセンター対応（精算／精算中止の追番を１つにする）（GT-7700：GM747902参考）
+//		PPrmSS[S_P03][CANCEL_COUNT] = 1L;						// 精算中止追番
+// GM849100(E) 名鉄協商コールセンター対応（精算／精算中止の追番を１つにする）（GT-7700：GM747902参考）
 		PPrmSS[S_P03][DEPOSIT_COUNT] = 1L;						// 預り証追番
 		PPrmSS[S_P03][TURIKAN_COUNT] = 1L;						// 釣銭管理合計追番
 		PPrmSS[S_P03][COIN_SAFE_COUNT] = 1L;					// ｺｲﾝ金庫追番

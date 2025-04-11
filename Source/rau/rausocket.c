@@ -802,42 +802,44 @@ void RAU_DpaRcvQue_Set(uchar *pData, ushort len, int port)
 			index += remain < length ? remain : length;			// 次のパケットとなる先頭インデックスを設定
 			remain -= (length - DPA_Rcv_Ctrl.dpa_data[ DPA_Rcv_Ctrl.WriteIdx ].Len);
 		}
-	}
-	else if( port == CREDIT ){
-		if( len > RAU_DATA_MAX ) {
-			len = RAU_DATA_MAX;
-		}
-		
-		while(index < len) {
-			if(DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len == 0) {
-				// パケットの先頭から受信
-				if(remain < 4) {							// データ長を受信していない
-					// データ長が不明のため次のデータを取得する
-					// パケット受信途中のためインデックス、カウンタは更新しない
-					DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len = remain;
-					memcpy( DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Dat, pData, remain );
-					break;
-				}
-			}
-
-			// 受信データ格納（パケットの途中からまたは途中までの可能性あり）
-			memcpy( &DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Dat[DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len], 
-								pData + index, remain );		// とりあえず全てコピー
-			
-			// 1パケット分のデータ長を設定する
-			length = (short)RAU_Byte2Long(DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Dat);
-			oldLen = DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len;
-			DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len = length;
-			
-			if(length <= remain + oldLen) {						// 1パケット全て受信？
-				// 全データ受信していればインデックス、カウンタを更新
-				++DPA_Credit_RcvCtrl.Count;							// queue regist count update
-				++DPA_Credit_RcvCtrl.WriteIdx;						// next write index update
-				DPA_Credit_RcvCtrl.WriteIdx &= 3;
-			}
-			index += remain < length ? remain : length;			// 次のパケットとなる先頭インデックスを設定
-			remain -= (length - DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len);
-		}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）（遠隔と端末間通信のバッファを別にする）
+//	}
+//	else if( port == CREDIT ){
+//		if( len > RAU_DATA_MAX ) {
+//			len = RAU_DATA_MAX;
+//		}
+//		
+//		while(index < len) {
+//			if(DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len == 0) {
+//				// パケットの先頭から受信
+//				if(remain < 4) {							// データ長を受信していない
+//					// データ長が不明のため次のデータを取得する
+//					// パケット受信途中のためインデックス、カウンタは更新しない
+//					DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len = remain;
+//					memcpy( DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Dat, pData, remain );
+//					break;
+//				}
+//			}
+//
+//			// 受信データ格納（パケットの途中からまたは途中までの可能性あり）
+//			memcpy( &DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Dat[DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len], 
+//								pData + index, remain );		// とりあえず全てコピー
+//			
+//			// 1パケット分のデータ長を設定する
+//			length = (short)RAU_Byte2Long(DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Dat);
+//			oldLen = DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len;
+//			DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len = length;
+//			
+//			if(length <= remain + oldLen) {						// 1パケット全て受信？
+//				// 全データ受信していればインデックス、カウンタを更新
+//				++DPA_Credit_RcvCtrl.Count;							// queue regist count update
+//				++DPA_Credit_RcvCtrl.WriteIdx;						// next write index update
+//				DPA_Credit_RcvCtrl.WriteIdx &= 3;
+//			}
+//			index += remain < length ? remain : length;			// 次のパケットとなる先頭インデックスを設定
+//			remain -= (length - DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.WriteIdx ].Len);
+//		}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）（遠隔と端末間通信のバッファを別にする）
 	} else {				// 上り回線からの受信データをセットする。
 		memcpy(DPA2_Rcv_Ctrl.dpa_data[DPA2_Rcv_Ctrl.WriteIdx], pData, RAU_NET_RES_LENGTH_MAX);
 
@@ -877,25 +879,27 @@ uchar RAU_DpaRcvQue_Read(uchar *pData, ushort *len, int port)
 		--DPA_Rcv_Ctrl.Count;							// queue regist count update
 		++DPA_Rcv_Ctrl.ReadIdx;							// next read index update
 		DPA_Rcv_Ctrl.ReadIdx &= 3;
-	}
-	else if( port == CREDIT ){
-		if( 0 == DPA_Credit_RcvCtrl.Count ) {
-			return	(uchar)0;
-		}
-
-		w_len = DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.ReadIdx ].Len;
-		DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.ReadIdx ].Len = 0;
-		
-		if( w_len > RAU_DATA_MAX ) {
-			w_len = RAU_DATA_MAX;
-		}
-		*len = w_len;
-
-		memcpy( pData, DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.ReadIdx ].Dat, w_len );
-
-		--DPA_Credit_RcvCtrl.Count;							// queue regist count update
-		++DPA_Credit_RcvCtrl.ReadIdx;							// next read index update
-		DPA_Credit_RcvCtrl.ReadIdx &= 3;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）（遠隔と端末間通信のバッファを別にする）
+//	}
+//	else if( port == CREDIT ){
+//		if( 0 == DPA_Credit_RcvCtrl.Count ) {
+//			return	(uchar)0;
+//		}
+//
+//		w_len = DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.ReadIdx ].Len;
+//		DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.ReadIdx ].Len = 0;
+//		
+//		if( w_len > RAU_DATA_MAX ) {
+//			w_len = RAU_DATA_MAX;
+//		}
+//		*len = w_len;
+//
+//		memcpy( pData, DPA_Credit_RcvCtrl.dpa_data[ DPA_Credit_RcvCtrl.ReadIdx ].Dat, w_len );
+//
+//		--DPA_Credit_RcvCtrl.Count;							// queue regist count update
+//		++DPA_Credit_RcvCtrl.ReadIdx;							// next read index update
+//		DPA_Credit_RcvCtrl.ReadIdx &= 3;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）（遠隔と端末間通信のバッファを別にする）
 	} else {				// 上り回線からの受信データを取り出す。
 		if( 0 == DPA2_Rcv_Ctrl.Count ) {	// データなし
 			return	(uchar)0;
@@ -951,15 +955,17 @@ void DpaSndQue_Set(uchar *pData, ushort len, int port)
 		++DPA2_Snd_Ctrl.Count;
 		++DPA2_Snd_Ctrl.WriteIdx;
 		DPA2_Snd_Ctrl.WriteIdx &= 3;
-	}
-	else if( port == CREDIT ){
-		DPA_Credit_SndCtrl.dpa_data[ DPA_Credit_SndCtrl.WriteIdx ].Len = len;
-
-		memcpy( DPA_Credit_SndCtrl.dpa_data[ DPA_Credit_SndCtrl.WriteIdx ].Dat, pData, len );
-
-		++DPA_Credit_SndCtrl.Count;							// queue regist count update
-		++DPA_Credit_SndCtrl.WriteIdx;						// next write index update
-		DPA_Credit_SndCtrl.WriteIdx &= 3;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）（遠隔と端末間通信のバッファを別にする）
+//	}
+//	else if( port == CREDIT ){
+//		DPA_Credit_SndCtrl.dpa_data[ DPA_Credit_SndCtrl.WriteIdx ].Len = len;
+//
+//		memcpy( DPA_Credit_SndCtrl.dpa_data[ DPA_Credit_SndCtrl.WriteIdx ].Dat, pData, len );
+//
+//		++DPA_Credit_SndCtrl.Count;							// queue regist count update
+//		++DPA_Credit_SndCtrl.WriteIdx;						// next write index update
+//		DPA_Credit_SndCtrl.WriteIdx &= 3;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）（遠隔と端末間通信のバッファを別にする）
 	} else {				// 上り回線への送信データをセットする。
 		DPA_Snd_Ctrl.dpa_data[ DPA_Snd_Ctrl.WriteIdx ].Len = len;
 
@@ -1002,27 +1008,29 @@ uchar DpaSndQue_Read(uchar *pData, ushort *len, uchar kind, int port)
 		--DPA2_Snd_Ctrl.Count;
 		++DPA2_Snd_Ctrl.ReadIdx;
 		DPA2_Snd_Ctrl.ReadIdx &= 3;
-	}
-	else if( port == CREDIT ){
-		if( 0 == DPA_Credit_SndCtrl.Count ){	// データなし
-			return	(uchar)0;
-		}
-		if( kind ){
-			return	(uchar)1;
-		}
-
-		w_len = DPA_Credit_SndCtrl.dpa_data[DPA_Credit_SndCtrl.ReadIdx].Len;
-		if( w_len > RAU_DATA_MAX ){
-			w_len = RAU_DATA_MAX;
-		}
-		*len = w_len;
-
-		memset(pData, 0x00, RAU_RCV_MAX_H );
-		memcpy(pData, DPA_Credit_SndCtrl.dpa_data[DPA_Credit_SndCtrl.ReadIdx].Dat, w_len);
-
-		--DPA_Credit_SndCtrl.Count;
-		++DPA_Credit_SndCtrl.ReadIdx;
-		DPA_Credit_SndCtrl.ReadIdx &= 3;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）
+//	}
+//	else if( port == CREDIT ){
+//		if( 0 == DPA_Credit_SndCtrl.Count ){	// データなし
+//			return	(uchar)0;
+//		}
+//		if( kind ){
+//			return	(uchar)1;
+//		}
+//
+//		w_len = DPA_Credit_SndCtrl.dpa_data[DPA_Credit_SndCtrl.ReadIdx].Len;
+//		if( w_len > RAU_DATA_MAX ){
+//			w_len = RAU_DATA_MAX;
+//		}
+//		*len = w_len;
+//
+//		memset(pData, 0x00, RAU_RCV_MAX_H );
+//		memcpy(pData, DPA_Credit_SndCtrl.dpa_data[DPA_Credit_SndCtrl.ReadIdx].Dat, w_len);
+//
+//		--DPA_Credit_SndCtrl.Count;
+//		++DPA_Credit_SndCtrl.ReadIdx;
+//		DPA_Credit_SndCtrl.ReadIdx &= 3;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）
 	} else {
 		if( 0 == DPA_Snd_Ctrl.Count ){
 			return	(uchar)0;

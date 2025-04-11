@@ -1660,6 +1660,23 @@ typedef	struct {
 } DISCOUNT_DATA;
 // GG124100(E) R.Endo 2022/08/09 車番チケットレス3.0 #6465 割引10種対応 [共通改善項目 No1526]
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-7700:GM747904参考）
+typedef	struct {
+	ulong			ParkingNo;										// 駐車場№（基本駐車場Ｎｏ固定）
+	ushort			DiscSyu;										// 割引種別（２００：投入金、２０１：払出金）
+	ushort			InOut10000;										// １００００円投入or払出枚数
+	ushort			InOut5000;										// ５０００円投入or払出金額
+	ushort			InOut2000;										// ２０００円投入or払出金額
+	ushort			InOut1000;										// １０００円投入or払出金額
+	ushort			InOut500;										// 　５００円投入or払出金額
+	ushort			InOut100;										// 　１００円投入or払出金額
+	ushort			InOut50;										// 　　５０円投入or払出金額
+	ushort			InOut10;										// 　　１０円投入or払出金額
+	ushort			MoveMode;										// 回収／返却　（現状はダミー）
+	ushort			DiscFlg;										// 割引済み　（現状はダミー）
+} IN_OUT_MONEY;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-7700:GM747904参考）
+
 // 仕様変更(S) K.Onodera 2016/11/01 精算データフォーマット対応
 // 割引詳細(明細情報)
 typedef struct{
@@ -1903,6 +1920,9 @@ typedef struct {
 // GG129001(S) データ保管サービス対応（登録番号をセットする）
 	uchar			RegistNum[14];									// 登録番号
 // GG129001(E) データ保管サービス対応（登録番号をセットする）
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）
+	date_time_rec2	Before_Ts_Time;									// 前回Ｔ合計の時間	
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）
 } Receipt_data;
 #pragma unpack
 
@@ -3160,6 +3180,14 @@ extern	ulong					LaneStsSeqNo;						// レーンモニタデータの状態一連番号
 // GG129000(S) H.Fujinaga 2023/02/24 ゲート式車番チケットレスシステム対応（遠隔精算対応）
 extern	uchar	PayInfoChange_StateCheck(void);
 // GG129000(E) H.Fujinaga 2023/02/24 ゲート式車番チケットレスシステム対応（遠隔精算対応）
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+// 標準の端末間通信では遠隔のバッファを使用しているが、併用可能にするためバッファを別にする
+// サイズは遠隔と同じとする
+#define	NTNET_LOG_WORK_SIZE		20000							// NT-NET端末間通信用ログデータ
+extern uchar	NTNET_LogData[NTNET_LOG_WORK_SIZE];
+extern uchar	NTNET_NtLogData[NTNET_LOG_WORK_SIZE];
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
 
 #endif	/* ___MEM_DEFH___ */
 

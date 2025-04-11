@@ -136,20 +136,22 @@ extern td_cre_ctl	cre_ctl;
 #define		CRE_STATUS_SENDING			0x10	// 通信中
 #define		CRE_STATUS_PPP_DISCONNECT	0x20	// PPP未接続
 
-// クレジットサーバー接続有無
-#define		CREDIT_ENABLED()		( (prm_get(COM_PRM, S_PAY, 24, 1, 2)) == 2 || (prm_get(COM_PRM, S_PAY, 24, 1, 2)) == 3)	// 1=CCT(未対応)
-																															// 2=CRE(FOMA)
-																															// 3=CRE(LAN)
-
-
-// 精算情報
-typedef struct st_creSeisanInfo {	// opetask => creCtrl
-	long			amount;				// 売上金額
-	unsigned char	jis_1[37];			// JIS1ｶｰﾄﾞﾃﾞｰﾀ
-	unsigned char	jis_2[69];			// JIS2ｶｰﾄﾞﾃﾞｰﾀ
-} td_creSeisanInfo;
-
-extern td_creSeisanInfo		creSeisanInfo;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
+//// クレジットサーバー接続有無
+//#define		CREDIT_ENABLED()		( (prm_get(COM_PRM, S_PAY, 24, 1, 2)) == 2 || (prm_get(COM_PRM, S_PAY, 24, 1, 2)) == 3)	// 1=CCT(未対応)
+//																															// 2=CRE(FOMA)
+//																															// 3=CRE(LAN)
+//
+//
+//// 精算情報
+//typedef struct st_creSeisanInfo {	// opetask => creCtrl
+//	long			amount;				// 売上金額
+//	unsigned char	jis_1[37];			// JIS1ｶｰﾄﾞﾃﾞｰﾀ
+//	unsigned char	jis_2[69];			// JIS2ｶｰﾄﾞﾃﾞｰﾀ
+//} td_creSeisanInfo;
+//
+//extern td_creSeisanInfo		creSeisanInfo;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
 
 
 // プロトタイプ
@@ -158,48 +160,54 @@ extern td_creSeisanInfo		creSeisanInfo;
 extern	short	creCtrl( short event );
 extern	void	creCtrlInit( uchar flg );
 extern	uchar	creStatusCheck( void );
-extern	short	creLimitCheck( ulong Amount );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
+//extern	short	creLimitCheck( ulong Amount );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
 extern	void	creOneMinutesCheckProc( void );
-extern	short	creOnlineTestCheck( void );
-extern	short	creErrorCheck( void );
-
-short			creSendData_OPEN( void );		// 開局コマンド(01)
-short			creSendData_CONFIRM( void );	// 与信問合せデータ(03)
-short			creSendData_SALES( void );		// 売上依頼データ(05)
-short			creSendData_ONLINETEST( void );	// ｵﾝﾗｲﾝﾃｽﾄ(07)
-short			creSendData_RETURN( void );		// 返品問合せデータ(09)
-
-short			creRecvData( void );
-
-void			creSaleNG_Add( void );
-void			creUpdatePayData( DATA_KIND_137_04 *RcvData );
-short			creTimeOut( void );
-short			creResultCheck( void );
-void			creMemCpyRight(uchar *dist, uchar *src, ushort dist_len, ushort src_len);
-extern void		creMessageAnaOnOff( short OnOff, short num );
-
-extern void		creSeqNo_Init( void );		// ｸﾚｼﾞｯﾄ電文用追い番初期化
-extern ushort	creSeqNo_Count( void );		// ｸﾚｼﾞｯﾄ電文用追い番カウント
-extern ushort	creSeqNo_Get( void );		// ｸﾚｼﾞｯﾄ電文用追い番：現在値を返す
-extern ulong	creSlipNo_Count( void );	// 端末処理通番（伝票番号）カウント
-extern ulong	creSlipNo_Get( void );		// 端末処理通番（伝票番号）：現在値を返す
-extern void		creSales_Init( void );		// 売上依頼用リトライ制御データ初期化
-extern void		creSales_Reset( void );		// 売上依頼の経過時間カウントをリセット
-extern uchar	creSales_Check( void );		// 売上依頼の経過時間をチェック
-extern void		creSales_Count( void );		// 売上依頼データ再送回数カウント
-extern void		creSales_Send( short kind );	// 売上依頼の再送処理
-extern void		creOpen_Init( void );		// 開局コマンド用リトライ制御データ初期化
-extern void		creOpen_Enable( void );		// 開局コマンドのリトライ送信許可
-extern void		creOpen_Disable( void );	// 開局コマンドのリトライ送信禁止
-extern uchar	creOpen_Check( void );		// 開局コマンドの経過時間をチェック
-extern void		creOpen_Send( void );		// 開局コマンド送信処理
-extern void		creOnlineTest_Init( void );	// ｵﾝﾗｲﾝﾃｽﾄの制御データ初期化
-extern void		creOnlineTest_Reset( void );// ｵﾝﾗｲﾝﾃｽﾄの経過時間カウントをリセット
-extern void		creOnlineTest_Count( void );// ｵﾝﾗｲﾝﾃｽﾄの経過時間をカウント
-extern uchar	creOnlineTest_Check( void );// ｵﾝﾗｲﾝﾃｽﾄの経過時間をチェック
-extern void		creOnlineTest_Send( void );	// ｵﾝﾗｲﾝﾃｽﾄの送信処理
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
+//extern	short	creOnlineTestCheck( void );
+//extern	short	creErrorCheck( void );
+//
+//short			creSendData_OPEN( void );		// 開局コマンド(01)
+//short			creSendData_CONFIRM( void );	// 与信問合せデータ(03)
+//short			creSendData_SALES( void );		// 売上依頼データ(05)
+//short			creSendData_ONLINETEST( void );	// ｵﾝﾗｲﾝﾃｽﾄ(07)
+//short			creSendData_RETURN( void );		// 返品問合せデータ(09)
+//
+//short			creRecvData( void );
+//
+//void			creSaleNG_Add( void );
+//void			creUpdatePayData( DATA_KIND_137_04 *RcvData );
+//short			creTimeOut( void );
+//short			creResultCheck( void );
+//void			creMemCpyRight(uchar *dist, uchar *src, ushort dist_len, ushort src_len);
+//extern void		creMessageAnaOnOff( short OnOff, short num );
+//
+//extern void		creSeqNo_Init( void );		// ｸﾚｼﾞｯﾄ電文用追い番初期化
+//extern ushort	creSeqNo_Count( void );		// ｸﾚｼﾞｯﾄ電文用追い番カウント
+//extern ushort	creSeqNo_Get( void );		// ｸﾚｼﾞｯﾄ電文用追い番：現在値を返す
+//extern ulong	creSlipNo_Count( void );	// 端末処理通番（伝票番号）カウント
+//extern ulong	creSlipNo_Get( void );		// 端末処理通番（伝票番号）：現在値を返す
+//extern void		creSales_Init( void );		// 売上依頼用リトライ制御データ初期化
+//extern void		creSales_Reset( void );		// 売上依頼の経過時間カウントをリセット
+//extern uchar	creSales_Check( void );		// 売上依頼の経過時間をチェック
+//extern void		creSales_Count( void );		// 売上依頼データ再送回数カウント
+//extern void		creSales_Send( short kind );	// 売上依頼の再送処理
+//extern void		creOpen_Init( void );		// 開局コマンド用リトライ制御データ初期化
+//extern void		creOpen_Enable( void );		// 開局コマンドのリトライ送信許可
+//extern void		creOpen_Disable( void );	// 開局コマンドのリトライ送信禁止
+//extern uchar	creOpen_Check( void );		// 開局コマンドの経過時間をチェック
+//extern void		creOpen_Send( void );		// 開局コマンド送信処理
+//extern void		creOnlineTest_Init( void );	// ｵﾝﾗｲﾝﾃｽﾄの制御データ初期化
+//extern void		creOnlineTest_Reset( void );// ｵﾝﾗｲﾝﾃｽﾄの経過時間カウントをリセット
+//extern void		creOnlineTest_Count( void );// ｵﾝﾗｲﾝﾃｽﾄの経過時間をカウント
+//extern uchar	creOnlineTest_Check( void );// ｵﾝﾗｲﾝﾃｽﾄの経過時間をチェック
+//extern void		creOnlineTest_Send( void );	// ｵﾝﾗｲﾝﾃｽﾄの送信処理
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
 extern void		creInfoInit( void );		// クレジット情報初期化
-extern void		creRegMonitor( ushort code, uchar type, ulong info );	// クレジット関連モニタ登録
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
+//extern void		creRegMonitor( ushort code, uchar type, ulong info );	// クレジット関連モニタ登録
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信（未使用定義削除））（FT-4000N：MH364304流用）
 extern	void	creCheckRejectSaleData( void );
 
 #endif	/* ___CRE_CTRL_H___ */

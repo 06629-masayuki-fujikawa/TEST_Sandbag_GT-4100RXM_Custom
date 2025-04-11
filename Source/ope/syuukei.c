@@ -5457,3 +5457,46 @@ void ec_linked_total_print(ushort pri_req, T_FrmSyuukei *pFrmSyuukei)
 	queset(PRNTCBNO, pri_req, sizeof(FrmSyuk2), &FrmSyuk2);
 }
 // MH810105 GG119202(E) T合計連動印字対応
+// GM849100(S) M.Fujikawa 2025/03/11 名鉄協商コールセンター対応 コードチェック#257073
+ulong set_parking_time( date_time_rec *InTime, date_time_rec *OutTime )
+{
+
+	ulong			indate;					// 入庫日
+	ulong			outdate;				// 出庫日
+	ulong			m_intime;				// 入庫日時（分換算）
+	ulong			m_outtime;				// 出庫日時（分換算）
+	ulong			parktime = 0L;			// 駐車時間（分換算）
+
+
+	if( InTime->Year != 0 ) {
+		// 入庫日計算
+		indate	= dnrmlzm( (short)InTime->Year, (short)InTime->Mon, (short)InTime->Day );
+		// 出庫日計算
+		outdate	= dnrmlzm( (short)OutTime->Year, (short)OutTime->Mon, (short)OutTime->Day	);
+
+		// 入庫日時（分換算）計算
+		m_intime = (indate*24*60) + (InTime->Hour*60) + (InTime->Min);
+		// 出庫日時（分換算）計算
+		m_outtime = (outdate*24*60) + (OutTime->Hour*60) + (OutTime->Min);
+
+		// 出庫日時≧入庫日時
+		if( m_outtime >= m_intime ) {
+			parktime = m_outtime - m_intime;		// 駐車時間取得（分換算）
+
+			// 算出した駐車時間は９９９９９９分以上
+			if( parktime > 999999L ) {
+				parktime = 999999L;				// ９９９９９９分でセット
+			} 
+		// 出庫日時＜入庫日時
+		} else {
+			parktime = 0L;					// ０分でセット
+		}
+	// 入庫日時なし
+	} else {
+		parktime = 0L;			// 駐車時刻を０分でセット
+	}
+
+	return( parktime );
+
+}
+// GM849100(E) M.Fujikawa 2025/03/11 名鉄協商コールセンター対応 コードチェック#257073

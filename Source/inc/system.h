@@ -93,8 +93,13 @@ extern void Rspi_DT10_Init(void);
 #define		LOCK_IF_MAX		31								/* I/F盤最大接続台数			*/
 #define		LOCK_IFS_MAX	12								/* I/F盤子機最大接続台数(1親機に対して)	*/
 #define		LOCK_IF_REN_MAX	54								/* 親I/F盤に対するﾛｯｸ装置連番の最大数	*/
-#define		LOCK_MAX		324								/* 新ﾛｯｸ装置最大接続数			*/
-#define		OLD_LOCK_MAX	324								/* 旧ﾛｯｸ装置最大接続数			*/
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用SRAM削減）
+//#define		LOCK_MAX		324								/* 新ﾛｯｸ装置最大接続数			*/
+//#define		OLD_LOCK_MAX	324								/* 旧ﾛｯｸ装置最大接続数			*/
+#define		LOCK_MAX		150								/* 新ﾛｯｸ装置最大接続数			*/
+#define		OLD_LOCK_MAX	150								/* 旧ﾛｯｸ装置最大接続数			*/
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用SRAM削減）
 #define		SYU_LOCK_MAX	30								/* 集計エリア格納車室最大数		*/
 #define		FLAP_IF_MAX		20								/* ﾌﾗｯﾌﾟI/F盤最大接続台数（ﾀｰﾐﾅﾙ数）	*/
 #define		FLAP_IFS_MAX	10								/* ﾌﾗｯﾌﾟ接続台数（１ﾀｰﾐﾅﾙに対して）		*/
@@ -309,6 +314,9 @@ enum {
 			IDLESUBTSKNO,									/* idle sub task				*/
 			PIPTSKNO,										/* ParkiPro task				*/
 			RAUTSKNO,										/* rau task						*/
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+			NTCOMTSKNO,										/* nt task(NT-NET通信処理部)	*/
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 			TSKMAX											/* count of task */
 };
 /*[]----------------------------------------------------------------------[]*/
@@ -374,6 +382,9 @@ extern	unsigned short	SD_EXIOPORT;						/* 拡張I/Oポートイメージバッファ*/
 #define		CP_RES_DET1		PORT1.PODR.BIT.B1				/* 予備ﾎﾞﾀﾝ1					*/
 
 #define		CP_IF_RTS		PORT7.PODR.BIT.B0				/* APS通信 IF盤通信 RTS制御信号		*/
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+#define		CP_NT_RTS		PORT6.PODR.BIT.B0				/* NT-NET通信 RTS制御信号		*/
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 #define		CP_CAN_RES		PORT6.PODR.BIT.B6				/* CANのﾘｾｯﾄ出力				*/
 
 #define		CP_RED_SHUT_OPEN	PORT0.PODR.BIT.B3			// 磁気リーダーシャッタオープン
@@ -714,6 +725,9 @@ extern	t_I2C_ERR_STS_EVENT		I2cErrEvent;
 extern	t_I2C_ERR_STS_EVENT		I2cErrStatus;
 
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+extern	unsigned long	LifeTimer1ms;						/* 1ms積算ｶｳﾝﾀ					*/
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 extern	unsigned long	LifeTimer2ms;						/* 2ms積算ｶｳﾝﾀ(Use IFcom)		*/
 extern	uchar		Tim1sCount;									// 1s積算カウンタ(every 20ms + 1) 
 extern	unsigned short	FBcom_2msT1;
@@ -853,6 +867,9 @@ MsgBuf	*Target_MsgGet( uchar id, t_TARGET_MSGGET_PRM *pReq );
 extern const MsgBuf *Target_MsgGet_delete1( const unsigned char task_id, const unsigned short message_id );
 // MH321800(E) Y.Tanizaki ICクレジット対応(共通改善No.1362/精算中止と同時に電子マネータッチで、カード引去りするが精算中止してしまう不具合対策)
 extern	void	xPause( unsigned long );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+extern	void	xPause1ms( unsigned long );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 extern	void	xPause2ms( unsigned long );
 extern	void	xPause_PRNTSK( unsigned long );
 extern	MsgBuf	*Target_MsgGet_Range( uchar, t_TARGET_MSGGET_PRM * );
@@ -1001,6 +1018,10 @@ extern	uchar	LagTim500ms_Is_Counting( char no );
 // MH810104 GG119201(E) 電子ジャーナル対応
 extern	unsigned long	LifeTimGet( void );
 extern	unsigned long	LifePastTimGet( unsigned long StartTime );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+extern	unsigned long	LifeTim1msGet( void );
+extern	unsigned long	LifePastTim1msGet( unsigned long StartTime );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 extern	unsigned long	LifeTim2msGet( void );
 extern	unsigned char	LifePastTim2msGet( unsigned long, unsigned long );
 extern	unsigned long c_2msPastTimeGet( unsigned long StartTime );

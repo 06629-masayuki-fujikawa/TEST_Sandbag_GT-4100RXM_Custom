@@ -208,6 +208,151 @@ extern	short	LKopeGetLockNum( uchar, ushort, ushort * );
 extern	const	uchar	ErrAct_index[];
 extern	uchar	get_crm_state(void);
 // MH322914 (e) kasiyama 2016/07/15 AI-V‘Î‰
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+static void NTNET_CtrlRecvTermData();
+static void		SetUnitInfo( UNIT_DATA *info );
+// ¥‹CƒŠ[ƒ_[ƒGƒ‰[ƒe[ƒuƒ‹
+const uchar	Err_Reder[] = {
+					18				// ƒGƒ‰[”
+	,ERR_RED_COMFAIL				// ’ÊM•s—Ç
+	,ERR_RED_MAGTYPE				// ¥‹CƒŠ[ƒ_[ƒ^ƒCƒvˆÙí
+	,ERR_RED_STACK_R				// ¶°ÄŞ‹l‚Ü‚è(Ø°ÀŞ°“à)
+	,ERR_RED_STACK_P				// ¶°ÄŞ‹l‚Ü‚è(ÌßØİÀ“à)
+	,ERR_RED_LOCSENSOR1				// ˆÊ’u¾İ»°1•s—Ç
+	,ERR_RED_LOCSENSOR2				// ˆÊ’u¾İ»°2•s—Ç
+	,ERR_RED_LOCSENSOR3				// ˆÊ’u¾İ»°3•s—Ç
+	,ERR_RED_LOCSENSOR4				// ˆÊ’u¾İ»°4•s—Ç
+	,ERR_RED_LOCSENSOR5				// ˆÊ’u¾İ»°5•s—Ç
+	,ERR_RED_LOCSENSOR6				// ˆÊ’u¾İ»°6•s—Ç	10
+	,ERR_RED_LOCSENSOR7				// ˆÊ’u¾İ»°7•s—Ç
+	,ERR_RED_PRNLOCSENSOR			// ÌßØİÀˆÊ’u¾İ»°•s—Ç
+	,ERR_RED_HPSENSOR1				// HP¾İ»°1•s—Ç
+	,ERR_RED_HPSENSOR2				// HP¾İ»°2•s—Ç
+	,ERR_RED_AFTERWRITE				// ‘Œã‚Ì´×°			”­¶^‰ğœ
+	,ERR_RED_OTHERS					// ‚»‚Ì‘¼‚Ì´×°			”­¶^‰ğœ
+	,ERR_RED_MEMORY					// ÒÓØ•s—Ç
+	,ERR_RED_VERIFY					// ÍŞØÌ§²´×°			”­¶^‰ğœ
+};
+
+// ƒŒƒV[ƒgƒvƒŠƒ“ƒ^[ƒGƒ‰[ƒe[ƒuƒ‹
+const uchar	Err_Ptr_R[] = {
+					13				// ƒGƒ‰[”
+	,ERR_PRNT_R_PRINTCOM			// Printer Error
+	,ERR_PRNT_R_HEADHEET			// Head Heet Up Error
+	,ERR_PRNT_R_CUTTER				// Cutter       Error
+	,ERR_PRNT_DATA_ERR				// ˆóš—v‹ÃŞ°À´×°				”­¶^‰ğœ
+	,ERR_PRNT_LOG_ERR				// Û¸ŞÃŞ°À´×°					”­¶^‰ğœ
+	,ERR_PRNT_YEAR_ERR				// “ú•ti”NjÃŞ°À´×°
+	,ERR_PRNT_MON_ERR				// “ú•tiŒjÃŞ°À´×°
+	,ERR_PRNT_DAY_ERR				// “ú•ti“újÃŞ°À´×°
+	,ERR_PRNT_HOUR_ERR				// “ú•tijÃŞ°À´×°
+	,ERR_PRNT_MIN_ERR				// “ú•ti•ªjÃŞ°À´×°
+	,ERR_PRNT_ERR_IRQ				// ÌßØİÀ´×°Š„‚İ”­¶			”­¶^‰ğœ
+	,ERR_PRNT_BUFF_FULL				// ÌßØİÀ‘—MÊŞ¯Ì§µ°ÊŞ°ÌÛ°”­¶	”­¶^‰ğœ
+	,ERR_PRNT_INIT_ERR				// ÌßØİÀ‰Šú‰»¸”s				”­¶^‰ğœ
+};
+
+// ƒWƒƒ[ƒiƒ‹ƒvƒŠƒ“ƒ^[ƒGƒ‰[ƒe[ƒuƒ‹
+const uchar	Err_Ptr_J[] = {
+					12				// ƒGƒ‰[”
+	,ERR_PRNT_J_PRINTCOM			// Printer Error
+	,ERR_PRNT_J_HEADHEET			// Head Heet Up Error
+	,ERR_PRNT_DATA_ERR				// ˆóš—v‹ÃŞ°À´×°				”­¶^‰ğœ
+	,ERR_PRNT_LOG_ERR				// Û¸ŞÃŞ°À´×°					”­¶^‰ğœ
+	,ERR_PRNT_YEAR_ERR				// “ú•ti”NjÃŞ°À´×°
+	,ERR_PRNT_MON_ERR				// “ú•tiŒjÃŞ°À´×°
+	,ERR_PRNT_DAY_ERR				// “ú•ti“újÃŞ°À´×°
+	,ERR_PRNT_HOUR_ERR				// “ú•tijÃŞ°À´×°
+	,ERR_PRNT_MIN_ERR				// “ú•ti•ªjÃŞ°À´×°
+	,ERR_PRNT_ERR_IRQ				// ÌßØİÀ´×°Š„‚İ”­¶			”­¶^‰ğœ
+	,ERR_PRNT_BUFF_FULL				// ÌßØİÀ‘—MÊŞ¯Ì§µ°ÊŞ°ÌÛ°”­¶	”­¶^‰ğœ
+	,ERR_PRNT_INIT_ERR				// ÌßØİÀ‰Šú‰»¸”s				”­¶^‰ğœ
+};
+
+// ƒRƒCƒ“ƒƒbƒNƒGƒ‰[ƒe[ƒuƒ‹
+const uchar	Err_Coin[] = {
+					23				// ƒGƒ‰[”
+	,ERR_COIN_COMFAIL				// ’ÊM•s—Ç
+	,ERR_COIN_ACCEPTER				// ±¸¾ÌßÀ  Error
+	,ERR_COIN_REJECTSW				// Ø¼Şª¸Ä  Error
+	,ERR_COIN_DISPENCEFAIL			// •¥o  Error
+	,ERR_COIN_10EMPTYSW				//  10 ´İÌßÃ¨SW Error
+	,ERR_COIN_50EMPTYSW				//  50 ´İÌßÃ¨SW Error
+	,ERR_COIN_100EMPTYSW			// 100 ´İÌßÃ¨SW Error
+	,ERR_COIN_500EMPTYSW			// 500 ´İÌßÃ¨SW Error	10
+	,ERR_COIN_10OVFSENSOR			//  10 µ°ÊŞ°ÌÛ°¾İ»° Error
+	,ERR_COIN_50VFSENSOR			//  50 µ°ÊŞ°ÌÛ°¾İ»° Error
+	,ERR_COIN_100VFSENSOR			// 100 µ°ÊŞ°ÌÛ°¾İ»° Error
+	,ERR_COIN_500VFSENSOR			// 500 µ°ÊŞ°ÌÛ°¾İ»° Error
+	,ERR_COIN_ACK4RECEIVE			// ACK4óM						”­¶^‰ğœ
+	,ERR_COIN_NAKRECEIVE			// NAKóM						”­¶^‰ğœ
+	,ERR_COIN_RECEIVEBUFFULL		// óMÊŞ¯Ì§ÌÙ					”­¶^‰ğœ
+	,ERR_COIN_PARITYERROR			// ÊßØÃ¨´×°						”­¶^‰ğœ
+	,ERR_COIN_OVERRUNERROR			// µ°ÊŞ°×İ´×°					”­¶^‰ğœ
+	,ERR_COIN_FLAMERROR				// ÌÚ-Ğİ¸Ş´×°			20		”­¶^‰ğœ
+	,ERR_COIN_RECEIVESIZENG			// óM•¶š”•sˆê’v				”­¶^‰ğœ
+	,ERR_COIN_RECEIVEBCCNG			// óMÃŞ°ÀBCC´×°				”­¶^‰ğœ
+	,ERR_COIN_CASETTOUT				// Casett    OUT				
+};
+
+// †•¼ƒŠ[ƒ_[ƒGƒ‰[ƒe[ƒuƒ‹
+const uchar	Err_Note[] = {
+					8,
+	ERR_NOTE_COMFAIL,			// †•¼ƒŠ[ƒ_[“à‹l‚Ü‚è
+	ERR_NOTE_JAM,				// ”À‘—•”†•¼‹l‚Ü‚è
+	ERR_NOTE_SHIKIBETU,				// û”[•”†•¼‹l‚Ü‚è
+	ERR_NOTE_STACKER,				// û”[•”ˆÙí
+	ERR_NOTE_REJECT,				// ƒRƒ}ƒ“ƒhÀs’†‚É“dŒ¹ˆÙí”­¶(“Çæ‹@)
+	ERR_NOTE_ACK4RECEIVE,				// ƒRƒ}ƒ“ƒhÀs’†‚É“dŒ¹ˆÙí”­¶(“Çæ‹@)
+	ERR_NOTE_NAKRECEIVE,				// ƒRƒ}ƒ“ƒhÀs’†‚É“dŒ¹ˆÙí”­¶(“Çæ‹@)
+	ERR_NOTE_SAFE				// ƒRƒ}ƒ“ƒhÀs’†‚É“dŒ¹ˆÙí”­¶(“Çæ‹@)
+};
+
+
+// ƒIƒvƒVƒ‡ƒ“ƒ†ƒjƒbƒgiMifarejƒGƒ‰[ƒe[ƒuƒ‹
+const uchar	Err_QR[] = {
+					6,				// ƒGƒ‰[”
+	ERR_BARCODE_COMM_FAIL,
+	ERR_BARCODE_PARAM_FAIL,
+	ERR_BARCODE_OVER_RUN,
+	ERR_BARCODE_FLAMING_ERR,
+	ERR_BARCODE_PARITY_ERR,
+	ERR_BARCODE_BUFF_OVER_FLOW
+};
+
+const uchar	Err_LCD[] = {
+					29,				// ƒGƒ‰[”
+	ERR_TKLSLCD_COMM_FAIL,
+	ERR_TKLSLCD_RMT_RST,
+	ERR_TKLSLCD_RMT_DSC,
+	ERR_TKLSLCD_ERR_OCC,
+	ERR_TKLSLCD_CON_RES_TO,
+	ERR_TKLSLCD_KPALV_RTY_OV,
+	ERR_TKLSLCD_KSG_SOC,
+	ERR_TKLSLCD_KSG_BLK_ST,
+	ERR_TKLSLCD_KSG_SOC_OP,
+	ERR_TKLSLCD_KSG_SOC_CB,
+	ERR_TKLSLCD_KSG_BND,
+	ERR_TKLSLCD_KSG_CON,
+	ERR_TKLSLCD_KSG_SND,
+	ERR_TKLSLCD_KSG_RCV,
+	ERR_TKLSLCD_KSG_CLS,
+	ERR_TKLSLCD_SND_FORCED_ACK,
+	ERR_TKLSLCD_SND_RTRY_OV,
+	ERR_TKLSLCD_SND_BUF_RPT,
+	ERR_TKLSLCD_SND_BUF_WPT,
+	ERR_TKLSLCD_SND_BUF_FUL,
+	ERR_TKLSLCD_PAY_RES_TO,
+	ERR_TKLSLCD_QR_RES_TO,
+	ERR_TKLSLCD_RCV_FORCED_ACK,
+	ERR_TKLSLCD_RCV_HDR,
+	ERR_TKLSLCD_RCV_CRC,
+	ERR_TKLSLCD_RCV_LENGTH,
+	ERR_TKLSLCD_RCV_SEQ_NO,
+	ERR_TKLSLCD_RCV_DCRYPT_FL,
+	ERR_TKLSLCD_PRM_UPLD_FL
+};
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
 
 /*[]----------------------------------------------------------------------[]*/
 /*| ÃŞ°ÀóMˆ—                                                           |*/
@@ -229,22 +374,34 @@ void	NTNET_GetRevData( ushort msg, uchar *data )
 
 	switch( msg ){
 	case IBK_NTNET_DAT_REC:											// NTNETÃŞ°ÀóM
-		if( NTBUF_GetRcvNtData( &RecvNtnetDt, NTNET_BUF_PRIOR ) > 0 ){
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+//		if( NTBUF_GetRcvNtData( &RecvNtnetDt, NTNET_BUF_PRIOR ) > 0 ){
+		if( NTBUF_GetRcvNtData( &RecvNtnetTermDt, NTNET_BUF_PRIOR ) > 0 ){
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
 			// —DæÃŞ°ÀóM
 			BufKind = NTNET_BUF_PRIOR;
 		}
-		else if( NTBUF_GetRcvNtData( &RecvNtnetDt, NTNET_BUF_NORMAL ) > 0 ){
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+//		else if( NTBUF_GetRcvNtData( &RecvNtnetDt, NTNET_BUF_NORMAL ) > 0 ){
+		else if( NTBUF_GetRcvNtData( &RecvNtnetTermDt, NTNET_BUF_NORMAL ) > 0 ){
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
 			// ÊŞ¯Ì§Øİ¸Ş‚Å‚È‚¢’ÊíÃŞ°ÀóM
 			BufKind = NTNET_BUF_NORMAL;
 		}
-		else if( NTBUF_GetRcvNtData( &RecvNtnetDt, NTNET_BUF_BROADCAST ) > 0 ){
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+//		else if( NTBUF_GetRcvNtData( &RecvNtnetDt, NTNET_BUF_BROADCAST ) > 0 ){
+		else if( NTBUF_GetRcvNtData( &RecvNtnetTermDt, NTNET_BUF_BROADCAST ) > 0 ){
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
 			// “¯•ñƒf[ƒ^
 			BufKind = NTNET_BUF_BROADCAST;
 		}
 
 		if( BufKind == NTNET_BUF_PRIOR || BufKind == NTNET_BUF_NORMAL ||	// —Dæor’Êí
 			BufKind == NTNET_BUF_BROADCAST ){								// or“¯•ñÃŞ°ÀóM?
-			NTNET_CtrlRecvData();
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+//			NTNET_CtrlRecvData();
+			NTNET_CtrlRecvTermData();
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
 			//phase = 1;											// óMÃŞ°À¸Ø±
 			NTBUF_ClrRcvNtData_Prepare( BufKind, &h );
 			//phase = 2;
@@ -252,8 +409,10 @@ void	NTNET_GetRevData( ushort msg, uchar *data )
 			//phase = 3;
 		}
 		break;
-	case IBK_NTNET_FREE_REC:										// NTNET FREEÊß¹¯ÄÃŞ°ÀóM
-		break;
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+//	case IBK_NTNET_FREE_REC:										// NTNET FREEÊß¹¯ÄÃŞ°ÀóM
+//		break;
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
 	case IBK_NTNET_ERR_REC:											// NTNET ´×°ÃŞ°ÀóM
 		err_chk( (char)data[0], (char)data[1], (char)data[2], 0, 0 );	// NTNET IBK´×°
 		break;
@@ -1136,7 +1295,10 @@ void	NTNET_RevData109( void )
 		NTNET_Snd_Data132();
 	}
 	if (RecvNtnetDt.RData109.ControlData[7]) {		// “®ìƒJƒEƒ“ƒgƒf[ƒ^‘—M
-		NTNET_Snd_Data228(RecvNtnetDt.RData109.DataBasic.MachineNo);
+// GM849100(S) M.Fujikawa 2025/01/15 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
+//		NTNET_Snd_Data228(RecvNtnetDt.RData109.DataBasic.MachineNo);
+		NTNET_Snd_Data228(RecvNtnetDt.RData109.DataBasic.MachineNo, 0);
+// GM849100(E) M.Fujikawa 2025/01/15 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
 	}
 }
 
@@ -1186,8 +1348,12 @@ void	NTNET_RevData154( void )
 		if( RecvNtnetDt.RData154.TermInfo_Req ) {		// ’[––î•ñƒf[ƒ^—v‹
 			// ƒZƒ“ƒ^[—pƒf[ƒ^—v‹Œ‹‰Ê‚ğ‘—M
 			code = 100;									// 100:³íó•ti’[––î•ñ—v‹‚É‘Î‚µ‚Ä‚Ì‚İj
-			NTNET_Snd_Data155(RecvNtnetDt.RData109.DataBasic.MachineNo, code);
-			NTNET_Snd_Data65(RecvNtnetDt.RData109.DataBasic.MachineNo);
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ MH364300 GG119A19(S) // ‘—Mæ’[––”Ô†ƒZƒbƒg•s—Ç(‹¤’Ê‰ü‘PNo.1160)
+//			NTNET_Snd_Data155(RecvNtnetDt.RData109.DataBasic.MachineNo, code);
+//			NTNET_Snd_Data65(RecvNtnetDt.RData109.DataBasic.MachineNo);
+			NTNET_Snd_Data155(RecvNtnetDt.RData154.DataBasic.MachineNo, code);
+			NTNET_Snd_Data65(RecvNtnetDt.RData154.DataBasic.MachineNo);
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ MH364300 GG119A19(E) // ‘—Mæ’[––”Ô†ƒZƒbƒg•s—Ç(‹¤’Ê‰ü‘PNo.1160)
 		}
 		if( RecvNtnetDt.RData154.SynchroTime_Req ) {	// “¯Šúƒf[ƒ^—v‹
 			code = 0;								// 0:³í
@@ -1766,77 +1932,79 @@ void	NTNET_Snd_Data05( ulong op_lokno, uchar loksns, uchar lokst )
 	RecvBackUp.ReceiveFlg = 0;										// —v‹–¢óM
 }
 
-/*[]----------------------------------------------------------------------[]*/
-/*| ŠÈˆÕÔºî•ñÃ°ÌŞÙ(ÃŞ°Àí•Ê12)ì¬ˆ—                                  |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| MODULE NAME  : NTNET_Snd_Data12                                        |*/
-/*| PARAMETER    : MachineNo : ‘—Mæ’[––‹@ŠB‡‚                            |*/
-/*| RETURN VALUE : void                                                    |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| Author       : R.Hara                                                  |*/
-/*| Date         : 2005-08-08                                              |*/
-/*| UpDate       :                                                         |*/
-/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
-void	NTNET_Snd_Data12( ulong MachineNo )
-{
-	short	i;
-	short	j = 0;
-	ushort	len = 0;
-
-	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_12 ) );
-
-	BasicDataMake( 12, 1 );											// Šî–{ÃŞ°Àì¬
-
-	SendNtnetDt.SData12.SMachineNo = MachineNo;						// ‘—Mæ’[––‹@ŠB‡‚
-	len = sizeof(DATA_BASIC) + 4;	// Šî–{ƒf[ƒ^{‘—Mæ’[––‹@ŠB‡‚
-	for( i = 0; i < LOCK_MAX; i++ ){
-		WACDOG;														// ‘•’uƒ‹[ƒv‚ÌÛ‚Í³«¯ÁÄŞ¯¸Ø¾¯ÄÀs
-
-		if (_is_ntnet_normal() || FlpSetChk((ushort)i)) {
-			// —LŒø‚ÈÔºî•ñ‚Ì‚İƒZƒbƒg
-			if( !SetCarInfoSelect(i) ){
-				continue;
-			}
-			if( j >= OLD_LOCK_MAX ){
-				break;
-			}
-			SendNtnetDt.SData12.LockState[j].LockNo =
-				(ulong)(( LockInfo[i].area * 10000L ) + LockInfo[i].posi );	// ‹æ‰æî•ñ
-
-			SendNtnetDt.SData12.LockState[j].NowState =
-									FLAPDT.flp_data[i].nstat.word & 0x01FF;		// Œ»İ½Ã°À½
-
-			SendNtnetDt.SData12.LockState[j].Year =
-									FLAPDT.flp_data[i].year;			// “üŒÉ”N
-
-			SendNtnetDt.SData12.LockState[j].Mont =
-									FLAPDT.flp_data[i].mont;			// “üŒÉŒ
-
-			SendNtnetDt.SData12.LockState[j].Date =
-									FLAPDT.flp_data[i].date;			// “üŒÉ“ú
-
-			SendNtnetDt.SData12.LockState[j].Hour =
-									FLAPDT.flp_data[i].hour;			// “üŒÉ
-
-			SendNtnetDt.SData12.LockState[j].Minu =
-									FLAPDT.flp_data[i].minu;			// “üŒÉ•ª
-
-			SendNtnetDt.SData12.LockState[j].Syubet =
-									(ushort)LockInfo[i].ryo_syu;		// —¿‹àí•Ê
-
-			SendNtnetDt.SData12.LockState[j].TyuRyo = 0L;				// ’“Ô—¿‹à(–¢g—p)
-
-			j++;
-			len += sizeof(LOCK_STATE);
-		}
-	}
-	if(_is_ntnet_remote()) {
-		RAU_SetSendNtData((const uchar*)&SendNtnetDt, len);
-	}
-	else {
-		NTBUF_SetSendNtData( &SendNtnetDt, len, NTNET_BUF_NORMAL );	// ÃŞ°À‘—M“o˜^
-	}
-}
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+///*[]----------------------------------------------------------------------[]*/
+///*| ŠÈˆÕÔºî•ñÃ°ÌŞÙ(ÃŞ°Àí•Ê12)ì¬ˆ—                                  |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| MODULE NAME  : NTNET_Snd_Data12                                        |*/
+///*| PARAMETER    : MachineNo : ‘—Mæ’[––‹@ŠB‡‚                            |*/
+///*| RETURN VALUE : void                                                    |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| Author       : R.Hara                                                  |*/
+///*| Date         : 2005-08-08                                              |*/
+///*| UpDate       :                                                         |*/
+///*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+//void	c( ulong MachineNo )
+//{
+//	short	i;
+//	short	j = 0;
+//	ushort	len = 0;
+//
+//	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_12 ) );
+//
+//	BasicDataMake( 12, 1 );											// Šî–{ÃŞ°Àì¬
+//
+//	SendNtnetDt.SData12.SMachineNo = MachineNo;						// ‘—Mæ’[––‹@ŠB‡‚
+//	len = sizeof(DATA_BASIC) + 4;	// Šî–{ƒf[ƒ^{‘—Mæ’[––‹@ŠB‡‚
+//	for( i = 0; i < LOCK_MAX; i++ ){
+//		WACDOG;														// ‘•’uƒ‹[ƒv‚ÌÛ‚Í³«¯ÁÄŞ¯¸Ø¾¯ÄÀs
+//
+//		if (_is_ntnet_normal() || FlpSetChk((ushort)i)) {
+//			// —LŒø‚ÈÔºî•ñ‚Ì‚İƒZƒbƒg
+//			if( !SetCarInfoSelect(i) ){
+//				continue;
+//			}
+//			if( j >= OLD_LOCK_MAX ){
+//				break;
+//			}
+//			SendNtnetDt.SData12.LockState[j].LockNo =
+//				(ulong)(( LockInfo[i].area * 10000L ) + LockInfo[i].posi );	// ‹æ‰æî•ñ
+//
+//			SendNtnetDt.SData12.LockState[j].NowState =
+//									FLAPDT.flp_data[i].nstat.word & 0x01FF;		// Œ»İ½Ã°À½
+//
+//			SendNtnetDt.SData12.LockState[j].Year =
+//									FLAPDT.flp_data[i].year;			// “üŒÉ”N
+//
+//			SendNtnetDt.SData12.LockState[j].Mont =
+//									FLAPDT.flp_data[i].mont;			// “üŒÉŒ
+//
+//			SendNtnetDt.SData12.LockState[j].Date =
+//									FLAPDT.flp_data[i].date;			// “üŒÉ“ú
+//
+//			SendNtnetDt.SData12.LockState[j].Hour =
+//									FLAPDT.flp_data[i].hour;			// “üŒÉ
+//
+//			SendNtnetDt.SData12.LockState[j].Minu =
+//									FLAPDT.flp_data[i].minu;			// “üŒÉ•ª
+//
+//			SendNtnetDt.SData12.LockState[j].Syubet =
+//									(ushort)LockInfo[i].ryo_syu;		// —¿‹àí•Ê
+//
+//			SendNtnetDt.SData12.LockState[j].TyuRyo = 0L;				// ’“Ô—¿‹à(–¢g—p)
+//
+//			j++;
+//			len += sizeof(LOCK_STATE);
+//		}
+//	}
+//	if(_is_ntnet_remote()) {
+//		RAU_SetSendNtData((const uchar*)&SendNtnetDt, len);
+//	}
+//	else {
+//		NTBUF_SetSendNtData( &SendNtnetDt, len, NTNET_BUF_NORMAL );	// ÃŞ°À‘—M“o˜^
+//	}
+//}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
 void	NTNET_Snd_ParkCarNumDataMk(void *p, uchar knd)
 {
 	int i;
@@ -2021,183 +2189,185 @@ void	NTNET_Snd_ParkCarNumDataMk(void *p, uchar knd)
 	}
 }
 
-/*[]----------------------------------------------------------------------[]*/
-/*| “üŒÉÃŞ°À(ÃŞ°Àí•Ê20)ì¬ˆ—                                           |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| MODULE NAME  : NTNET_Snd_Data20                                        |*/
-/*| PARAMETER    : pr_lokno : “à•”ˆ——p’“ÔˆÊ’u”Ô†(1`324)               |*/
-/*| RETURN VALUE : void                                                    |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| Author       : R.Hara                                                  |*/
-/*| Date         : 2005-08-08                                              |*/
-/*| UpDate       :                                                         |*/
-/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
-void	NTNET_Snd_Data20( ushort pr_lokno )
-{
-	ushort	lkno;
-	const t_NtBufState	*ntbufst;
-	uchar	ans;
-	ushort	len;
-
-	lkno = pr_lokno - 1;
-
-	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_20 ) );
-
-	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
-		BasicDataMake( 54, 0 );										// Šî–{ÃŞ°Àì¬
-	} else {
-		BasicDataMake( 20, 0 );										// Šî–{ÃŞ°Àì¬
-	}
-
-	SendNtnetDt.SData20.InCount = NTNetDataCont[0];					// “üŒÉ’Ç‚¢”Ô
-	NTNetDataCont[0]++;												// “üŒÉ’Ç‚¢”Ô+1
-
-	SendNtnetDt.SData20.Syubet = LockInfo[lkno].ryo_syu;			// ˆ—‹æ•ª
-
-	if( FLAPDT.flp_data[lkno].lag_to_in.BIT.SYUUS == 1 ){	// C³¸Z‚Ì
-		SendNtnetDt.SData20.InMode = 6;								// “üŒÉÓ°ÄŞFC³¸Z“üŒÉ
-	}else{
-		SendNtnetDt.SData20.InMode = (FLAPDT.flp_data[lkno].lag_to_in.BIT.FUKUG)? 5 : 0;	// “üŒÉÓ°ÄŞ
-	}
-
-	SendNtnetDt.SData20.LockNo = (ulong)(( LockInfo[lkno].area * 10000L )
-								+ LockInfo[lkno].posi );			// ‹æ‰æî•ñ
-	SendNtnetDt.SData20.CardType = 0;								// ’“ÔŒ”À²Ìß(–¢g—p)
-	SendNtnetDt.SData20.CMachineNo = 0;								// ’“ÔŒ”‹@ŠB‡‚
-	SendNtnetDt.SData20.CardNo = 0L;								// ’“ÔŒ””Ô†(”­Œ”’Ç‚¢”Ô)
-	SendNtnetDt.SData20.InTime.Year = FLAPDT.flp_data[lkno].year;	// “üŒÉ”N
-	SendNtnetDt.SData20.InTime.Mon = FLAPDT.flp_data[lkno].mont;	// “üŒÉŒ
-	SendNtnetDt.SData20.InTime.Day = FLAPDT.flp_data[lkno].date;	// “üŒÉ“ú
-	SendNtnetDt.SData20.InTime.Hour = FLAPDT.flp_data[lkno].hour;	// “üŒÉ
-	SendNtnetDt.SData20.InTime.Min = FLAPDT.flp_data[lkno].minu;	// “üŒÉ•ª
-	SendNtnetDt.SData20.InTime.Sec = 0;								// “üŒÉ•b
-	SendNtnetDt.SData20.PassCheck = 1;								// ±İÁÊß½Áª¯¸‚µ‚È‚¢
-	if( prm_get( COM_PRM,S_SHA,(short)(2+((LockInfo[lkno].ryo_syu-1)*6)),1,1 ) ){	// í•Ê–ˆ¶³İÄ‚·‚éİ’è?
-		SendNtnetDt.SData20.CountSet = 0;							// İÔ¶³İÄ(‚·‚é)
-	}else{
-		SendNtnetDt.SData20.CountSet = 1;							// İÔ¶³İÄ(‚µ‚È‚¢)
-	}
-	// ’èŠúŒ”ÃŞ°À‚Í0ŒÅ’è
-
-	len = sizeof( DATA_KIND_20 );
-
-	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
-		memmove(&SendNtnetDt.SData54.InCount, &SendNtnetDt.SData20.InCount, sizeof(DATA_KIND_20)-sizeof(DATA_BASIC));
-
-		SendNtnetDt.SData54.FmtRev = 0;								// ƒtƒH[ƒ}ƒbƒgRev.‡‚
-		NTNET_Snd_ParkCarNumDataMk(&SendNtnetDt.SData54.ParkData, 0);
-
-		len = sizeof( DATA_KIND_54 );
-	}
-	if(_is_ntnet_remote()) {
-		ans = RAU_SetSendNtData((const uchar*)&SendNtnetDt, len);
-	}
-	else {
-		ans = NTBUF_SetSendNtData( &SendNtnetDt, len, NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
-	}
-	switch( ans ){
-	case NTNET_BUFSET_NORMAL:										// ³íI—¹
-		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_RELEASE, 0, 0 );
-		break;
-	case NTNET_BUFSET_STATE_CHG:									// ÊŞ¯Ì§ó‘Ô•Ï‰»(‘‚İ‚ÍŠ®—¹)
-		ntbufst = NTBUF_GetBufState();
-		if( ntbufst->car_in & 0x02 ){								// ÊŞ¯Ì§FULL”­¶?
-			err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_BUFFULL, NTERR_EMERGE, 0, 0 );
-		}
-		queset( OPETCBNO, OPE_OPNCLS_EVT, 0, NULL );
-		break;
-	case NTNET_BUFSET_DEL_OLD:										// ÅŒÃÃŞ°À‚ğÁ‹
-	case NTNET_BUFSET_DEL_NEW:										// ÅVÃŞ°À‚ğÁ‹
-	case NTNET_BUFSET_CANT_DEL:										// ÊŞ¯Ì§FULL‚¾‚ªİ’è‚ª"‹x‹Æ"‚Ì‚½‚ßÁ‹•s‰Â
-		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_EMERGE, 0, 0 );
-		break;
-	}
-}
-
-/*[]----------------------------------------------------------------------[]*/
-/*| “üŒÉÃŞ°À(ÃŞ°Àí•Ê20)ì¬ˆ— U‘Ö¸Z‚Ì‰¼“üŒÉ—p‘—MŠÖ”              |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| MODULE NAME  : NTNET_Snd_Data20_frs                                    |*/
-/*| PARAMETER    : pr_lokno : “à•”ˆ——p’“ÔˆÊ’u”Ô†(1`324)               |*/
-/*| RETURN VALUE : void                                                    |*/
-/*[]----------------------------------------------------------------------[]*/
-void	NTNET_Snd_Data20_frs( ushort pr_lokno, void *data )
-{
-	ushort	lkno;
-	const t_NtBufState	*ntbufst;
-	uchar	ans;
-	flp_com *flp_data = (flp_com*)data;
-	ushort	len;
-
-	lkno = pr_lokno - 1;
-
-	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_20 ) );
-
-	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
-		BasicDataMake( 54, 0 );										// Šî–{ÃŞ°Àì¬
-	} else {
-		BasicDataMake( 20, 0 );										// Šî–{ÃŞ°Àì¬
-	}
-
-	SendNtnetDt.SData20.InCount = NTNetDataCont[0];					// “üŒÉ’Ç‚¢”Ô
-	NTNetDataCont[0]++;												// “üŒÉ’Ç‚¢”Ô+1
-
-	SendNtnetDt.SData20.Syubet = LockInfo[lkno].ryo_syu;			// ˆ—‹æ•ª
-	SendNtnetDt.SData20.InMode = (flp_data->lag_to_in.BIT.FUKUG)? 5 : 0;		// “üŒÉÓ°ÄŞ
-	SendNtnetDt.SData20.LockNo = (ulong)(( LockInfo[lkno].area * 10000L )
-								+ LockInfo[lkno].posi );			// ‹æ‰æî•ñ
-	SendNtnetDt.SData20.CardType = 0;								// ’“ÔŒ”À²Ìß(–¢g—p)
-	SendNtnetDt.SData20.CMachineNo = 0;								// ’“ÔŒ”‹@ŠB‡‚
-	SendNtnetDt.SData20.CardNo = 0L;								// ’“ÔŒ””Ô†(”­Œ”’Ç‚¢”Ô)
-	SendNtnetDt.SData20.InTime.Year = flp_data->year;	// “üŒÉ”N
-	SendNtnetDt.SData20.InTime.Mon = flp_data->mont;	// “üŒÉŒ
-	SendNtnetDt.SData20.InTime.Day = flp_data->date;	// “üŒÉ“ú
-	SendNtnetDt.SData20.InTime.Hour = flp_data->hour;	// “üŒÉ
-	SendNtnetDt.SData20.InTime.Min = flp_data->minu;	// “üŒÉ•ª
-	SendNtnetDt.SData20.InTime.Sec = 0;								// “üŒÉ•b
-	SendNtnetDt.SData20.PassCheck = 1;						// ±İÁÊß½Áª¯¸‚µ‚È‚¢
-
-	if( prm_get( COM_PRM,S_SHA,(short)(2+((LockInfo[lkno].ryo_syu-1)*6)),1,1 ) ){	// í•Ê–ˆ¶³İÄ‚·‚éİ’è?
-		SendNtnetDt.SData20.CountSet = 0;							// İÔ¶³İÄ(‚·‚é)
-	}else{
-		SendNtnetDt.SData20.CountSet = 1;							// İÔ¶³İÄ(‚µ‚È‚¢)
-	}
-	// ’èŠúŒ”ÃŞ°À‚Í0ŒÅ’è
-
-	len = sizeof( DATA_KIND_20 );
-
-	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
-		memmove(&SendNtnetDt.SData54.InCount, &SendNtnetDt.SData20.InCount, sizeof(DATA_KIND_20)-sizeof(DATA_BASIC));
-
-		SendNtnetDt.SData54.FmtRev = 0;								// ƒtƒH[ƒ}ƒbƒgRev.‡‚
-		NTNET_Snd_ParkCarNumDataMk(&SendNtnetDt.SData54.ParkData, 0);
-
-		len = sizeof( DATA_KIND_54 );
-	}
-	if(_is_ntnet_remote()) {
-		ans = RAU_SetSendNtData((const uchar*)&SendNtnetDt, len);
-	}
-	else {
-		ans = NTBUF_SetSendNtData( &SendNtnetDt, len, NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
-	}
-	switch( ans ){
-	case NTNET_BUFSET_NORMAL:										// ³íI—¹
-		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_RELEASE, 0, 0 );
-		break;
-	case NTNET_BUFSET_STATE_CHG:									// ÊŞ¯Ì§ó‘Ô•Ï‰»(‘‚İ‚ÍŠ®—¹)
-		ntbufst = NTBUF_GetBufState();
-		if( ntbufst->car_in & 0x02 ){								// ÊŞ¯Ì§FULL”­¶?
-			err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_BUFFULL, NTERR_EMERGE, 0, 0 );
-		}
-		queset( OPETCBNO, OPE_OPNCLS_EVT, 0, NULL );
-		break;
-	case NTNET_BUFSET_DEL_OLD:										// ÅŒÃÃŞ°À‚ğÁ‹
-	case NTNET_BUFSET_DEL_NEW:										// ÅVÃŞ°À‚ğÁ‹
-	case NTNET_BUFSET_CANT_DEL:										// ÊŞ¯Ì§FULL‚¾‚ªİ’è‚ª"‹x‹Æ"‚Ì‚½‚ßÁ‹•s‰Â
-		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_EMERGE, 0, 0 );
-		break;
-	}
-}
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+///*[]----------------------------------------------------------------------[]*/
+///*| “üŒÉÃŞ°À(ÃŞ°Àí•Ê20)ì¬ˆ—                                           |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| MODULE NAME  : NTNET_Snd_Data20                                        |*/
+///*| PARAMETER    : pr_lokno : “à•”ˆ——p’“ÔˆÊ’u”Ô†(1`324)               |*/
+///*| RETURN VALUE : void                                                    |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| Author       : R.Hara                                                  |*/
+///*| Date         : 2005-08-08                                              |*/
+///*| UpDate       :                                                         |*/
+///*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+//void	NTNET_Snd_Data20( ushort pr_lokno )
+//{
+//	ushort	lkno;
+//	const t_NtBufState	*ntbufst;
+//	uchar	ans;
+//	ushort	len;
+//
+//	lkno = pr_lokno - 1;
+//
+//	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_20 ) );
+//
+//	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
+//		BasicDataMake( 54, 0 );										// Šî–{ÃŞ°Àì¬
+//	} else {
+//		BasicDataMake( 20, 0 );										// Šî–{ÃŞ°Àì¬
+//	}
+//
+//	SendNtnetDt.SData20.InCount = NTNetDataCont[0];					// “üŒÉ’Ç‚¢”Ô
+//	NTNetDataCont[0]++;												// “üŒÉ’Ç‚¢”Ô+1
+//
+//	SendNtnetDt.SData20.Syubet = LockInfo[lkno].ryo_syu;			// ˆ—‹æ•ª
+//
+//	if( FLAPDT.flp_data[lkno].lag_to_in.BIT.SYUUS == 1 ){	// C³¸Z‚Ì
+//		SendNtnetDt.SData20.InMode = 6;								// “üŒÉÓ°ÄŞFC³¸Z“üŒÉ
+//	}else{
+//		SendNtnetDt.SData20.InMode = (FLAPDT.flp_data[lkno].lag_to_in.BIT.FUKUG)? 5 : 0;	// “üŒÉÓ°ÄŞ
+//	}
+//
+//	SendNtnetDt.SData20.LockNo = (ulong)(( LockInfo[lkno].area * 10000L )
+//								+ LockInfo[lkno].posi );			// ‹æ‰æî•ñ
+//	SendNtnetDt.SData20.CardType = 0;								// ’“ÔŒ”À²Ìß(–¢g—p)
+//	SendNtnetDt.SData20.CMachineNo = 0;								// ’“ÔŒ”‹@ŠB‡‚
+//	SendNtnetDt.SData20.CardNo = 0L;								// ’“ÔŒ””Ô†(”­Œ”’Ç‚¢”Ô)
+//	SendNtnetDt.SData20.InTime.Year = FLAPDT.flp_data[lkno].year;	// “üŒÉ”N
+//	SendNtnetDt.SData20.InTime.Mon = FLAPDT.flp_data[lkno].mont;	// “üŒÉŒ
+//	SendNtnetDt.SData20.InTime.Day = FLAPDT.flp_data[lkno].date;	// “üŒÉ“ú
+//	SendNtnetDt.SData20.InTime.Hour = FLAPDT.flp_data[lkno].hour;	// “üŒÉ
+//	SendNtnetDt.SData20.InTime.Min = FLAPDT.flp_data[lkno].minu;	// “üŒÉ•ª
+//	SendNtnetDt.SData20.InTime.Sec = 0;								// “üŒÉ•b
+//	SendNtnetDt.SData20.PassCheck = 1;								// ±İÁÊß½Áª¯¸‚µ‚È‚¢
+//	if( prm_get( COM_PRM,S_SHA,(short)(2+((LockInfo[lkno].ryo_syu-1)*6)),1,1 ) ){	// í•Ê–ˆ¶³İÄ‚·‚éİ’è?
+//		SendNtnetDt.SData20.CountSet = 0;							// İÔ¶³İÄ(‚·‚é)
+//	}else{
+//		SendNtnetDt.SData20.CountSet = 1;							// İÔ¶³İÄ(‚µ‚È‚¢)
+//	}
+//	// ’èŠúŒ”ÃŞ°À‚Í0ŒÅ’è
+//
+//	len = sizeof( DATA_KIND_20 );
+//
+//	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
+//		memmove(&SendNtnetDt.SData54.InCount, &SendNtnetDt.SData20.InCount, sizeof(DATA_KIND_20)-sizeof(DATA_BASIC));
+//
+//		SendNtnetDt.SData54.FmtRev = 0;								// ƒtƒH[ƒ}ƒbƒgRev.‡‚
+//		NTNET_Snd_ParkCarNumDataMk(&SendNtnetDt.SData54.ParkData, 0);
+//
+//		len = sizeof( DATA_KIND_54 );
+//	}
+//	if(_is_ntnet_remote()) {
+//		ans = RAU_SetSendNtData((const uchar*)&SendNtnetDt, len);
+//	}
+//	else {
+//		ans = NTBUF_SetSendNtData( &SendNtnetDt, len, NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+//	}
+//	switch( ans ){
+//	case NTNET_BUFSET_NORMAL:										// ³íI—¹
+//		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_RELEASE, 0, 0 );
+//		break;
+//	case NTNET_BUFSET_STATE_CHG:									// ÊŞ¯Ì§ó‘Ô•Ï‰»(‘‚İ‚ÍŠ®—¹)
+//		ntbufst = NTBUF_GetBufState();
+//		if( ntbufst->car_in & 0x02 ){								// ÊŞ¯Ì§FULL”­¶?
+//			err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_BUFFULL, NTERR_EMERGE, 0, 0 );
+//		}
+//		queset( OPETCBNO, OPE_OPNCLS_EVT, 0, NULL );
+//		break;
+//	case NTNET_BUFSET_DEL_OLD:										// ÅŒÃÃŞ°À‚ğÁ‹
+//	case NTNET_BUFSET_DEL_NEW:										// ÅVÃŞ°À‚ğÁ‹
+//	case NTNET_BUFSET_CANT_DEL:										// ÊŞ¯Ì§FULL‚¾‚ªİ’è‚ª"‹x‹Æ"‚Ì‚½‚ßÁ‹•s‰Â
+//		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_EMERGE, 0, 0 );
+//		break;
+//	}
+//}
+//
+///*[]----------------------------------------------------------------------[]*/
+///*| “üŒÉÃŞ°À(ÃŞ°Àí•Ê20)ì¬ˆ— U‘Ö¸Z‚Ì‰¼“üŒÉ—p‘—MŠÖ”              |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| MODULE NAME  : NTNET_Snd_Data20_frs                                    |*/
+///*| PARAMETER    : pr_lokno : “à•”ˆ——p’“ÔˆÊ’u”Ô†(1`324)               |*/
+///*| RETURN VALUE : void                                                    |*/
+///*[]----------------------------------------------------------------------[]*/
+//void	NTNET_Snd_Data20_frs( ushort pr_lokno, void *data )
+//{
+//	ushort	lkno;
+//	const t_NtBufState	*ntbufst;
+//	uchar	ans;
+//	flp_com *flp_data = (flp_com*)data;
+//	ushort	len;
+//
+//	lkno = pr_lokno - 1;
+//
+//	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_20 ) );
+//
+//	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
+//		BasicDataMake( 54, 0 );										// Šî–{ÃŞ°Àì¬
+//	} else {
+//		BasicDataMake( 20, 0 );										// Šî–{ÃŞ°Àì¬
+//	}
+//
+//	SendNtnetDt.SData20.InCount = NTNetDataCont[0];					// “üŒÉ’Ç‚¢”Ô
+//	NTNetDataCont[0]++;												// “üŒÉ’Ç‚¢”Ô+1
+//
+//	SendNtnetDt.SData20.Syubet = LockInfo[lkno].ryo_syu;			// ˆ—‹æ•ª
+//	SendNtnetDt.SData20.InMode = (flp_data->lag_to_in.BIT.FUKUG)? 5 : 0;		// “üŒÉÓ°ÄŞ
+//	SendNtnetDt.SData20.LockNo = (ulong)(( LockInfo[lkno].area * 10000L )
+//								+ LockInfo[lkno].posi );			// ‹æ‰æî•ñ
+//	SendNtnetDt.SData20.CardType = 0;								// ’“ÔŒ”À²Ìß(–¢g—p)
+//	SendNtnetDt.SData20.CMachineNo = 0;								// ’“ÔŒ”‹@ŠB‡‚
+//	SendNtnetDt.SData20.CardNo = 0L;								// ’“ÔŒ””Ô†(”­Œ”’Ç‚¢”Ô)
+//	SendNtnetDt.SData20.InTime.Year = flp_data->year;	// “üŒÉ”N
+//	SendNtnetDt.SData20.InTime.Mon = flp_data->mont;	// “üŒÉŒ
+//	SendNtnetDt.SData20.InTime.Day = flp_data->date;	// “üŒÉ“ú
+//	SendNtnetDt.SData20.InTime.Hour = flp_data->hour;	// “üŒÉ
+//	SendNtnetDt.SData20.InTime.Min = flp_data->minu;	// “üŒÉ•ª
+//	SendNtnetDt.SData20.InTime.Sec = 0;								// “üŒÉ•b
+//	SendNtnetDt.SData20.PassCheck = 1;						// ±İÁÊß½Áª¯¸‚µ‚È‚¢
+//
+//	if( prm_get( COM_PRM,S_SHA,(short)(2+((LockInfo[lkno].ryo_syu-1)*6)),1,1 ) ){	// í•Ê–ˆ¶³İÄ‚·‚éİ’è?
+//		SendNtnetDt.SData20.CountSet = 0;							// İÔ¶³İÄ(‚·‚é)
+//	}else{
+//		SendNtnetDt.SData20.CountSet = 1;							// İÔ¶³İÄ(‚µ‚È‚¢)
+//	}
+//	// ’èŠúŒ”ÃŞ°À‚Í0ŒÅ’è
+//
+//	len = sizeof( DATA_KIND_20 );
+//
+//	if( prm_get(COM_PRM,S_NTN,121,1,1) != 0 ) {
+//		memmove(&SendNtnetDt.SData54.InCount, &SendNtnetDt.SData20.InCount, sizeof(DATA_KIND_20)-sizeof(DATA_BASIC));
+//
+//		SendNtnetDt.SData54.FmtRev = 0;								// ƒtƒH[ƒ}ƒbƒgRev.‡‚
+//		NTNET_Snd_ParkCarNumDataMk(&SendNtnetDt.SData54.ParkData, 0);
+//
+//		len = sizeof( DATA_KIND_54 );
+//	}
+//	if(_is_ntnet_remote()) {
+//		ans = RAU_SetSendNtData((const uchar*)&SendNtnetDt, len);
+//	}
+//	else {
+//		ans = NTBUF_SetSendNtData( &SendNtnetDt, len, NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+//		break;
+//	}
+//	switch( ans ){
+//	case NTNET_BUFSET_NORMAL:										// ³íI—¹
+//		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_RELEASE, 0, 0 );
+//	case NTNET_BUFSET_STATE_CHG:									// ÊŞ¯Ì§ó‘Ô•Ï‰»(‘‚İ‚ÍŠ®—¹)
+//		ntbufst = NTBUF_GetBufState();
+//		if( ntbufst->car_in & 0x02 ){								// ÊŞ¯Ì§FULL”­¶?
+//			err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_BUFFULL, NTERR_EMERGE, 0, 0 );
+//		}
+//		queset( OPETCBNO, OPE_OPNCLS_EVT, 0, NULL );
+//		break;
+//	case NTNET_BUFSET_DEL_OLD:										// ÅŒÃÃŞ°À‚ğÁ‹
+//	case NTNET_BUFSET_DEL_NEW:										// ÅVÃŞ°À‚ğÁ‹
+//	case NTNET_BUFSET_CANT_DEL:										// ÊŞ¯Ì§FULL‚¾‚ªİ’è‚ª"‹x‹Æ"‚Ì‚½‚ßÁ‹•s‰Â
+//		err_chk( ERRMDL_NTNET, ERR_NTNET_ID20_SENDBUF, NTERR_EMERGE, 0, 0 );
+//		break;
+//	}
+//}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
 
 /*[]----------------------------------------------------------------------[]*/
 /*| ƒNƒŒƒWƒbƒg¸Z”»•Ê                                                     |*/
@@ -2610,6 +2780,10 @@ void	NTNET_Snd_Data101( ulong MachineNo )
 /*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
 void	NTNET_Snd_Data104( ulong req )
 {
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
+// NOTE: ’[––ŠÔ‚Æ‰“Šu•¹—p‚Ìê‡‚±‚±‚Åreturn‚µ‚Ä‚µ‚Ü‚¤‚ªA–¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰‚Å‚Í
+//       ŠÇ—ƒf[ƒ^—v‹‚ğs‚í‚È‚¢‚Ì‚ÅC³‚µ‚È‚¢
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
 	if (_is_ntnet_remote()) {
 		return;
 	}
@@ -3002,7 +3176,10 @@ void	NTNET_Snd_Data126( ulong MachineNo, ushort payclass )
 			RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_126 ));
 		}
 		else {
-			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_126 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304Qlj
+//			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_126 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_126 ), NTNET_BUF_NORMAL );	// ÃŞ°À‘—M“o˜^(’Êíƒf[ƒ^‚Å‘—M)
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304Qlj
 		}
 	}
 }
@@ -4368,96 +4545,98 @@ void	NTNET_Snd_Data116( uchar ProcMode, ulong PassId, ulong ParkingId, uchar Use
 	}
 }
 
-/*[]----------------------------------------------------------------------[]*/
-/*| ƒ‚ƒjƒ^ƒf[ƒ^(ÃŞ°Àí•Ê122)ì¬ˆ—                                      |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| MODULE NAME  : NTNET_Snd_Data122                                       |*/
-/*| PARAMETER    : void                                                    |*/
-/*| RETURN VALUE : void                                                    |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| Author       : mitani                                                  |*/
-/*| Date         : 2005-11-30                                              |*/
-/*| UpDate       :                                                         |*/
-/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
-void	NTNET_Snd_Data122( uchar kind, uchar code, uchar level, uchar *info, uchar *message )
-{
-	uchar	wks;
-	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_122 ) );
-
-	BasicDataMake( 122, 0 );										// Šî–{ÃŞ°Àì¬
-
-	SendNtnetDt.SData122.Monsyu = kind;		// ƒ‚ƒjƒ^í•Ê
-	SendNtnetDt.SData122.Moncod = code;		// ƒ‚ƒjƒ^ƒR[ƒh
-	SendNtnetDt.SData122.Monlev = level;	// ƒ‚ƒjƒ^ƒŒƒxƒ‹
-	if (info != NULL) {
-		memcpy( &SendNtnetDt.SData122.Mondat1, info, sizeof(SendNtnetDt.SData122.Mondat1));
-	}
-	if (message != NULL) {
-		memcpy( &SendNtnetDt.SData122.Mondat2, message, sizeof(SendNtnetDt.SData122.Mondat2));
-	}
-	
-	wks = (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 1);
-	
-	if ( wks != 9 && SendNtnetDt.SData122.Monlev >= wks ) {			// e‹@‘—MÚÍŞÙ
-		if(_is_ntnet_remote()) {
-			RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_122 ));
-		}
-		else {
-			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_122 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
-		}
-	}
-
-	/* ‹¤’Êƒpƒ‰ƒ[ƒ^39-0022‚Ì1‚ÌˆÊ‚É‚Ä‘—M‰Â/•s‰Âƒ`ƒFƒbƒN */
-}
-
-/*[]----------------------------------------------------------------------[]*/
-/*| ‘€ìƒ‚ƒjƒ^ƒf[ƒ^(ÃŞ°Àí•Ê123)ì¬ˆ—                                  |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| MODULE NAME  : NTNET_Snd_Data123                                       |*/
-/*| PARAMETER    : void                                                    |*/
-/*| RETURN VALUE : void                                                    |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| Author       : mitani                                                  |*/
-/*| Date         : 2005-11-30                                              |*/
-/*| UpDate       :                                                         |*/
-/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
-void	NTNET_Snd_Data123( uchar kind, uchar code, uchar level, uchar *before, uchar *after, uchar *message )
-{
-	uchar	wks;
-	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_123 ) );
-
-	BasicDataMake( 123, 0 );										// Šî–{ÃŞ°Àì¬
-
-	SendNtnetDt.SData123.OpeMonsyu = kind;	// ‘€ìƒ‚ƒjƒ^í•Ê
-	SendNtnetDt.SData123.OpeMoncod = code;	// ‘€ìƒ‚ƒjƒ^ƒR[ƒh
-	SendNtnetDt.SData123.OpeMonlev = level;	// ‘€ìƒ‚ƒjƒ^ƒŒƒxƒ‹
-	memcpy( &SendNtnetDt.SData123.OpeMondat1, before, sizeof(SendNtnetDt.SData123.OpeMondat1));
-	memcpy( &SendNtnetDt.SData123.OpeMondat2, after, sizeof(SendNtnetDt.SData123.OpeMondat2));
-	if (message != NULL) {
-		memcpy( &SendNtnetDt.SData123.OpeMondat3, message, sizeof(SendNtnetDt.SData123.OpeMondat3));
-	}
-	
-	if( SendNtnetDt.SData123.OpeMonsyu == 80 ){
-		if( SendNtnetDt.SData123.OpeMoncod == 86 ){								// ‰“Šuƒ_ƒEƒ“ƒ[ƒhŠ®—¹‚Ì‘€ìƒ‚ƒjƒ^
-			if( *((ulong*)SendNtnetDt.SData123.OpeMondat1) > PROG_DL_RESET ){	// ƒŠƒZƒbƒg”­¶ŠÖ˜A‚Ìƒ‚ƒjƒ^
-				*((ulong*)SendNtnetDt.SData123.OpeMondat1) = PROG_DL_RESET;		// ƒŠƒZƒbƒgi9j‚Æ‚µ‚Ä“d•¶‚Í‘—M‚·‚é
-			}
-		}
-	}
-	
-	wks = (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 2);
-	
-	if ( wks != 9 && SendNtnetDt.SData123.OpeMonlev >= wks ) {		// e‹@‘—MÚÍŞÙ
-		if(_is_ntnet_remote()) {
-			RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_123 ));
-		}
-		else {
-			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_123 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
-		}
-	}
-
-	/* ‹¤’Êƒpƒ‰ƒ[ƒ^39-0022‚Ì10‚ÌˆÊ‚É‚Ä‘—M‰Â/•s‰Âƒ`ƒFƒbƒN */
-}
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+///*[]----------------------------------------------------------------------[]*/
+///*| ƒ‚ƒjƒ^ƒf[ƒ^(ÃŞ°Àí•Ê122)ì¬ˆ—                                      |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| MODULE NAME  : NTNET_Snd_Data122                                       |*/
+///*| PARAMETER    : void                                                    |*/
+///*| RETURN VALUE : void                                                    |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| Author       : mitani                                                  |*/
+///*| Date         : 2005-11-30                                              |*/
+///*| UpDate       :                                                         |*/
+///*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+//void	NTNET_Snd_Data122( uchar kind, uchar code, uchar level, uchar *info, uchar *message )
+//{
+//	uchar	wks;
+//	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_122 ) );
+//
+//	BasicDataMake( 122, 0 );										// Šî–{ÃŞ°Àì¬
+//
+//	SendNtnetDt.SData122.Monsyu = kind;		// ƒ‚ƒjƒ^í•Ê
+//	SendNtnetDt.SData122.Moncod = code;		// ƒ‚ƒjƒ^ƒR[ƒh
+//	SendNtnetDt.SData122.Monlev = level;	// ƒ‚ƒjƒ^ƒŒƒxƒ‹
+//	if (info != NULL) {
+//		memcpy( &SendNtnetDt.SData122.Mondat1, info, sizeof(SendNtnetDt.SData122.Mondat1));
+//	}
+//	if (message != NULL) {
+//		memcpy( &SendNtnetDt.SData122.Mondat2, message, sizeof(SendNtnetDt.SData122.Mondat2));
+//	}
+//	
+//	wks = (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 1);
+//	
+//	if ( wks != 9 && SendNtnetDt.SData122.Monlev >= wks ) {			// e‹@‘—MÚÍŞÙ
+//		if(_is_ntnet_remote()) {
+//			RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_122 ));
+//		}
+//		else {
+//			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_122 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+//		}
+//	}
+//
+//	/* ‹¤’Êƒpƒ‰ƒ[ƒ^39-0022‚Ì1‚ÌˆÊ‚É‚Ä‘—M‰Â/•s‰Âƒ`ƒFƒbƒN */
+//}
+//
+///*[]----------------------------------------------------------------------[]*/
+///*| ‘€ìƒ‚ƒjƒ^ƒf[ƒ^(ÃŞ°Àí•Ê123)ì¬ˆ—                                  |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| MODULE NAME  : NTNET_Snd_Data123                                       |*/
+///*| PARAMETER    : void                                                    |*/
+///*| RETURN VALUE : void                                                    |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| Author       : mitani                                                  |*/
+///*| Date         : 2005-11-30                                              |*/
+///*| UpDate       :                                                         |*/
+///*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+//void	NTNET_Snd_Data123( uchar kind, uchar code, uchar level, uchar *before, uchar *after, uchar *message )
+//{
+//	uchar	wks;
+//	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_123 ) );
+//
+//	BasicDataMake( 123, 0 );										// Šî–{ÃŞ°Àì¬
+//
+//	SendNtnetDt.SData123.OpeMonsyu = kind;	// ‘€ìƒ‚ƒjƒ^í•Ê
+//	SendNtnetDt.SData123.OpeMoncod = code;	// ‘€ìƒ‚ƒjƒ^ƒR[ƒh
+//	SendNtnetDt.SData123.OpeMonlev = level;	// ‘€ìƒ‚ƒjƒ^ƒŒƒxƒ‹
+//	memcpy( &SendNtnetDt.SData123.OpeMondat1, before, sizeof(SendNtnetDt.SData123.OpeMondat1));
+//	memcpy( &SendNtnetDt.SData123.OpeMondat2, after, sizeof(SendNtnetDt.SData123.OpeMondat2));
+//	if (message != NULL) {
+//		memcpy( &SendNtnetDt.SData123.OpeMondat3, message, sizeof(SendNtnetDt.SData123.OpeMondat3));
+//	}
+//	
+//	if( SendNtnetDt.SData123.OpeMonsyu == 80 ){
+//		if( SendNtnetDt.SData123.OpeMoncod == 86 ){								// ‰“Šuƒ_ƒEƒ“ƒ[ƒhŠ®—¹‚Ì‘€ìƒ‚ƒjƒ^
+//			if( *((ulong*)SendNtnetDt.SData123.OpeMondat1) > PROG_DL_RESET ){	// ƒŠƒZƒbƒg”­¶ŠÖ˜A‚Ìƒ‚ƒjƒ^
+//				*((ulong*)SendNtnetDt.SData123.OpeMondat1) = PROG_DL_RESET;		// ƒŠƒZƒbƒgi9j‚Æ‚µ‚Ä“d•¶‚Í‘—M‚·‚é
+//			}
+//		}
+//	}
+//	
+//	wks = (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 2);
+//	
+//	if ( wks != 9 && SendNtnetDt.SData123.OpeMonlev >= wks ) {		// e‹@‘—MÚÍŞÙ
+//		if(_is_ntnet_remote()) {
+//			RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_123 ));
+//		}
+//		else {
+//			NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_123 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+//		}
+//	}
+//
+//	/* ‹¤’Êƒpƒ‰ƒ[ƒ^39-0022‚Ì10‚ÌˆÊ‚É‚Ä‘—M‰Â/•s‰Âƒ`ƒFƒbƒN */
+//}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
 
 /*[]----------------------------------------------------------------------[]*/
 /*| ‹¤’Êİ’èÃŞ°À(ÃŞ°Àí•Ê208)ì¬ˆ— - 1¾¸¼®İ‘—M                         |*/
@@ -4916,35 +5095,49 @@ void	NTNET_Snd_Data226( ulong MachineNo )
  *[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
 void	NTNET_RevData78( void )
 {
-	RP_DATA_KIND_78	*msg = &RecvNtnetDt.RP_RData78;
-	ushort	moncode;
-	uchar	okng;
-
-	NTNET_ClrSetup();
-
-	okng = 0;
-// match machine no.?
-	if (msg->SMachineNo != (ulong)CPrmSS[S_PAY][2]) {
-		okng = _RPKERR_INVALID_MACHINENO;
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+//	RP_DATA_KIND_78	*msg = &RecvNtnetDt.RP_RData78;
+//	ushort	moncode;
+//	uchar	okng;
+//
+//	NTNET_ClrSetup();
+//
+//	okng = 0;
+//// match machine no.?
+//	if (msg->SMachineNo != (ulong)CPrmSS[S_PAY][2]) {
+//		okng = _RPKERR_INVALID_MACHINENO;
+//	}
+//// specified address is valid?
+//	else if (msg->Segment != 0 ||
+//			check_remote_addr(0, msg->TopAddr, msg->DataCount) == 0) {
+//		okng = _RPKERR_INVALID_PARA_ADDR;
+//	}
+//	else if (! check_acceptable()) {
+//		okng = _RPKERR_COMMAND_REJECT;
+//	}
+//// answer
+//	NTNET_Ans_Data208(msg->DataBasic.SystemID, msg->DataBasic.MachineNo,
+//							msg->TopAddr, msg->DataCount, okng);
+//// regist monitor
+//	moncode = OPMON_RSETUP_REFOK;
+//	if (okng != 0) {
+//		moncode++;
+//	}
+//	regist_mon(moncode, (ushort)okng, msg->TopAddr, 6);
+	if ((RecvNtnetDt.RData78.PrmDiv == 0) &&									                                    /* ‹¤’Êİ’è‚Ì‚İ‘Î‰ */
+		(RecvNtnetDt.RData78.ModelCode == NTNET_MODEL_CODE) &&
+		(RecvNtnetDt.RData78.Segment > 0 && RecvNtnetDt.RData78.Segment < C_PRM_SESCNT_MAX) &&						/* ¾¸ŞÒİÄ(¾¸¼®İ)    */
+		(RecvNtnetDt.RData78.TopAddr > 0 && RecvNtnetDt.RData78.TopAddr <= CPrmCnt[RecvNtnetDt.RData78.Segment]) &&	/* ŠJn±ÄŞÚ½        */
+		(RecvNtnetDt.RData78.DataCount > 0 && RecvNtnetDt.RData78.DataCount <= NTNET_PARAMDATA_MAX)) 				/* ÃŞ°À”           */
+	{
+		_NTNET_Snd_Data208(RecvNtnetDt.RData78.DataBasic.MachineNo, 
+						   1, 
+						   RecvNtnetDt.RData78.Segment, 
+						   RecvNtnetDt.RData78.TopAddr, 
+						   RecvNtnetDt.RData78.DataCount);
 	}
-// specified address is valid?
-	else if (msg->Segment != 0 ||
-			check_remote_addr(0, msg->TopAddr, msg->DataCount) == 0) {
-		okng = _RPKERR_INVALID_PARA_ADDR;
-	}
-	else if (! check_acceptable()) {
-		okng = _RPKERR_COMMAND_REJECT;
-	}
-// answer
-	NTNET_Ans_Data208(msg->DataBasic.SystemID, msg->DataBasic.MachineNo,
-							msg->TopAddr, msg->DataCount, okng);
-// regist monitor
-	moncode = OPMON_RSETUP_REFOK;
-	if (okng != 0) {
-		moncode++;
-	}
-	regist_mon(moncode, (ushort)okng, msg->TopAddr, 6);
 }
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 
 /*[]----------------------------------------------------------------------[]*
  *| İ’èƒf[ƒ^‘—M—v‹ˆ—
@@ -5624,24 +5817,37 @@ void	NTNET_Snd_Data211_Exec( void )
  *[]----------------------------------------------------------------------[]*
  *| MODULE NAME  : NTNET_Snd_Data228
  *| PARAMETER    : MachineNo : ‘—Mæ’[––‹@ŠB‡‚
+ *| PARAMETER    : from : —v‹Œ³ 0=‰“ŠuNT-NET / 1=’[––ŠÔNT-NET
  *| RETURN VALUE : void
  *[]----------------------------------------------------------------------[]*
  *| Author       : 
  *| Date         : 2006-09-27
  *| UpDate       : 
  *[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
-void	NTNET_Snd_Data228( ulong MachineNo )
+// GM849100(S) M.Fujikawa 2025/01/15 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
+//void	NTNET_Snd_Data228( ulong MachineNo )
+void	NTNET_Snd_Data228( ulong MachineNo , uchar from)
+// GM849100(E) M.Fujikawa 2025/01/15 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
 {
 	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_228 ) );
 
 	// Šî–{ÃŞ°Àì¬
 	BasicDataMake( 228, 1 );
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ’ÊM‚ÍƒVƒXƒeƒ€ID‚ğ1ŒÅ’è‚É‚·‚éj
+	if(from == 1) {
+		// ’[––ŠÔ’ÊM‚Ìê‡‚ÍƒVƒXƒeƒ€ID‚ğ1‚É‚·‚é
+		SendNtnetDt.DataBasic.SystemID = 1;
+	}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ’ÊM‚ÍƒVƒXƒeƒ€ID‚ğ1ŒÅ’è‚É‚·‚éj
 	
 	SendNtnetDt.SData228.MachineNo = MachineNo;
 	memcpy(SendNtnetDt.SData228.Count, Mov_cnt_dat, (sizeof(ulong) * MOV_CNT_MAX));
 
 	// ÃŞ°À‘—M“o˜^
-	if(_is_ntnet_remote()) {
+// GM849100(S) M.Fujikawa 2025/01/15 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
+//	if(_is_ntnet_remote()) {
+	if(from == 0) {
+// GM849100(E) M.Fujikawa 2025/01/15 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
 		RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_228 ));
 	}
 	else {
@@ -7961,27 +8167,29 @@ void	NTNET_Rev_SyukeiSyuryo( void )
 }
 
 
-/*[]----------------------------------------------------------------------[]*/
-/*| FreeÃŞ°Àì¬ˆ—                                                       |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| MODULE NAME  : NTNET_Snd_DataFree                                      |*/
-/*| PARAMETER    : void                                                    |*/
-/*| RETURN VALUE : void                                                    |*/
-/*[]----------------------------------------------------------------------[]*/
-/*| Author       : R.Hara                                                  |*/
-/*| Date         : 2005-08-08                                              |*/
-/*| UpDate       :                                                         |*/
-/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
-void	NTNET_Snd_DataFree( void )
-{
-	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_Free ) );
-	memcpy( SendNtnetDt.SDataFree.FreeData, "FREE", 4 );
-	SendNtnetDt.SDataFree.FreeData[5] = 5;	/* ƒf[ƒ^ƒNƒŠƒA */
-	if( NTBUF_SetSendFreeData( &SendNtnetDt ) == 0 ){
-		// ƒoƒbƒtƒ@ƒI[ƒo[ƒ‰ƒCƒg”­¶
-		
-	}
-}
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+///*[]----------------------------------------------------------------------[]*/
+///*| FreeÃŞ°Àì¬ˆ—                                                       |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| MODULE NAME  : NTNET_Snd_DataFree                                      |*/
+///*| PARAMETER    : void                                                    |*/
+///*| RETURN VALUE : void                                                    |*/
+///*[]----------------------------------------------------------------------[]*/
+///*| Author       : R.Hara                                                  |*/
+///*| Date         : 2005-08-08                                              |*/
+///*| UpDate       :                                                         |*/
+///*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+//void	NTNET_Snd_DataFree( void )
+//{
+//	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_Free ) );
+//	memcpy( SendNtnetDt.SDataFree.FreeData, "FREE", 4 );
+//	SendNtnetDt.SDataFree.FreeData[5] = 5;	/* ƒf[ƒ^ƒNƒŠƒA */
+//	if( NTBUF_SetSendFreeData( &SendNtnetDt ) == 0 ){
+//		// ƒoƒbƒtƒ@ƒI[ƒo[ƒ‰ƒCƒg”­¶
+//		
+//	}
+//}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
 
 /*[]----------------------------------------------------------------------[]*/
 /*| §ŒäÃŞ°À(ÃŞ°Àí•Ê100)ì¬ˆ—  i±İÁÊß½İ’èj                          |*/
@@ -8671,7 +8879,10 @@ void	NTNET_Snd_Data63_R(void)
 	ushort *pt = rbuf.sRelayBuf;
 
 	// CRM•Û‚ÌŒ”æ“¾
-	NTBUF_GetBufCount(&buf);
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+//	NTBUF_GetBufCount(&buf);
+	NTBUF_GetBufCount(&buf, TRUE);
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 
 	memset(&SendNtnetDt.SData63_R, 0, sizeof(DATA_KIND_83_R));
 	BasicDataMake_R( 63, 1 );										// Šî–{ÃŞ°Àì¬
@@ -9439,6 +9650,9 @@ ushort	NTNET_Edit_Data22( Receipt_data *p_RcptDat, DATA_KIND_22 *p_NtDat )
 	p_NtDat->DataBasic.ModelCode = p_RcptDat->DataBasic.ModelCode;		// ‹@íº°ÄŞ
 	p_NtDat->DataBasic.MachineNo = p_RcptDat->DataBasic.MachineNo;		// ‹@ŠB‡‚
 	memcpy( &p_NtDat->DataBasic.Year, &p_RcptDat->DataBasic.Year, 6 );	// ˆ—”NŒ“ú•ª•b
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+	p_NtDat->DataBasic.SeqNo = p_RcptDat->SeqNo;						// ƒV[ƒPƒ“ƒVƒƒƒ‹‡‚
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 
 	p_NtDat->PayCount = CountSel( &p_RcptDat->Oiban);					// ¸Zor¸Z’†~’Ç‚¢”Ô
 	p_NtDat->PayMethod = p_RcptDat->PayMethod;							// ¸Z•û–@
@@ -9945,6 +10159,9 @@ ushort	NTNET_Edit_Data22_SK( Receipt_data *p_RcptDat, DATA_KIND_22 *p_NtDat )
 	p_NtDat->DataBasic.ModelCode = p_RcptDat->DataBasic.ModelCode;		// ‹@íº°ÄŞ
 	p_NtDat->DataBasic.MachineNo = p_RcptDat->DataBasic.MachineNo;		// ‹@ŠB‡‚
 	memcpy( &p_NtDat->DataBasic.Year, &p_RcptDat->DataBasic.Year, 6 );	// ˆ—”NŒ“ú•ª•b
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+	p_NtDat->DataBasic.SeqNo = p_RcptDat->SeqNo;						// ƒV[ƒPƒ“ƒVƒƒƒ‹‡‚
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 
 	p_NtDat->PayCount = CountSel( &p_RcptDat->Oiban );					// ¸Zor¸Z’†~’Ç‚¢”Ô
 	p_NtDat->PayMethod = p_RcptDat->PayMethod;							// ¸Z•û–@
@@ -14843,6 +15060,324 @@ void NTNET_Data152_SaveDataUpdate(void)
 	}
 }
 
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+	// ’Êí‚Ì‚m‚s‚m‚d‚s‚Í‚±‚±‚ÌŠÖ”‚ÅŠeƒf[ƒ^‚ğì¬
+/*[]----------------------------------------------------------------------[]
+ *|	name	: NTBUF_ConvertLogToNTNETData
+ *[]----------------------------------------------------------------------[]
+ *| summary	: ƒƒOƒf[ƒ^‚ğNTNETƒf[ƒ^‚É•ÏŠ·‚·‚é
+ *| param	: logType		: ƒƒOí•Ê
+ *|			  pLogDatadata	: •ÏŠ·Œ³‚ÌƒƒOƒf[ƒ^
+ *|			  pNtnetData	: NTNETƒf[ƒ^Ši”[æ
+ *| return	: NTNETƒf[ƒ^ƒTƒCƒY
+ *|			  0 : ‹ó“Ç‚İ‘ÎÛƒf[ƒ^
+ *|			  -1 : ˆÙíI—¹
+ *[]----------------------------------------------------------------------[]*/
+ushort	NTNET_ConvertLogToNTNETData(ushort logType, uchar* pLogData, uchar* pNtnetData)
+{
+	ushort	ret = (ushort)-1;
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+	Receipt_data	*p_RcptDat;
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+	
+	switch(logType) {
+	case eLOG_PAYMENT:					// ¸Z
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+		// •œŒˆÏ‚Í‘—M‚µ‚È‚¢
+		p_RcptDat = (Receipt_data*)pLogData;
+		if( p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_receive == 1 ){
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+// MH341107(S) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+//		ret = NTNET_Edit_Data22((Receipt_data*)pLogData, (DATA_KIND_22*)pNtnetData);
+		// ’“ÔêƒZƒ“ƒ^[Œ`®H
+		if( prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0 ){
+			ret = NTNET_Edit_Data56_T( (Receipt_data*)pLogData, (DATA_KIND_56_T*)pNtnetData );
+		}
+		// Šù‘¶Œ`®H
+		else{
+			ret = NTNET_Edit_Data22( (Receipt_data*)pLogData, (DATA_KIND_22*)pNtnetData );
+		}
+// MH341107(E) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+		break;
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji–¢g—pƒƒOi“üŒÉAoŒÉjj
+//	case eLOG_ENTER:					// “üŒÉ
+//// MH341107(S) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+////		ret = NTNET_Edit_Data20((enter_log*)pLogData, (DATA_KIND_20*)pNtnetData);
+//		if( prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0 ){
+//			ret = NTNET_Edit_Data54_T((enter_log*)pLogData, (DATA_KIND_54_T*)pNtnetData);
+//		}else{
+//			ret = NTNET_Edit_Data20((enter_log*)pLogData, (DATA_KIND_20*)pNtnetData);
+//		}
+//// MH341107(E) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+//		break;
+//// MH364300 GG119A34(S) ‰ü‘P˜A—•\No.83‘Î‰
+//	case eLOG_LEAVE:					// oŒÉ
+//		if (prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0) {
+//			ret = NTNET_Edit_Data55_T((leave_log*)pLogData, (DATA_KIND_55_T*)pNtnetData);
+//		} else {
+//			ret = NTNET_Edit_Data21((leave_log*)pLogData, (DATA_KIND_21*)pNtnetData);
+//		}
+//		break;
+//// MH364300 GG119A34(E) ‰ü‘P˜A—•\No.83‘Î‰
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji–¢g—pƒƒOi“üŒÉAoŒÉjj
+	case eLOG_ERROR:					// ƒGƒ‰[
+// MH341107(S) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+//		ret = NTNET_Edit_Data120((Err_log*)pLogData, (DATA_KIND_120*)pNtnetData);
+//		if (((DATA_KIND_120*)pNtnetData)->Errlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 3)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+//			ret = 0;					// ‘—M‚µ‚È‚¢
+//		}
+		if( prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0 ){
+			ret = NTNET_Edit_Data63_T((Err_log*)pLogData, (DATA_KIND_63_T*)pNtnetData);
+			if (((DATA_KIND_63_T*)pNtnetData)->Errlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 3)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+				ret = 0;					// ‘—M‚µ‚È‚¢
+			}
+		}else{
+			ret = NTNET_Edit_Data120((Err_log*)pLogData, (DATA_KIND_120*)pNtnetData);
+			if (((DATA_KIND_120*)pNtnetData)->Errlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 3)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+				ret = 0;					// ‘—M‚µ‚È‚¢
+			}
+		}
+// MH341107(E) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+		break;
+	case eLOG_ALARM:					// ƒAƒ‰[ƒ€
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+// MH341107(S) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+//		ret = NTNET_Edit_Data121((Arm_log*)pLogData, (DATA_KIND_121*)pNtnetData);
+//		if (((DATA_KIND_121*)pNtnetData)->Armlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 4)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+//			ret = 0;					// ‘—M‚µ‚È‚¢
+//		}
+
+// MH341110(S) A.Iiizumi 2017/11/21 V‘ŠŒİˆ—‹@”\ ƒAƒ‰[ƒ€ƒf[ƒ^‚ª‘—M‚·‚é^‚µ‚È‚¢‚Ìƒtƒ‰ƒO‚ğ”»’è‚µ‚È‚¢•s‹ï‡C³ GG107200 (‹¤’Ê‰ü‘P‡‚1388)
+//GTƒVƒŠ[ƒY‚Ìalm_chk2‚Ì‘—M‚·‚é^‚µ‚È‚¢‚Ì”»’èˆ—‚ª”²‚¯‚Ä‚¢‚½‚½‚ßC³
+		if( 0 == chk_arm_send_ntnet(((Arm_log*)pLogData)->Armsyu,((Arm_log*)pLogData)->Armcod)){
+			ret = 0;	// ‘—M‚µ‚È‚¢
+			break;
+		}
+// MH341110(E) A.Iiizumi 2017/11/21 V‘ŠŒİˆ—‹@”\ ƒAƒ‰[ƒ€ƒf[ƒ^‚ª‘—M‚·‚é^‚µ‚È‚¢‚Ìƒtƒ‰ƒO‚ğ”»’è‚µ‚È‚¢•s‹ï‡C³ GG107200 (‹¤’Ê‰ü‘P‡‚1388)
+		if( prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0 ){
+			ret = NTNET_Edit_Data64_T((Arm_log*)pLogData, (DATA_KIND_64_T*)pNtnetData);
+			if (((DATA_KIND_64_T*)pNtnetData)->Armlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 4)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+				ret = 0;					// ‘—M‚µ‚È‚¢
+			}
+		}else{
+			ret = NTNET_Edit_Data121((Arm_log*)pLogData, (DATA_KIND_121*)pNtnetData);
+			if (((DATA_KIND_121*)pNtnetData)->Armlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 4)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+				ret = 0;					// ‘—M‚µ‚È‚¢
+			}
+		}
+// MH341107(E) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+		break;
+	case eLOG_OPERATE:					// ‘€ì
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+// MH364301(S) ƒ‚ƒjƒ^ƒR[ƒh‚ÌuR0252vAuR0253v‚ª’ÊMƒf[ƒ^‚Å‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+		if( 0 == chk_opemon_send_ntnet(((Ope_log*)pLogData)->OpeKind,((Ope_log*)pLogData)->OpeCode)){
+			ret = 0;	// ‘—M‚µ‚È‚¢
+			break;
+		}
+// MH364301(E) ƒ‚ƒjƒ^ƒR[ƒh‚ÌuR0252vAuR0253v‚ª’ÊMƒf[ƒ^‚Å‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+		ret = NTNET_Edit_Data123((Ope_log*)pLogData, (DATA_KIND_123*)pNtnetData);
+		if (((DATA_KIND_123*)pNtnetData)->OpeMonlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 2)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+			ret = 0;					// ‘—M‚µ‚È‚¢
+		}
+		break;
+	case eLOG_MONITOR:					// ƒ‚ƒjƒ^
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+// MH364301(S) ƒ‚ƒjƒ^ƒR[ƒh‚ÌuR0252vAuR0253v‚ª’ÊMƒf[ƒ^‚Å‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+		if( 0 == chk_mon_send_ntnet(((Mon_log*)pLogData)->MonKind,((Mon_log*)pLogData)->MonCode)){
+			ret = 0;	// ‘—M‚µ‚È‚¢
+			break;
+		}
+// MH364301(E) ƒ‚ƒjƒ^ƒR[ƒh‚ÌuR0252vAuR0253v‚ª’ÊMƒf[ƒ^‚Å‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+		ret = NTNET_Edit_Data122((Mon_log*)pLogData, (DATA_KIND_122*)pNtnetData);
+		if (((DATA_KIND_122*)pNtnetData)->Monlev < (uchar)prm_get(COM_PRM, S_NTN, 37, 1, 1)) {	// ƒŒƒxƒ‹İ’èƒ`ƒFƒbƒN
+			ret = 0;					// ‘—M‚µ‚È‚¢
+		}
+		break;
+	case eLOG_PARKING:					// ’“Ô‘ä”ƒf[ƒ^
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		ret = NTNET_Edit_Data58((ParkCar_log*)pLogData, (DATA_KIND_58*)pNtnetData);
+		break;
+	case eLOG_COINBOX:					// ƒRƒCƒ“‹àŒÉWŒv
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		ret = NTNET_Edit_Data131((COIN_SYU*)pLogData, (DATA_KIND_130*)pNtnetData);
+		break;
+	case eLOG_NOTEBOX:					// †•¼‹àŒÉWŒv
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		ret = NTNET_Edit_Data133((NOTE_SYU*)pLogData, (DATA_KIND_132*)pNtnetData);
+		break;
+	case eLOG_MONEYMANAGE:				// ‹à‘KŠÇ—(SRAM)
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		ret = NTNET_Edit_Data126((TURI_KAN*)pLogData, (DATA_KIND_126*)pNtnetData);
+// MH341110(S) A.Iiizumi 2018/02/15 NT-NET’[––ŠÔ’ÊM‚Å’“ÔêƒZƒ“ƒ^[Œ`®‚Ìê‡A’Ş‘KŠÇ—‡Œv(ID135)‚ª¸Z‚Ì–ˆ‚É‘—M‚³‚ê‚é•s‹ï‡‘Î‰(‹¤’Ê‰ü‘P‡‚1402)
+//// MH341107(S) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+//		if( prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0 ){
+//			ret = NTNET_Edit_Data135_T((TURI_KAN*)pLogData, (DATA_KIND_135_T*)pNtnetData);
+//		}
+//// MH341107(E) K.Onodera 2016/11/11 AI-V‘Î‰(’[––ŠÔ)
+// MH341110(E) A.Iiizumi 2018/02/15 NT-NET’[––ŠÔ’ÊM‚Å’“ÔêƒZƒ“ƒ^[Œ`®‚Ìê‡A’Ş‘KŠÇ—‡Œv(ID135)‚ª¸Z‚Ì–ˆ‚É‘—M‚³‚ê‚é•s‹ï‡‘Î‰(‹¤’Ê‰ü‘P‡‚1402)
+		break;
+// MH341110(S) A.Iiizumi 2018/02/15 NT-NET’[––ŠÔ’ÊM‚Å’“ÔêƒZƒ“ƒ^[Œ`®‚Ìê‡A’Ş‘KŠÇ—‡Œv(ID135)‚ª¸Z‚Ì–ˆ‚É‘—M‚³‚ê‚é•s‹ï‡‘Î‰(‹¤’Ê‰ü‘P‡‚1402)
+	case eLOG_MNYMNG_SRAM:				// ’Ş‘KŠÇ—WŒvƒf[ƒ^
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		if( prm_get(COM_PRM, S_SSS, 1, 1, 1) == 1 ) {		// –¼“S‹¦¤d—lNT-NET’[––ŠÔ’ÊM
+			ret = 0;					// ‘—M‚µ‚È‚¢
+			break;
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^AƒGƒ‰[ƒf[ƒ^‚Ì‚İ‚·‚éj
+		ret = NTNET_Edit_Data135_T((TURI_KAN*)pLogData, (DATA_KIND_135_T*)pNtnetData);
+		if( prm_get(COM_PRM, S_NTN, 121, 1, 1) == 0 ){// Šù‘¶Œ`®‚Ìê‡‚Í–¢’è‹`‚Ìƒf[ƒ^
+			ret = 0;					// ‘—M‚µ‚È‚¢
+		}
+		break;
+// MH341110(E) A.Iiizumi 2018/02/15 NT-NET’[––ŠÔ’ÊM‚Å’“ÔêƒZƒ“ƒ^[Œ`®‚Ìê‡A’Ş‘KŠÇ—‡Œv(ID135)‚ª¸Z‚Ì–ˆ‚É‘—M‚³‚ê‚é•s‹ï‡‘Î‰(‹¤’Ê‰ü‘P‡‚1402)
+
+	case eLOG_TTOTAL:					// T‡Œv‚ÍNTBUF_ConvertTotalLogToNTNETData()‚ğg—p‚·‚é‚±‚Æ
+	case eLOG_GTTOTAL:					// GT‡Œv‚ÍNTBUF_ConvertTotalLogToNTNETData()‚ğg—p‚·‚é‚±‚Æ
+	default:
+		break;
+	}
+	
+	return ret;
+}
+
+/*[]----------------------------------------------------------------------[]
+ *|	name	: NTBUF_ConvertTotalLogToNTNETData
+ *[]----------------------------------------------------------------------[]
+ *| summary	: ‡ŒvƒƒOƒf[ƒ^‚ğNTNETƒf[ƒ^‚É•ÏŠ·‚·‚é
+ *| param	: logType		: ƒƒOí•Ê(T‡Œv, GT‡Œv‚Ì‚İ)
+ *|			  logID			: ‡ŒvƒƒOƒf[ƒ^í•Ê(30`36, 41) 
+ *|			  pLogDatadata	: •ÏŠ·Œ³‚ÌƒƒOƒf[ƒ^
+ *|			  pNtnetData	: NTNETƒf[ƒ^Ši”[æ
+ *| return	: NTNETƒf[ƒ^ƒTƒCƒY
+ *|			  0 : ˆÙíI—¹
+ *[]----------------------------------------------------------------------[]*/
+ushort	NTNET_ConvertTotalLogToNTNETData(ushort logType, ushort logID, uchar* pLogData, uchar* pNtnetData)
+{
+	ushort	ret = 0;
+	ushort	type;							// WŒvƒ^ƒCƒv
+	SYUKEI*	pSyukei = (SYUKEI*)pLogData;
+	
+	if(eLOG_TTOTAL == logType) {			// T‡Œv
+		type = 1;							// 1=T‡Œv
+	}
+	else if(eLOG_GTTOTAL == logType) {		// GT‡Œv
+		type = 2;							// 2=GT‡Œv
+	}
+	else {
+		return 0;
+	}
+
+// MH341107(S) K.Onodera 2016/11/14 AI-V‘Î‰(’[––ŠÔ)
+	// ’“ÔêƒZƒ“ƒ^[Œ`®H
+	if( prm_get(COM_PRM, S_NTN, 121, 1, 1) == 0 ){
+// MH341107(E) K.Onodera 2016/11/14 AI-V‘Î‰(’[––ŠÔ)
+		switch(logID) {
+		case 30:								// WŒvŠî–{ƒf[ƒ^
+			ret = NTNET_Edit_SyukeiKihon(pSyukei, type, (DATA_KIND_30 *)pNtnetData);
+			break;
+		case 31:								// —¿‹àí•Ê–ˆWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiRyokinMai(pSyukei, type, (DATA_KIND_31 *)pNtnetData);
+			break;
+		case 32:								// •ª—ŞWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiBunrui(pSyukei, type, (DATA_KIND_32 *)pNtnetData);
+			break;
+		case 33:								// Š„ˆøWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiWaribiki(pSyukei, type, (DATA_KIND_33 *)pNtnetData);
+			break;
+		case 34:								// ’èŠúWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiTeiki(pSyukei, type, (DATA_KIND_34 *)pNtnetData);
+			break;
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+//		case 35:								// Ôº–ˆWŒvƒf[ƒ^
+//			ret = NTNET_Edit_SyukeiShashitsuMai(pSyukei, type, (DATA_KIND_35 *)pNtnetData);
+//			break;
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji•s—vˆ—íœj
+		case 36:								// ‹à‘KWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiKinsen(pSyukei, type, (DATA_KIND_36 *)pNtnetData);
+			break;
+		case 41:								// WŒvI—¹’Ê’mƒf[ƒ^
+			ret = NTNET_Edit_SyukeiSyuryo(pSyukei, type, (DATA_KIND_41 *)pNtnetData);
+			break;
+		default:
+			break;
+		}
+// MH341107(S) K.Onodera 2016/11/14 AI-V‘Î‰(’[––ŠÔ)
+	}else{
+		switch(logID) {
+		case 30:								// WŒvŠî–{ƒf[ƒ^
+			ret = NTNET_Edit_SyukeiKihon_T(pSyukei, type, (DATA_KIND_42_T *)pNtnetData);
+			break;
+		case 31:								// —¿‹àí•Ê–ˆWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiRyokinMai_T(pSyukei, type, (DATA_KIND_43_T *)pNtnetData);
+			break;
+		case 32:								// •ª—ŞWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiBunrui_T(pSyukei, type, (DATA_KIND_44_T *)pNtnetData);
+			break;
+		case 33:								// Š„ˆøWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiWaribiki_T(pSyukei, type, (DATA_KIND_45_T *)pNtnetData);
+			break;
+		case 34:								// ’èŠúWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiTeiki_T(pSyukei, type, (DATA_KIND_46_T *)pNtnetData);
+			break;
+// MH341110(S) A.Iiizumi 2017/12/18 ParkingWeb‘Î‰‚ÌNT-NET‚ÍÔº–ˆWŒv‚Í•s—v‚È‚½‚ß’[––ŠÔ‚Å‚Í‘—M‚µ‚È‚¢‚æ‚¤‚ÉC³ (‹¤’Ê‰ü‘P‡‚1391)
+//		case 35:								// Ôº–ˆWŒvƒf[ƒ^
+//			ret = NTNET_Edit_SyukeiShashitsuMai_T(pSyukei, type, (DATA_KIND_47_T *)pNtnetData);
+//			break;
+// MH341110(E) A.Iiizumi 2017/12/18 ParkingWeb‘Î‰‚ÌNT-NET‚ÍÔº–ˆWŒv‚Í•s—v‚È‚½‚ß’[––ŠÔ‚Å‚Í‘—M‚µ‚È‚¢‚æ‚¤‚ÉC³ (‹¤’Ê‰ü‘P‡‚1391)
+		case 36:								// ‹à‘KWŒvƒf[ƒ^
+			ret = NTNET_Edit_SyukeiKinsen_T(pSyukei, type, (DATA_KIND_48_T *)pNtnetData);
+			break;
+		case 41:								// WŒvI—¹’Ê’mƒf[ƒ^
+			ret = NTNET_Edit_SyukeiSyuryo_T(pSyukei, type, (DATA_KIND_53_T *)pNtnetData);
+			break;
+		default:
+			break;
+		}
+	}
+// MH341107(E) K.Onodera 2016/11/14 AI-V‘Î‰(’[––ŠÔ)
+	
+	return ret;
+}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+
 // MH810103 GG119202(S) •s—v‹@”\íœ(ƒZƒ“ƒ^[ƒNƒŒƒWƒbƒg)
 ///*[]----------------------------------------------------------------------[]*
 // *| ¸Ú¼Ş¯Ä:‘—M“d•¶(ŠJ‹ÇºÏİÄŞ:µİ×²İÃ½Ä)
@@ -16098,7 +16633,10 @@ static void NTNET_RevData16_01_ReceiptAgain( void )
 	if( _is_ntnet_remote() ){
 		RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_16_02 ));
 	}else {
-		NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_16_02 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+//		NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_16_02 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+		NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_16_02 ), NTNET_BUF_PRIOR );	// —DæÊŞ¯Ì§‚Å‘—M“o˜^
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 	}
 }
 
@@ -16142,7 +16680,10 @@ static void NTNET_RevData16_10_ErrorAlarm( void )
 	if(_is_ntnet_remote()) {
 		RAU_SetSendNtData((const uchar*)&SendNtnetDt, sizeof( DATA_KIND_16_11 ));
 	}else {
-		NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_16_11 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+//		NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_16_11 ), NTNET_BUF_BUFFERING );	// ÃŞ°À‘—M“o˜^
+		NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_16_11 ), NTNET_BUF_PRIOR );	// —DæÊŞ¯Ì§‚Å‘—M“o˜^
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 	}
 }
 
@@ -19515,6 +20056,2568 @@ unsigned short	NTNET_Edit_SyukeiKihon_rXX( SYUKEI *syukei, ushort Type, DATA_KIN
 	return ret;
 }
 // d—l•ÏX(E) K.Onodera 2016/11/04 WŒvŠî–{ƒf[ƒ^ƒtƒH[ƒ}ƒbƒg‘Î‰
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+//[]----------------------------------------------------------------------[]
+///	@brief		¸Zƒf[ƒ^(ƒf[ƒ^í•Ê56)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½¸Zƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : ¸Zƒf[ƒ^(DATA_KIND_56_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^  
+///	@return		ret       : ¸Zƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+// MH364302(S) ¸Zƒf[ƒ^ì¬‚Ì’ˆÓ“_
+///	@note		•K‚¸ˆø”‚Ìp_RcptDat‚ğg—p‚µ‚Äƒf[ƒ^ƒZƒbƒg‚·‚é‚±‚ÆIIiPayData‚Íg—p‚µ‚È‚¢j
+///				–{ŠÖ”‚Í¸Zƒf[ƒ^‘—M‚ÉŒÄ‚Î‚ê‚é‚½‚ßAp_RcptDat‚ÆPayData‚Ì’l‚ªˆê’v‚µ‚È‚¢
+///				ó‹µ‚ª‘¶İ‚·‚éBPayDataˆÈŠO‚ÌƒOƒ[ƒoƒ‹•Ï”‚àg—p‚µ‚È‚¢‚±‚ÆII
+// MH364302(E) ¸Zƒf[ƒ^ì¬‚Ì’ˆÓ“_
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort	NTNET_Edit_Data56_T( Receipt_data *p_RcptDat, DATA_KIND_56_T *p_NtDat )
+{
+	uchar	i, j;
+	ushort	ret;
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+	ushort		wk_kind1, wk_kind2;
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+// MH364301(S) QRƒR[ƒhŒˆÏ‘Î‰
+	uchar	k;
+	ushort	wk_kubun, wk_DiscNo;
+// MH364301(E) QRƒR[ƒhŒˆÏ‘Î‰
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Í‰ÛÅ‘ÎÛƒZƒbƒg–¢‘Î‰j
+//// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛ‚ğƒZƒbƒg‚·‚éj
+//	wari_tiket	wari_dt;
+//// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛ‚ğƒZƒbƒg‚·‚éj
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Í‰ÛÅ‘ÎÛƒZƒbƒg–¢‘Î‰j
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_56_T ) );
+
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ’ÊM‚ÍƒVƒXƒeƒ€ID‚ğ1ŒÅ’è‚É‚·‚éj
+//	p_NtDat->DataBasic.SystemID 	= p_RcptDat->DataBasic.SystemID;	// ¼½ÃÑID
+	p_NtDat->DataBasic.SystemID		= 1;								// ’[––ŠÔ’ÊM‚Í1ŒÅ’è
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ’ÊM‚ÍƒVƒXƒeƒ€ID‚ğ1ŒÅ’è‚É‚·‚éj
+	p_NtDat->DataBasic.DataKind 	= p_RcptDat->DataBasic.DataKind;	// ÃŞ°Àí•Ê
+	p_NtDat->DataBasic.DataKeep 	= p_RcptDat->DataBasic.DataKeep;	// ÃŞ°À•ÛÌ×¸Ş
+	p_NtDat->DataBasic.ParkingNo 	= p_RcptDat->DataBasic.ParkingNo;	// ’“Ôê‡‚
+	p_NtDat->DataBasic.ModelCode 	= p_RcptDat->DataBasic.ModelCode;	// ‹@íº°ÄŞ
+	p_NtDat->DataBasic.MachineNo	= p_RcptDat->DataBasic.MachineNo;	// ‹@ŠB‡‚
+	memcpy( &p_NtDat->DataBasic.Year, &p_RcptDat->DataBasic.Year, 6 );	// ˆ—”NŒ“ú•ª•b
+	p_NtDat->DataBasic.SeqNo 		= p_RcptDat->SeqNo;					// ƒV[ƒPƒ“ƒVƒƒƒ‹‡‚
+	p_NtDat->CenterSeqNo 			= p_RcptDat->CenterSeqNo;			// ƒZƒ“ƒ^[’Ç”Ôi¸Zj
+
+	// ‹à‘Kî•ñ ================
+	p_NtDat->SeisanData.MoneyInOut.MoneyKind_In	= 0x1f;									// ‹àí—L–³	“‹Ú‹àí‚Ì—L–³@“Š“ü‹ài10‰~,50‰~,100‰~,500‰~,1000‰~j
+	p_NtDat->SeisanData.MoneyInOut.In_10_cnt		= (uchar)p_RcptDat->in_coin[0];		// “Š“ü‹à–‡”(10‰~)		0`255
+	p_NtDat->SeisanData.MoneyInOut.In_50_cnt		= (uchar)p_RcptDat->in_coin[1];		// “Š“ü‹à–‡”(50‰~)		0`255
+	p_NtDat->SeisanData.MoneyInOut.In_100_cnt		= (uchar)p_RcptDat->in_coin[2];		// “Š“ü‹à–‡”(100‰~)	0`255
+	p_NtDat->SeisanData.MoneyInOut.In_500_cnt		= (uchar)p_RcptDat->in_coin[3];		// “Š“ü‹à–‡”(500‰~)	0`255
+	p_NtDat->SeisanData.MoneyInOut.In_1000_cnt		= (uchar)p_RcptDat->in_coin[4];		// “Š“ü‹à–‡”(1000‰~)	0`255
+	// ƒGƒXƒNƒ†•¼–ß‚µ‚ ‚è
+	if( p_RcptDat->f_escrow ){
+		++p_NtDat->SeisanData.MoneyInOut.In_1000_cnt;									// ƒGƒXƒNƒ†•¼–ß‚µ•ª‚ğ“Š“ü–‡”‚É‰ÁZ
+	}
+	p_NtDat->SeisanData.MoneyInOut.MoneyKind_Out	= 0x1f;								// ‹àí—L–³	“‹Ú‹àí‚Ì—L–³@•¥o‹ài10‰~,50‰~,100‰~,500‰~,1000‰~j
+	p_NtDat->SeisanData.MoneyInOut.Out_10_cnt		= (uchar)p_RcptDat->out_coin[0];	// •¥o‹à–‡”(10‰~)		0`255
+	p_NtDat->SeisanData.MoneyInOut.Out_50_cnt		= (uchar)p_RcptDat->out_coin[1];	// •¥o‹à–‡”(50‰~)		0`255
+	p_NtDat->SeisanData.MoneyInOut.Out_100_cnt		= (uchar)p_RcptDat->out_coin[2];	// •¥o‹à–‡”(100‰~)	0`255
+	p_NtDat->SeisanData.MoneyInOut.Out_500_cnt		= (uchar)p_RcptDat->out_coin[3];	// •¥o‹à–‡”(500‰~)	0`255
+	p_NtDat->SeisanData.MoneyInOut.Out_1000_cnt		= (uchar)p_RcptDat->f_escrow;		// •¥o‹à–‡”(1000‰~)	0`255
+	// ==========================
+
+	p_NtDat->SeisanData.SalesParkingNo = (ulong)CPrmSS[S_SYS][1];					// ”„ãæ’“Ôê‡‚(0`999999   ¦“Á’—pi•W€‚Å‚ÍŠî–{’“Ôê‡‚‚ğƒZƒbƒgj
+// GM849100(S) M.Fujikawa 2025/03/11 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ ƒR[ƒhƒ`ƒFƒbƒN#257073
+	// ’“ÔŠÔ
+	p_NtDat->SeisanData.ParkingTime = set_parking_time( &p_RcptDat->TInTime, &p_RcptDat->TOutTime );;
+// GM849100(E) M.Fujikawa 2025/03/11 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ ƒR[ƒhƒ`ƒFƒbƒN#257073
+// •s‹ï‡C³(S) K.Onodera 2016/12/22 #1692 •¥–ß‚µ•s‘«ŠziŒ»‹àˆÈŠOj‚ÉŒ»‹à•¥–ß‹àŠz‚ªƒZƒbƒg‚³‚ê‚Ä‚µ‚Ü‚¤
+//	if( p_RcptDat->FRK_Return ){
+	if( p_RcptDat->FRK_Return && p_RcptDat->FRK_RetMod ){
+// •s‹ï‡C³(E) K.Onodera 2016/12/22 #1692 •¥–ß‚µ•s‘«ŠziŒ»‹àˆÈŠOj‚ÉŒ»‹à•¥–ß‹àŠz‚ªƒZƒbƒg‚³‚ê‚Ä‚µ‚Ü‚¤
+		p_NtDat->SeisanData.FusokuCardKind = p_RcptDat->FRK_RetMod;					// •¥o•s‘«”}‘Ìí•Ê(Œ»‹àˆÈŠO)
+		p_NtDat->SeisanData.FusokuCard = p_RcptDat->FRK_Return;						// •¥o•s‘«Šz(Œ»‹àˆÈŠO)
+	}
+	p_NtDat->SeisanData.PayCount = CountSel( &p_RcptDat->Oiban);					// ¸Zor¸Z’†~’Ç‚¢”Ô
+	p_NtDat->SeisanData.PayMethod = p_RcptDat->PayMethod;							// ¸Z•û–@
+	p_NtDat->SeisanData.PayClass = p_RcptDat->PayClass;								// ˆ—‹æ•ª
+	p_NtDat->SeisanData.PayMode = p_RcptDat->PayMode;								// ¸ZÓ°ÄŞ(©“®¸Z)
+
+	if( p_NtDat->SeisanData.PayMethod != 5 ){
+		p_NtDat->SeisanData.LockNo = p_RcptDat->WPlace;								// ‹æ‰æî•ñ
+	}
+	p_NtDat->SeisanData.CardType = 0;												// ’“ÔŒ”À²Ìß
+	p_NtDat->SeisanData.CMachineNo = 0;												// ’“ÔŒ”‹@ŠB‡‚
+	p_NtDat->SeisanData.CardNo = 0L;												// ’“ÔŒ””Ô†(”­Œ”’Ç‚¢”Ô)
+	if( p_NtDat->SeisanData.PayMethod != 5 ){
+// GM849100(S) M.Fujikawa 2025/03/11 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ ƒR[ƒhƒ`ƒFƒbƒN#257071
+//		p_NtDat->SeisanData.OutTime.Year = p_RcptDat->TOutTime.Year;				// oŒÉ”N
+//		p_NtDat->SeisanData.OutTime.Mon = p_RcptDat->TOutTime.Mon;					// oŒÉŒ
+//		p_NtDat->SeisanData.OutTime.Day = p_RcptDat->TOutTime.Day;					// oŒÉ“ú
+//		p_NtDat->SeisanData.OutTime.Hour = p_RcptDat->TOutTime.Hour;				// oŒÉ
+//		p_NtDat->SeisanData.OutTime.Min = p_RcptDat->TOutTime.Min;					// oŒÉ•ª
+//		p_NtDat->SeisanData.OutTime.Sec = 0;										// oŒÉ•b
+		p_NtDat->SeisanData.PayTime.Year = p_RcptDat->TOutTime.Year;
+		p_NtDat->SeisanData.PayTime.Mon = p_RcptDat->TOutTime.Mon;
+		p_NtDat->SeisanData.PayTime.Day = p_RcptDat->TOutTime.Day;
+		p_NtDat->SeisanData.PayTime.Hour = p_RcptDat->TOutTime.Hour;
+		p_NtDat->SeisanData.PayTime.Min = p_RcptDat->TOutTime.Min;
+		p_NtDat->SeisanData.PayTime.Sec = 0;
+// GM849100(E) M.Fujikawa 2025/03/11 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ ƒR[ƒhƒ`ƒFƒbƒN#257071
+		p_NtDat->SeisanData.KakariNo = p_RcptDat->KakariNo;							// ŒWˆõ‡‚
+		p_NtDat->SeisanData.OutKind = p_RcptDat->OutKind;							// ¸ZoŒÉ
+	}
+	p_NtDat->SeisanData.ReceiptIssue = p_RcptDat->ReceiptIssue;						// —ÌûØ”­s—L–³
+	if( p_NtDat->SeisanData.PayMethod != 5 ){
+		p_NtDat->SeisanData.InTime.Year = p_RcptDat->TInTime.Year;					// “üŒÉ”N
+		p_NtDat->SeisanData.InTime.Mon = p_RcptDat->TInTime.Mon;					// “üŒÉŒ
+		p_NtDat->SeisanData.InTime.Day = p_RcptDat->TInTime.Day;					// “üŒÉ“ú
+		p_NtDat->SeisanData.InTime.Hour = p_RcptDat->TInTime.Hour;					// “üŒÉ
+		p_NtDat->SeisanData.InTime.Min = p_RcptDat->TInTime.Min;					// “üŒÉ•ª
+		p_NtDat->SeisanData.InTime.Sec = 0;											// “üŒÉ•b
+	}
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXj
+//	// ¸Z”NŒ“ú•ª•b‚Í0‚Æ‚·‚é
+//	// ‘O‰ñ¸Z”NŒ“ú•ª•b‚Í0‚Æ‚·‚é
+	if( p_RcptDat->PayClass == 1 || p_RcptDat->PayClass == 3 ) {					// Ä¸Z or Ä¸Z’†~
+		// Ä¸Z‚È‚ç‘O‰ñ¸Z‚ğƒZƒbƒg
+// GM849100(S) M.Fujikawa 2025/03/11 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ ƒR[ƒhƒ`ƒFƒbƒN#257071
+//		p_NtDat->SeisanData.PayTime.Year = p_RcptDat->BeforeTPayTime.Year % 100;	// ‘O‰ñ¸Z”N
+//		p_NtDat->SeisanData.PayTime.Mon  = p_RcptDat->BeforeTPayTime.Mon;			// ‘O‰ñ¸ZŒ
+//		p_NtDat->SeisanData.PayTime.Day  = p_RcptDat->BeforeTPayTime.Day;			// ‘O‰ñ¸Z“ú
+//		p_NtDat->SeisanData.PayTime.Hour = p_RcptDat->BeforeTPayTime.Hour;			// ‘O‰ñ¸Z
+//		p_NtDat->SeisanData.PayTime.Min  = p_RcptDat->BeforeTPayTime.Min;			// ‘O‰ñ¸Z•ª
+//		// ƒR[ƒ‹ƒZƒ“ƒ^[Œü‚¯ƒf[ƒ^‚É•b‚ÍƒZƒbƒg‚µ‚È‚¢
+//		p_NtDat->SeisanData.PayTime.Sec  = 0;										// ‘O‰ñ¸Z•b
+		p_NtDat->SeisanData.BeforePayTime.Year = p_RcptDat->BeforeTPayTime.Year % 100;	// ‘O‰ñ¸Z”N
+		p_NtDat->SeisanData.BeforePayTime.Mon  = p_RcptDat->BeforeTPayTime.Mon;			// ‘O‰ñ¸ZŒ
+		p_NtDat->SeisanData.BeforePayTime.Day  = p_RcptDat->BeforeTPayTime.Day;			// ‘O‰ñ¸Z“ú
+		p_NtDat->SeisanData.BeforePayTime.Hour = p_RcptDat->BeforeTPayTime.Hour;			// ‘O‰ñ¸Z
+		p_NtDat->SeisanData.BeforePayTime.Min  = p_RcptDat->BeforeTPayTime.Min;			// ‘O‰ñ¸Z•ª
+		// ƒR[ƒ‹ƒZƒ“ƒ^[Œü‚¯ƒf[ƒ^‚É•b‚ÍƒZƒbƒg‚µ‚È‚¢
+		p_NtDat->SeisanData.BeforePayTime.Sec  = 0;										// ‘O‰ñ¸Z•b
+// GM849100(E) M.Fujikawa 2025/03/11 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰ ƒR[ƒhƒ`ƒFƒbƒN#257071
+	}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXj
+	p_NtDat->SeisanData.TaxPrice = 0;												// ‰ÛÅ‘ÎÛŠz
+	p_NtDat->SeisanData.TotalPrice = 0;												// ‡Œv‹àŠz(HOST–¢g—p‚Ì‚½‚ß)
+	p_NtDat->SeisanData.Tax = p_RcptDat->Wtax;										// Á”ïÅŠz
+	if( p_NtDat->SeisanData.PayMethod != 5 ){										// XV¸ZˆÈŠO
+		p_NtDat->SeisanData.Syubet = p_RcptDat->syu;								// —¿‹àí•Ê
+		p_NtDat->SeisanData.Price = p_RcptDat->WPrice;								// ’“Ô—¿‹à
+	}
+// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛŠz‚ğƒZƒbƒg‚·‚éj
+	p_NtDat->SeisanData.TaxPrice = p_RcptDat->WTaxPrice;							// ‰ÛÅ‘ÎÛŠz
+// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛŠz‚ğƒZƒbƒg‚·‚éj
+	p_NtDat->SeisanData.CashPrice = p_RcptDat->WTotalPrice;							// Œ»‹à”„ã
+	p_NtDat->SeisanData.InPrice = p_RcptDat->WInPrice;								// “Š“ü‹àŠz
+	if( p_RcptDat->FRK_RetMod == 0 ){
+		p_NtDat->SeisanData.ChgPrice = p_RcptDat->WChgPrice + p_RcptDat->FRK_Return;	// ’Ş‘K‹àŠz + U‘Ö‰ß•¥‚¢
+	}else{
+		p_NtDat->SeisanData.ChgPrice = p_RcptDat->WChgPrice;						// ’Ş‘K‹àŠz
+	}
+	p_NtDat->SeisanData.Fusoku = p_RcptDat->WFusoku;								// ’Ş‘K•¥o•s‘«‹àŠz
+	p_NtDat->SeisanData.FusokuFlg = 0;												// ’Ş‘K•¥o•s‘«”­¶Ì×¸Ş
+	p_NtDat->SeisanData.PayObsFlg = 0;												// ¸Z’†áŠQ”­¶Ì×¸Ş
+	p_NtDat->SeisanData.ChgOverFlg = 0;												// •¥–ßãŒÀŠzµ°ÊŞ°”­¶Ì×¸Ş
+
+	p_NtDat->SeisanData.PassCheck = p_RcptDat->PassCheck;							// ±İÁÊß½Áª¯¸
+	p_NtDat->SeisanData.CountSet = p_RcptDat->CountSet;								// İÔ¶³İÄ‚µ‚È‚¢
+	// ’èŠúŒ”¸Zˆ—or’èŠúŒ”XV
+	if( p_RcptDat->teiki.ParkingNo ){
+		p_NtDat->SeisanData.PassData.ParkingNo = p_RcptDat->teiki.ParkingNo;		// ’èŠúŒ”’“Ôê‡‚
+		p_NtDat->SeisanData.PassData.PassID = p_RcptDat->teiki.id;					// ’èŠúŒ”ID
+		p_NtDat->SeisanData.PassData.Syubet = p_RcptDat->teiki.syu;					// ’èŠúŒ”í•Ê
+		p_NtDat->SeisanData.PassData.State = p_RcptDat->teiki.status;				// ’èŠúŒ”½Ã°À½
+		p_NtDat->SeisanData.PassData.MoveMode = 0;									// ’èŠúŒ”•Ô‹p
+		p_NtDat->SeisanData.PassData.ReadMode = 0;									// ’èŠúŒ”Ø°ÄŞ×²Ä
+		p_NtDat->SeisanData.PassData.SYear =
+								(uchar)(p_RcptDat->teiki.s_year%100);				// ’èŠúŒ”ŠJn”N
+		p_NtDat->SeisanData.PassData.SMon = p_RcptDat->teiki.s_mon;					// ’èŠúŒ”ŠJnŒ
+		p_NtDat->SeisanData.PassData.SDate = p_RcptDat->teiki.s_day;				// ’èŠúŒ”ŠJn“ú
+		p_NtDat->SeisanData.PassData.EYear =
+								(uchar)(p_RcptDat->teiki.e_year%100);				// ’èŠúŒ”I—¹”N
+		p_NtDat->SeisanData.PassData.EMon = p_RcptDat->teiki.e_mon;					// ’èŠúŒ”I—¹Œ
+		p_NtDat->SeisanData.PassData.EDate = p_RcptDat->teiki.e_day;				// ’èŠúŒ”I—¹“ú
+	}
+	// ’èŠúXVH
+	if( p_NtDat->SeisanData.PayMethod == 5 ){
+		p_NtDat->SeisanData.PassRenewalPric = p_RcptDat->WPrice;					// ’èŠúŒ”XV—¿‹à
+		p_NtDat->SeisanData.PassRenewalCondition = 1;								// ’èŠúŒ”XVğŒ
+		// ½Ã°À½1`3”ÍˆÍ“à
+		if( rangechk( 1, 3, p_RcptDat->teiki.status ) ){
+			p_NtDat->SeisanData.PassRenewalCondition = 11;							// ’èŠúŒ”XVğŒ
+		}
+		p_NtDat->SeisanData.PassRenewalPeriod = p_RcptDat->teiki.update_mon;		// ’èŠúŒ”XVŠúŠÔ(XVŒ”)
+		p_NtDat->SeisanData.UpCount = 0;											// XV‰ñ”
+		p_NtDat->SeisanData.ReIssueCount = 0;										// Ä”­s‰ñ”
+		// ƒIƒvƒVƒ‡ƒ“‘ã‹à‡@`‡C‚Í‚OŒÅ’è‚Æ‚·‚é
+	}
+
+// MH364300 GG119A23(S) // GG122600(S) Y.Tanizaki ICƒNƒŒƒWƒbƒg‘Î‰
+// GG122600(S) ŒˆÏ¸Z’†~‚Í¸Zƒf[ƒ^‚É‚İ‚È‚µŒˆÏî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+//	if( isEC_USE() && PayData.credit.pay_ryo ){
+// MH364302(S) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+//	if( isEC_USE() && PayData.credit.pay_ryo &&
+	if( isEC_USE() && p_RcptDat->credit.pay_ryo &&
+// MH364302(E) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+		p_NtDat->SeisanData.PayClass != 2 && p_NtDat->SeisanData.PayClass != 3 ){	// ¸Z’†~AÄ¸Z’†~‚Å‚Í‚È‚¢
+// GG122600(E) ŒˆÏ¸Z’†~‚Í¸Zƒf[ƒ^‚É‚İ‚È‚µŒˆÏî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+		p_NtDat->SeisanData.CreditIssue = 1;										// ¸Ú¼Ş¯Ä¶°ÄŞŒˆÏ—L–³
+
+		memset( &t_Settlement, 0, sizeof(t_Settlement) );
+// GG122600(S) ‚İ‚È‚µ{ŒˆÏOKóM‚É¸Zƒf[ƒ^‚ÌƒJ[ƒh”Ô†‚ªóM‚µ‚½ƒJ[ƒh”Ô†‚Ì‚Ü‚Ü‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+		if( p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1 &&
+			p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_settlement == 0 ){
+			// ‚İ‚È‚µŒˆÏ{ŒˆÏŒ‹‰ÊOKóM‚É‚æ‚é‚İ‚È‚µŒˆÏ‚Ì¸Zƒf[ƒ^‚Í‰ïˆõNo.‚ğ0x20h–„‚ß‚·‚éB
+			// [*]ˆóš‚İ‚È‚µŒˆÏ‚Æ“¯—l‚Ì‰ïˆõNo‚ğƒZƒbƒg‚·‚éB
+			memset( &t_Settlement.credit.CreditCardNo[0], 0x20, sizeof(t_Settlement.credit.CreditCardNo) );
+		}
+		else {
+// GG122600(E) ‚İ‚È‚µ{ŒˆÏOKóM‚É¸Zƒf[ƒ^‚ÌƒJ[ƒh”Ô†‚ªóM‚µ‚½ƒJ[ƒh”Ô†‚Ì‚Ü‚Ü‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+// MH364302(S) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+//		memcpyFlushLeft( &t_Settlement.credit.CreditCardNo[0],
+//						(uchar*)&PayData.credit.card_no[0],
+//						sizeof(t_Settlement.credit.CreditCardNo),
+//						sizeof(PayData.credit.card_no) );							// ¸Ú¼Ş¯Ä¶°ÄŞ‰ïˆõ‡‚
+		memcpyFlushLeft( &t_Settlement.credit.CreditCardNo[0],
+						(uchar*)&p_RcptDat->credit.card_no[0],
+						sizeof(t_Settlement.credit.CreditCardNo),
+						sizeof(p_RcptDat->credit.card_no) );						// ¸Ú¼Ş¯Ä¶°ÄŞ‰ïˆõ‡‚
+// MH364302(E) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+// GG122600(S) ‚İ‚È‚µ{ŒˆÏOKóM‚É¸Zƒf[ƒ^‚ÌƒJ[ƒh”Ô†‚ªóM‚µ‚½ƒJ[ƒh”Ô†‚Ì‚Ü‚Ü‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+		}
+// GG122600(E) ‚İ‚È‚µ{ŒˆÏOKóM‚É¸Zƒf[ƒ^‚ÌƒJ[ƒh”Ô†‚ªóM‚µ‚½ƒJ[ƒh”Ô†‚Ì‚Ü‚Ü‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰@ƒ\[ƒXƒR[ƒhƒŒƒrƒ…[#257074
+//		// ‰ïˆõNo‚Ìã7Œ…–Ú`‰º5Œ…–ÚˆÈŠO‚Å'*'‚ªŠi”[‚³‚ê‚Ä‚¢‚½‚ç'0'‚É’uŠ·
+//		change_CharInArray( &t_Settlement.credit.CreditCardNo[0], sizeof(t_Settlement.credit.CreditCardNo), 7, 5, '*', '0' );
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰@ƒ\[ƒXƒR[ƒhƒŒƒrƒ…[#257074
+// MH364302(S) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+//		t_Settlement.credit.Credit_ryo = PayData.credit.pay_ryo;					// ¸Ú¼Ş¯Ä¶°ÄŞ—˜—p‹àŠz
+//		t_Settlement.credit.CreditSlipNo = PayData.credit.slip_no;					// ¸Ú¼Ş¯Ä¶°ÄŞ“`•[”Ô†
+//		t_Settlement.credit.CreditAppNo = PayData.credit.app_no;					// ¸Ú¼Ş¯Ä¶°ÄŞ³”F”Ô†
+//		memcpyFlushLeft( &t_Settlement.credit.CreditName[0],
+//						(uchar*)&PayData.credit.card_name[0],
+//						sizeof(t_Settlement.credit.CreditName),
+//						sizeof(PayData.credit.card_name) );							// ¸Ú¼Ş¯Ä¶°ÄŞ‰ïĞ–¼
+		t_Settlement.credit.Credit_ryo = p_RcptDat->credit.pay_ryo;					// ¸Ú¼Ş¯Ä¶°ÄŞ—˜—p‹àŠz
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+//		t_Settlement.credit.CreditSlipNo = p_RcptDat->credit.slip_no;				// ¸Ú¼Ş¯Ä¶°ÄŞ“`•[”Ô†
+		if( p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1 ||
+			p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_settlement == 1 ){
+			// ‚İ‚È‚µŒˆÏ‚ÍŒˆÏƒŠ[ƒ_[ŒŸo‚à¸Z‹@ŒŸo‚à“¯‚¶ˆµ‚¢‚É‚·‚é
+			t_Settlement.credit.CreditSlipNo = 0;
+		}
+		else {
+			t_Settlement.credit.CreditSlipNo = p_RcptDat->credit.slip_no;			// ¸Ú¼Ş¯Ä¶°ÄŞ“`•[”Ô†
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+		t_Settlement.credit.CreditAppNo = p_RcptDat->credit.app_no;					// ¸Ú¼Ş¯Ä¶°ÄŞ³”F”Ô†
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+		if( p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1 ||
+			p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_settlement == 1 ){
+			// ‚İ‚È‚µŒˆÏ‚ÍŒˆÏƒŠ[ƒ_[ŒŸo‚à¸Z‹@ŒŸo‚à“¯‚¶ˆµ‚¢‚É‚·‚é
+			memset( &t_Settlement.credit.CreditName[0], 0x20, sizeof(&t_Settlement.credit.CreditName) );
+		}
+		else {
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+		memcpyFlushLeft( &t_Settlement.credit.CreditName[0],
+						(uchar*)&p_RcptDat->credit.card_name[0],
+						sizeof(t_Settlement.credit.CreditName),
+						sizeof(p_RcptDat->credit.card_name) );						// ¸Ú¼Ş¯Ä¶°ÄŞ‰ïĞ–¼
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+		}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+// MH364302(E) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+		// –¾¦“I‚É0‚ğƒZƒbƒg
+		t_Settlement.credit.CreditDate[0] = 0;										// ¸Ú¼Ş¯Ä¶°ÄŞ—LŒøŠúŒÀ(”N)
+		t_Settlement.credit.CreditDate[1] = 0;										// ¸Ú¼Ş¯Ä¶°ÄŞ—LŒøŠúŒÀ(Œ)
+		t_Settlement.credit.CreditProcessNo = 0;									// ¸Ú¼Ş¯Ä¶°ÄŞ¾İÀˆ—’Ç‚¢”Ô
+		// ‚İ‚È‚µŒˆÏ‚ÍƒXƒy[ƒX–„‚ß‚·‚é
+// MH364302(S) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+//		memcpyFlushLeft( &t_Settlement.credit.term_id[0],
+//						(uchar*)&PayData.credit.CCT_Num[0],
+//						sizeof(t_Settlement.credit.term_id),
+//						sizeof(PayData.credit.CCT_Num) );							// ¸Ú¼Ş¯Ä¶°ÄŞ’[––¯•Ê”Ô†
+//		// ‚İ‚È‚µŒˆÏ‚ÍƒXƒy[ƒX–„‚ß‚·‚é
+//		memcpyFlushLeft( &p_NtDat->SeisanData.kid_code[0],
+//						(uchar*)&PayData.credit.kid_code[0],
+//						sizeof(p_NtDat->SeisanData.kid_code),
+//						sizeof(PayData.credit.kid_code) );							// KIDº°ÄŞ
+		memcpyFlushLeft( &t_Settlement.credit.term_id[0],
+						(uchar*)&p_RcptDat->credit.CCT_Num[0],
+						sizeof(t_Settlement.credit.term_id),
+						sizeof(p_RcptDat->credit.CCT_Num) );						// ¸Ú¼Ş¯Ä¶°ÄŞ’[––¯•Ê”Ô†
+		// ‚İ‚È‚µŒˆÏ‚ÍƒXƒy[ƒX–„‚ß‚·‚é
+		memcpyFlushLeft( &p_NtDat->SeisanData.kid_code[0],
+						(uchar*)&p_RcptDat->credit.kid_code[0],
+						sizeof(p_NtDat->SeisanData.kid_code),
+						sizeof(p_RcptDat->credit.kid_code) );						// KIDº°ÄŞ
+// MH364302(E) ’“Ô—¿‹à0‰~‚©‚ÂƒNƒŒƒWƒbƒg—˜—p‹àŠz‚ ‚è‚Ì¸Zƒf[ƒ^‚ğ‘—M‚µ‚Ä‚µ‚Ü‚¤•s‹ï‡‚ÌC³
+		AesCBCEncrypt( (uchar *)&t_Settlement.credit, sizeof( t_Settlement.credit ) );
+		memcpy( (uchar *)&p_NtDat->SeisanData.CreditCardNo[0],
+				(uchar *)&t_Settlement.credit, sizeof( t_Settlement.credit ) );
+	}
+
+// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i“o˜^”Ô†‚ğƒZƒbƒg‚·‚éj
+	if (p_RcptDat->RegistNum[0] != 0) {
+		p_NtDat->SeisanData.RegistNum1 = astoinl(&p_RcptDat->RegistNum[5], 9);
+		p_NtDat->SeisanData.RegistNum2 = astoin(&p_RcptDat->RegistNum[1], 4);
+		p_NtDat->SeisanData.RegistNum3 = p_RcptDat->RegistNum[0];
+	}
+// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i“o˜^”Ô†‚ğƒZƒbƒg‚·‚éj
+// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i“K—pÅ—¦‚ğƒZƒbƒg‚·‚éj
+	p_NtDat->SeisanData.TaxRate = p_RcptDat->WTaxRate;
+// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i“K—pÅ—¦‚ğƒZƒbƒg‚·‚éj
+// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i“KŠi¿‹‘î•ñ—L–³‚ğƒZƒbƒg‚·‚éj
+	// ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰ˆÈ~‚Í•K‚¸1‚ğƒZƒbƒg‚·‚é
+	p_NtDat->SeisanData.Invoice = 1;
+// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i“KŠi¿‹‘î•ñ—L–³‚ğƒZƒbƒg‚·‚éj
+
+// ¸Z”}‘Ìî•ñi•W€‚Å‚Í–¢‘Î‰j
+	if( p_NtDat->SeisanData.Media->MediaKind ) {
+		
+		memset( &t_Settlement, 0, sizeof(t_Settlement) );
+		memcpy( t_Settlement.media.card_id,
+				 p_NtDat->SeisanData.Media->MediaCardNo,
+				sizeof(t_Settlement.media.card_id) );								// ƒJ[ƒh”Ô†
+		memcpy( t_Settlement.media.card_info,
+				 p_NtDat->SeisanData.Media->MediaCardInfo,
+				sizeof(t_Settlement.media.card_info) );								// ƒJ[ƒhî•ñ
+		// AES ˆÃ†‰»
+		AesCBCEncrypt( (uchar *)&t_Settlement.media, sizeof( t_Settlement.media ) );
+		memcpy( (uchar *)& p_NtDat->SeisanData.Media->MediaCardNo[0],
+				(uchar *)&t_Settlement.media, sizeof( t_Settlement.media ) );
+
+	}
+// MH364300 GG119A23(E) // GG122600(E) Y.Tanizaki ICƒNƒŒƒWƒbƒg‘Î‰
+
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+	// ‘O‰ñ‚s‡ŒvŠÔ‚ğƒZƒbƒg
+	memcpy( &p_NtDat->SeisanData.Before_Ts_Time, 
+					&p_RcptDat->Before_Ts_Time, sizeof(p_RcptDat->Before_Ts_Time) );
+
+	// “Š“üE•¥o‹àŠz‚ğƒZƒbƒg
+	p_NtDat->MoneyData[0].ParkingNo = (ulong)CPrmSS[S_SYS][1];				// Šî–{’“ÔêNo.
+	p_NtDat->MoneyData[0].DiscSyu   = NTNET_MEITETU_IN_MONEY;				// “ü‹à
+	p_NtDat->MoneyData[0].InOut1000 = p_RcptDat->in_coin[4];				// “Š“ü‹àŠz1000‰~
+	if (p_RcptDat->PayClass == 2 || p_RcptDat->PayClass == 3) {
+		if(p_RcptDat->f_escrow) {											// ƒGƒXƒNƒ‚ ‚è
+			p_NtDat->MoneyData[0].InOut1000 += 1;							// ¸Z’†~‚È‚çƒGƒXƒNƒ–‡”‚ğ‰ÁZ
+		}
+	}
+	p_NtDat->MoneyData[0].InOut500  = p_RcptDat->in_coin[3];				// “Š“ü‹àŠz500‰~
+	p_NtDat->MoneyData[0].InOut100  = p_RcptDat->in_coin[2];				// “Š“ü‹àŠz100‰~
+	p_NtDat->MoneyData[0].InOut50   = p_RcptDat->in_coin[1];				// “Š“ü‹àŠz50‰~
+	p_NtDat->MoneyData[0].InOut10   = p_RcptDat->in_coin[0];				// “Š“ü‹àŠz10‰~
+
+	p_NtDat->MoneyData[1].ParkingNo = (ulong)CPrmSS[S_SYS][1];				// Šî–{’“ÔêNo.
+	p_NtDat->MoneyData[1].DiscSyu   = NTNET_MEITETU_OUT_MONEY;				// o‹à
+	if (p_RcptDat->PayClass == 2 || p_RcptDat->PayClass == 3) {
+		if(p_RcptDat->f_escrow) {											// ƒGƒXƒNƒ‚ ‚è
+			p_NtDat->MoneyData[1].InOut1000 = 1;							// ¸Z’†~‚È‚çƒGƒXƒNƒ–‡”‚ğƒZƒbƒg
+		}
+	}
+	p_NtDat->MoneyData[1].InOut500  = p_RcptDat->out_coin[3];				// •¥o‹àŠz500‰~
+	p_NtDat->MoneyData[1].InOut100  = p_RcptDat->out_coin[2];				// •¥o‹àŠz100‰~
+	p_NtDat->MoneyData[1].InOut50   = p_RcptDat->out_coin[1];				// •¥o‹àŠz50‰~
+	p_NtDat->MoneyData[1].InOut10   = p_RcptDat->out_coin[0];				// •¥o‹àŠz10‰~
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+
+// MH341109(S) A.iiizumi 2017/11/01 NT-NETŒo—R‚Å¸Zƒf[ƒ^‚ğ‘—M‚Í¸Z”}‘Ìî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+// NT-NETŒo—R‚Å¸Zƒf[ƒ^‚ğParkingWeb‘—M‚Í¸Z”}‘Ìî•ñ‚ğƒZƒbƒg‚µ‚È‚¢‚Ì‚ª³‚µ‚¢d—l
+// ’¼ÚParkingWeb‚É‘—M‚·‚éê‡‚ÍƒZƒbƒg‚·‚éd—l‚Å‚·B
+//	if( p_RcptDat->teiki.ParkingNo ) {
+//		p_NtDat->SeisanData.Media[0].MediaKind	= (ushort)(p_RcptDat->teiki.pkno_syu + 2);			// ¸Z”}‘Ìî•ñ‚P@í•Ê(ƒƒCƒ“”}‘Ì)	
+//		intoasl(p_NtDat->SeisanData.Media[0].MediaCardNo, p_RcptDat->teiki.id, 5);					// ƒJ[ƒh”Ô†	"0"`"9"A"A"`"Z"(‰p”š) ¶‹l‚ß
+//		intoasl(p_NtDat->SeisanData.Media[0].MediaCardInfo, p_RcptDat->teiki.syu, 2);				// ƒJ[ƒh”Ô†	"0"`"9"A"A"`"Z"(‰p”š) ¶‹l‚ß
+//	}
+// MH341109(E) A.iiizumi 2017/11/01 NT-NETŒo—R‚Å¸Zƒf[ƒ^‚ğ‘—M‚Í¸Z”}‘Ìî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+
+// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛ‚ğƒZƒbƒg‚·‚éj
+	p_NtDat->SeisanData.TaxableDiscount = 0;
+// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛ‚ğƒZƒbƒg‚·‚éj
+	for( i = j = 0; i < WTIK_USEMAX; i++ ){										// ¸Z’†~ˆÈŠO‚ÌŠ„ˆøî•ñƒRƒs[
+		if(( p_RcptDat->DiscountData[i].DiscSyu != 0 ) &&						// Š„ˆøí•Ê‚ ‚è
+		   (( p_RcptDat->DiscountData[i].DiscSyu < NTNET_CSVS_M ) ||			// ¸Z’†~Š„ˆøî•ñ‚Å‚È‚¢
+		    ( NTNET_CFRE < p_RcptDat->DiscountData[i].DiscSyu ))){
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰@ƒ\[ƒXƒR[ƒhƒŒƒrƒ…[#257128
+//				memcpy( &p_NtDat->DiscountData[j], &p_RcptDat->DiscountData[i], sizeof( DISCOUNT_DATA ) );	// Š„ˆøî•ñ
+				p_NtDat->DiscountData[j].ParkingNo		= p_RcptDat->DiscountData[i].ParkingNo;					// ’“ÔêNo.
+				p_NtDat->DiscountData[j].DiscSyu		= p_RcptDat->DiscountData[i].DiscSyu;						// Š„ˆøí•Ê
+				p_NtDat->DiscountData[j].DiscNo			= p_RcptDat->DiscountData[i].DiscNo;		// Š„ˆø‹æ•ª
+				p_NtDat->DiscountData[j].DiscCount		= p_RcptDat->DiscountData[i].DiscCount;	// ‰ñû–‡”
+				p_NtDat->DiscountData[j].Discount		= p_RcptDat->DiscountData[i].Discount;		// Š„ˆøŠz
+				p_NtDat->DiscountData[j].DiscInfo1		= p_RcptDat->DiscountData[i].DiscInfo1;	// Š„ˆøî•ñ1
+				p_NtDat->DiscountData[j].uDiscData.common.DiscInfo2 = p_RcptDat->DiscountData[i].uDiscData.common.DiscInfo2;	// Š„ˆøî•ñ2
+				p_NtDat->DiscountData[j].uDiscData.common.MoveMode = 1;											// g—p
+				p_NtDat->DiscountData[j].uDiscData.common.DiscFlg = 0;											// Š„ˆøÏ‚İ(V‹K¸Z)
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰@ƒ\[ƒXƒR[ƒhƒŒƒrƒ…[#257128
+			if( p_NtDat->DiscountData[j].DiscSyu == NTNET_PRI_W ){
+				memset( &p_NtDat->DiscountData[j].uDiscData, 0, 8 );	// •s—vƒf[ƒ^ƒNƒŠƒA
+			}
+		    // Š„ˆøî•ñ‚Ì‚¤‚¿A“dqƒ}ƒl[‚É‚Â‚¢‚Ä‚ÍˆÃ†‰»‚ğs‚¤
+			if( p_NtDat->DiscountData[j].DiscSyu == NTNET_SUICA_1	||		// 31:Suica
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_EDY_1		||		// 33:Edy
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_PASMO_1	||		// 35:PASMO
+// MH364300 GG119A23(S) // GG122600(S) Y.Tanizaki ICƒNƒŒƒWƒbƒg‘Î‰
+//				p_NtDat->DiscountData[j].DiscSyu == 37				||		// 37:iD
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_ID_1		||		// 37:iD
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_NANACO_1	||		// 85:nanaco
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_WAON_1	||		// 65:WAON
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_QUICPAY_1	||		// 81:quicpay
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_SAPICA_1	||		// 83:SAPICA		
+// MH364300 GG119A23(E) // GG122600(E) Y.Tanizaki ICƒNƒŒƒWƒbƒg‘Î‰
+				p_NtDat->DiscountData[j].DiscSyu == NTNET_ICOCA_1	||		// 61:Œğ’ÊŒnICƒJ[ƒhi—\”õ‚Pj
+		    	p_NtDat->DiscountData[j].DiscSyu == NTNET_ICCARD_1 ){		// 63Œğ’ÊŒnICƒJ[ƒhi—\”õ‚Qj
+
+				memset( &t_Settlement, 0, sizeof(t_Settlement) );
+				memcpy( t_Settlement.cardno, 
+						(uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[j]))->CardNo, 	// Š„ˆø‹æ•ªˆÈ‰º16ƒoƒCƒg‚ÉƒJ[ƒh”Ô†‚ª“ü‚Á‚Ä‚¢‚é
+						sizeof(t_Settlement.cardno) );
+
+				// AES ˆÃ†‰»
+				AesCBCEncrypt( t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+				memcpy( (uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[j]))->CardNo,
+						(uchar *)&t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+			}
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Í‰ÛÅ‘ÎÛƒZƒbƒg–¢‘Î‰j
+//// MH364304(S) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛ‚ğƒZƒbƒg‚·‚éj
+//			// wari_ticket‚É•ÏŠ·‚·‚é
+//			disc_wari_conv(&p_NtDat->DiscountData[j], &wari_dt);
+//			if (wari_dt.tik_syu != 0 && wari_dt.tik_syu != INVALID) {
+//				// ‰ÛÅ‘ÎÛ‚©ƒ`ƒFƒbƒN‚·‚é
+//				if (cancelReceipt_Waridata_chk(&wari_dt) &&
+//					wari_dt.ryokin != 0) {
+//					p_NtDat->SeisanData.TaxableDiscount |= (1 << j);
+//				}
+//			}
+//// MH364304(E) ƒf[ƒ^•ÛŠÇƒT[ƒrƒX‘Î‰i‰ÛÅ‘ÎÛ‚ğƒZƒbƒg‚·‚éj
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Í‰ÛÅ‘ÎÛƒZƒbƒg–¢‘Î‰j
+
+			j++;
+		}
+	}
+	// –¾×î•ñ
+	for( i=0; i<DETAIL_SYU_MAX; i++ ){
+		if( p_RcptDat->DetailData[i].DiscSyu ){
+			p_NtDat->DiscountData[j].ParkingNo		= p_RcptDat->DetailData[i].ParkingNo;					// ’“ÔêNo.
+			p_NtDat->DiscountData[j].DiscSyu		= p_RcptDat->DetailData[i].DiscSyu;						// Š„ˆøí•Ê
+			p_NtDat->DiscountData[j].DiscNo			= p_RcptDat->DetailData[i].uDetail.Common.DiscNo;		// Š„ˆø‹æ•ª
+			p_NtDat->DiscountData[j].DiscCount		= p_RcptDat->DetailData[i].uDetail.Common.DiscCount;	// ‰ñû–‡”
+			p_NtDat->DiscountData[j].Discount		= p_RcptDat->DetailData[i].uDetail.Common.Discount;		// Š„ˆøŠz
+			p_NtDat->DiscountData[j].DiscInfo1		= p_RcptDat->DetailData[i].uDetail.Common.DiscInfo1;	// Š„ˆøî•ñ1
+			p_NtDat->DiscountData[j].uDiscData.common.DiscInfo2 = p_RcptDat->DetailData[i].uDetail.Common.DiscInfo2;	// Š„ˆøî•ñ2
+			p_NtDat->DiscountData[j].uDiscData.common.MoveMode = 1;											// g—p
+			p_NtDat->DiscountData[j].uDiscData.common.DiscFlg = 0;											// Š„ˆøÏ‚İ(V‹K¸Z)
+			j++;
+		}
+	}
+
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+	// ŒˆÏƒŠ[ƒ_Ú‘±‚ ‚è
+// MH364301(S) SX20“‡‘Î‰
+//	if (isEC_USE()) {
+	if (EcUseKindCheck(p_RcptDat->Electron_data.Ec.e_pay_kind) ||
+		p_RcptDat->Electron_data.Ec.e_pay_kind == EC_CREDIT_USED) {
+// MH364301(E) SX20“‡‘Î‰
+// GG122600(S) ŒˆÏ¸Z’†~‚Í¸Zƒf[ƒ^‚É‚İ‚È‚µŒˆÏî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+		// ¸Z’†~AÄ¸Z’†~‚ÍŠ„ˆøî•ñ‚ÉƒZƒbƒg‚µ‚È‚¢
+		if (p_NtDat->SeisanData.PayClass != 2 && p_NtDat->SeisanData.PayClass != 3) {
+// GG122600(E) ŒˆÏ¸Z’†~‚Í¸Zƒf[ƒ^‚É‚İ‚È‚µŒˆÏî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+		if (p_RcptDat->credit.pay_ryo != 0) {
+			// ƒNƒŒƒWƒbƒgŒˆÏ
+			/* ‹ó‚«´Ø±ŒŸõ */
+			for (i = 0; (i < NTNET_DIC_MAX2) &&
+					(0 != p_NtDat->DiscountData[i].ParkingNo); i++) {
+				;
+			}		/* ƒf[ƒ^‚ª‚ ‚éŠÔ				*/
+			if (i < NTNET_DIC_MAX2) {
+				p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+				p_NtDat->DiscountData[i].DiscSyu = NTNET_INQUIRY_NUM;		// Š„ˆøí•Ê
+				// ƒNƒŒƒWƒbƒgŒˆÏ‚Í–â‚¢‡‚í‚¹”Ô†‚ğóM‚µ‚È‚¢‚Ì‚Å0x20–„‚ß‚Æ‚·‚é
+				memset(&p_NtDat->DiscountData[i].DiscNo, 0x20, 16);
+				p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;
+				p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;
+				i++;
+				j++;
+			}
+		}
+		else if (p_RcptDat->Electron_data.Ec.pay_ryo != 0) {
+			// “dqƒ}ƒl[ŒˆÏ
+			// Š„ˆøî•ñ‚ÉƒJ[ƒhNo.‚Æ—˜—pŠz‚ÍƒZƒbƒg‚µ‚È‚¢
+			/* ‹ó‚«´Ø±ŒŸõ */
+			for (i = 0; (i < NTNET_DIC_MAX2) &&
+					(0 != p_NtDat->DiscountData[i].ParkingNo); i++) {
+				;
+			}		/* ƒf[ƒ^‚ª‚ ‚éŠÔ				*/
+// MH364301(S) QRƒR[ƒhŒˆÏ‘Î‰
+//			if (i < (NTNET_DIC_MAX-2)) {
+			// ‹ó‚«‚ª‚R‚Â‚ ‚é‚©H
+			k = 3;
+			if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_ID_USED ||
+				p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QUIC_PAY_USED ||
+				p_RcptDat->Electron_data.Ec.e_pay_kind == EC_PITAPA_USED ||
+				p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QR_USED) {
+				// ‹ó‚«‚ª‚S‚Â‚ ‚é‚©H
+				k++;
+			}
+			if (i <= (NTNET_DIC_MAX2-k)) {
+// MH364301(E) QRƒR[ƒhŒˆÏ‘Î‰
+				switch (p_RcptDat->Electron_data.Ec.e_pay_kind) {			// ŒˆÏí•Ê‚©‚çU‚è•ª‚¯
+				case	EC_EDY_USED:
+					wk_kind1 = NTNET_EDY_1;									// Š„ˆøí•ÊFEdy¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_EDY_2;									// Š„ˆøí•ÊFEdyx•¥ŠzAcŠz
+					break;
+				case	EC_NANACO_USED:
+					wk_kind1 = NTNET_NANACO_1;								// Š„ˆøí•ÊFnanaco¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_NANACO_2;								// Š„ˆøí•ÊFnanacox•¥ŠzAcŠz
+					break;
+				case	EC_WAON_USED:
+					wk_kind1 = NTNET_WAON_1;								// Š„ˆøí•ÊFWAON¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_WAON_2;								// Š„ˆøí•ÊFWAONx•¥ŠzAcŠz
+					break;
+				case	EC_SAPICA_USED:
+					wk_kind1 = NTNET_SAPICA_1;								// Š„ˆøí•ÊFSAPICA¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_SAPICA_2;								// Š„ˆøí•ÊFSAPICAx•¥ŠzAcŠz
+					break;
+				case	EC_KOUTSUU_USED:
+					// Œğ’ÊŒnICƒJ[ƒh‚ÍSuica‚ÌID‚ğg—p‚·‚é
+					wk_kind1 = NTNET_SUICA_1;								// Š„ˆøí•ÊFSuica¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_SUICA_2;								// Š„ˆøí•ÊFSuicax•¥ŠzAcŠz
+					break;
+				case	EC_ID_USED:
+					wk_kind1 = NTNET_ID_1;									// Š„ˆøí•ÊFiD¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_ID_2;									// Š„ˆøí•ÊFiDx•¥Šz
+					break;
+				case	EC_QUIC_PAY_USED:
+					wk_kind1 = NTNET_QUICPAY_1;								// Š„ˆøí•ÊFQUICPay¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_QUICPAY_2;								// Š„ˆøí•ÊFQUICPayx•¥Šz
+					break;
+// MH364301(S) PiTaPa‘Î‰
+				case	EC_PITAPA_USED:
+					wk_kind1 = NTNET_PITAPA_1;								// Š„ˆøí•ÊFPiTaPa¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_PITAPA_2;								// Š„ˆøí•ÊFPiTaPax•¥Šz
+					break;
+// MH364301(E) PiTaPa‘Î‰
+				default:
+					wk_kind1 = 0;
+					wk_kind2 = 0;
+					break;
+				}
+
+				if (wk_kind1 != 0 && wk_kind2 != 0) {
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = wk_kind1;			// Š„ˆøí•Ê
+					// ƒJ[ƒh”Ô†
+// GG122600(S) ‚İ‚È‚µ{ŒˆÏOKóM‚É¸Zƒf[ƒ^‚ÌƒJ[ƒh”Ô†‚ªóM‚µ‚½ƒJ[ƒh”Ô†‚Ì‚Ü‚Ü‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+///					memcpy(&p_NtDat->DiscountData[i].DiscNo, p_RcptDat->Electron_data.Ec.Card_ID, sizeof(p_RcptDat->Electron_data.Ec.Card_ID));
+					if( p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1 &&
+	    				p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_settlement == 0 ){
+						// ‚İ‚È‚µŒˆÏ{ŒˆÏŒ‹‰ÊOKóM‚É‚æ‚é‚İ‚È‚µŒˆÏ‚Ì¸Zƒf[ƒ^‚Í‰ïˆõNo.‚ğƒJ[ƒhŒ…”•ª0x30–„‚ß‚µ¶‹l‚ß‚ÅZZ‚·‚éB
+						// [*]ˆóš‚İ‚È‚µŒˆÏ‚Æ“¯—l‚Ì‰ïˆõNo‚ğƒZƒbƒg‚·‚éB
+						memset( &p_NtDat->DiscountData[i].DiscNo, 0x20, sizeof(p_RcptDat->Electron_data.Ec.Card_ID) );
+						// ‚»‚ê‚¼‚ê‚ÌƒJ[ƒhŒ…”•ª0x30–„‚ß
+						memset( &p_NtDat->DiscountData[i].DiscNo, 0x30, (size_t)(EcBrandEmoney_Digit[p_RcptDat->Electron_data.Ec.e_pay_kind - EC_USED]) );
+						// ¶‹l‚ß‚ÅZZ
+						memset( &p_NtDat->DiscountData[i].DiscNo, 'Z', 2 );
+					}
+					else {
+						memcpy(&p_NtDat->DiscountData[i].DiscNo, p_RcptDat->Electron_data.Ec.Card_ID, sizeof(p_RcptDat->Electron_data.Ec.Card_ID));
+					}
+// GG122600(E) ‚İ‚È‚µ{ŒˆÏOKóM‚É¸Zƒf[ƒ^‚ÌƒJ[ƒh”Ô†‚ªóM‚µ‚½ƒJ[ƒh”Ô†‚Ì‚Ü‚Ü‘—M‚³‚ê‚Ä‚µ‚Ü‚¤
+// GG122600(S) ƒJ[ƒh”Ô†‚ªˆÃ†‰»‚³‚ê‚Ä‚¢‚È‚¢
+					// “dqƒ}ƒl[ƒJ[ƒh”Ô†‚ÍˆÃ†‰»‘ÎÛ
+					memset( &t_Settlement, 0, sizeof(t_Settlement) );
+					memcpy( t_Settlement.cardno, 
+							(uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,	// Š„ˆø‹æ•ªˆÈ‰º16ƒoƒCƒg‚ÉƒJ[ƒh”Ô†‚ª“ü‚Á‚Ä‚¢‚é
+							sizeof(t_Settlement.cardno) );
+
+					// AES ˆÃ†‰»
+					AesCBCEncrypt( t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+					memcpy( (uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,
+							(uchar *)&t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+// GG122600(E) ƒJ[ƒh”Ô†‚ªˆÃ†‰»‚³‚ê‚Ä‚¢‚È‚¢
+					i++;
+					j++;
+
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = wk_kind2;			// Š„ˆøí•Ê
+// MH364301(S) QRƒR[ƒhŒˆÏ‘Î‰
+//					p_NtDat->DiscountData[i].DiscNo = 0;					// Š„ˆø‹æ•ª
+					if (p_RcptDat->EcResult == EPAY_RESULT_MIRYO_ZANDAKA_END) {
+						wk_kubun = 2;										// –¢—¹x•¥Ï‚İ
+					}
+					else if (p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1) {
+						wk_kubun = 1;										// ‚İ‚È‚µŒˆÏ
+					}
+					else {
+						wk_kubun = 0;										// x•¥
+					}
+					p_NtDat->DiscountData[i].DiscNo = wk_kubun;				// Š„ˆø‹æ•ªFŒˆÏí•Ê
+// MH364301(E) QRƒR[ƒhŒˆÏ‘Î‰
+					p_NtDat->DiscountData[i].DiscCount = 1;					// g—p–‡”
+					p_NtDat->DiscountData[i].Discount = p_RcptDat->Electron_data.Ec.pay_ryo;	// x•¥‹àŠz
+					p_NtDat->DiscountData[i].DiscInfo1 = p_RcptDat->Electron_data.Ec.pay_after;	// cŠz
+					switch (p_RcptDat->Electron_data.Ec.e_pay_kind) {		// ŒˆÏí•Ê‚©‚çU‚è•ª‚¯
+					case	EC_EDY_USED:
+// GG122600(S) EdyEWAON‘Î‰
+//						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = p_RcptDat->Electron_data.Ec.Brand.Edy.DealNo;			// Edyæˆø’Ê”Ô
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = astoinl(p_RcptDat->Electron_data.Ec.Brand.Edy.CardDealNo, 5);	// ƒJ[ƒhæˆø’Ê”Ô
+// GG122600(E) EdyEWAON‘Î‰
+						break;
+					case	EC_NANACO_USED:
+// GG122600(S) nanacoEiDEQUICPay‘Î‰
+//						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = p_RcptDat->Electron_data.Ec.Brand.Nanaco.DealNo;		// nanacoæˆø’Ê”Ô
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = astoinl(p_RcptDat->Electron_data.Ec.Brand.Nanaco.DealNo, 6);	// ’[––æˆø’Ê”Ô
+// GG122600(E) nanacoEiDEQUICPay‘Î‰
+						break;
+					case	EC_WAON_USED:
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = p_RcptDat->Electron_data.Ec.Brand.Waon.point;			// WAON¡‰ñ•t—^ƒ|ƒCƒ“ƒg
+						break;
+					case	EC_SAPICA_USED:
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = p_RcptDat->Electron_data.Ec.Brand.Sapica.Details_ID;	// SAPICAˆêŒ–¾×ID
+						break;
+// GG122600(S) nanacoEiDEQUICPay‘Î‰
+					case	EC_ID_USED:
+						// cŠz‚ª’Ê’m‚³‚ê‚é‚±‚Æ‚Í‚È‚¢‚ªA”O‚Ì‚½‚ßŠ„ˆøî•ñ1‚ğƒNƒŠƒA‚·‚é
+						p_NtDat->DiscountData[i].DiscInfo1 = 0;
+						// ƒZƒbƒg‚·‚é€–Ú‚È‚µ
+						break;
+					case	EC_QUIC_PAY_USED:
+						// “`•[”Ô†‚Í0‚ğƒZƒbƒg
+						p_NtDat->DiscountData[i].DiscInfo1 = 0;
+						// æˆø’Ê”Ô‚Í0‚ğƒZƒbƒg
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;
+						break;
+// GG122600(E) nanacoEiDEQUICPay‘Î‰
+// MH364301(S) PiTaPa‘Î‰
+					case	EC_PITAPA_USED:
+						p_NtDat->DiscountData[i].DiscInfo1 = astoinl(p_RcptDat->Electron_data.Ec.Brand.Pitapa.Slip_No, 5);			// “`•[”Ô†
+						// æˆø’Ê”Ô‚Í0‚ğƒZƒbƒg
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;
+						break;
+// MH364301(E) PiTaPa‘Î‰
+					default:
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;
+						break;
+					}
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;
+					i++;
+					j++;
+
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_INQUIRY_NUM;	// Š„ˆøí•Ê
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+					if( p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1 ||
+						p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_settlement == 1 ) {
+						// ‚İ‚È‚µŒˆÏ‚Í0x20‚ÅƒtƒBƒ‹‚·‚é
+						memset( &p_NtDat->DiscountData[i].DiscNo, 0x20, 16 );
+					}
+					else {
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+					memcpyFlushLeft( (uchar *)&p_NtDat->DiscountData[i].DiscNo, (uchar *)&p_RcptDat->Electron_data.Ec.inquiry_num[0],
+										16, sizeof( p_RcptDat->Electron_data.Ec.inquiry_num ) );	// –â‚¢‡‚í‚¹”Ô†
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+					}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXjiGT-7700:GM747904Qlj
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;
+					i++;
+					j++;
+
+// MH364301(S) Š„ˆøî•ñ‚Éu³”F”Ô†v‚ğƒZƒbƒg‚·‚é
+					if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_ID_USED ||
+						p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QUIC_PAY_USED ||
+						p_RcptDat->Electron_data.Ec.e_pay_kind == EC_PITAPA_USED) {
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];				// ’“ÔêNo.
+						switch (p_RcptDat->Electron_data.Ec.e_pay_kind) {
+						case EC_ID_USED:
+							p_NtDat->DiscountData[i].DiscSyu = NTNET_ID_APPROVAL_NO;
+							memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+											p_RcptDat->Electron_data.Ec.Brand.Id.Approval_No,
+											16,
+											sizeof(p_RcptDat->Electron_data.Ec.Brand.Id.Approval_No));
+							break;
+						case EC_QUIC_PAY_USED:
+							p_NtDat->DiscountData[i].DiscSyu = NTNET_QUIC_PAY_APPROVAL_NO;
+							memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+											p_RcptDat->Electron_data.Ec.Brand.Quickpay.Approval_No,
+											16,
+											sizeof(p_RcptDat->Electron_data.Ec.Brand.Quickpay.Approval_No));
+							break;
+						case EC_PITAPA_USED:
+							p_NtDat->DiscountData[i].DiscSyu = NTNET_PITAPA_APPROVAL_NO;
+							// ƒIƒtƒ‰ƒCƒ“³”FŒˆÏ‚ÍƒI[ƒ‹'*'‚Ì‚½‚ßA'0'‚Ö•ÏŠ·‚·‚é
+							if (p_RcptDat->Electron_data.Ec.Brand.Pitapa.Approval_No[0] == '*') {
+								memset((uchar*)&p_NtDat->DiscountData[i].DiscNo, 0x20, 16);
+								memset((uchar*)&p_NtDat->DiscountData[i].DiscNo, '0', 8);
+							}
+							else {
+								memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+												p_RcptDat->Electron_data.Ec.Brand.Pitapa.Approval_No,
+												16,
+												sizeof(p_RcptDat->Electron_data.Ec.Brand.Pitapa.Approval_No));
+							}
+							break;
+						default:
+							break;
+						}
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;				// g—p^•Ô‹p=0ŒÅ’è
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;				// Š„ˆøÏ‚İ=0ŒÅ’è
+						i++;
+						j++;
+					}
+// MH364301(E) Š„ˆøî•ñ‚Éu³”F”Ô†v‚ğƒZƒbƒg‚·‚é
+				}
+// MH364301(S) QRƒR[ƒhŒˆÏ‘Î‰
+				else if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QR_USED) {
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];					// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_QR;							// Š„ˆøí•Ê
+					if (p_RcptDat->Electron_data.Ec.E_Status.BIT.deemed_sett_fin == 1) {
+						wk_kubun = 1;														// ‚İ‚È‚µŒˆÏ
+						p_NtDat->DiscountData[i].DiscInfo1 = 0;								// Š„ˆøî•ñ‚P
+					}
+					else {
+						wk_kubun = 0;														// x•¥
+						p_NtDat->DiscountData[i].DiscInfo1 = p_RcptDat->Electron_data.Ec.Brand.Qr.PayKind;	// Š„ˆøî•ñ‚P
+					}
+					p_NtDat->DiscountData[i].DiscNo = wk_kubun;								// Š„ˆø‹æ•ªFŒˆÏí•Ê
+					p_NtDat->DiscountData[i].DiscCount = 1;									// g—p–‡”
+					p_NtDat->DiscountData[i].Discount = p_RcptDat->Electron_data.Ec.pay_ryo;	// x•¥‹àŠz
+					p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;				// Š„ˆøî•ñ‚Q
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;					// g—p^•Ô‹p=0ŒÅ’è
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;					// Š„ˆøÏ‚İ=0ŒÅ’è
+					i++;
+					j++;
+
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];					// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_INQUIRY_NUM;					// Š„ˆøí•Ê
+					// QRŒˆÏ‚Í–â‚¢‡‚í‚¹”Ô†‚ğóM‚µ‚È‚¢‚Ì‚Å0x20–„‚ß‚Æ‚·‚é
+					memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+							0x20, 16);
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;					// g—p^•Ô‹p=1ŒÅ’è
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;					// Š„ˆøÏ‚İ=0ŒÅ’è
+					i++;
+					j++;
+
+					if (wk_kubun == 0) {
+						// ’Êíx•¥
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];				// ’“Ôê‡‚
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_MCH_NO_TOP_HALF;			// Š„ˆøí•ÊFQRƒR[ƒhŒˆÏ Mchæˆø”Ô†ãˆÊ”¼•ª
+
+						memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+										p_RcptDat->Electron_data.Ec.Brand.Qr.MchTradeNo,
+										16,
+										sizeof(p_RcptDat->Electron_data.Ec.Brand.Qr.MchTradeNo)/2);
+
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;				// g—p^•Ô‹pFg—piŒÅ’èj
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;				// Š„ˆøÏ‚İFV‹K¸ZiŒÅ’èj
+						i++;
+						j++;
+
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];				// ’“Ôê‡‚
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_MCH_NO_LOWER_HALF;			// Š„ˆøí•ÊFQRƒR[ƒhŒˆÏ Mchæˆø”Ô†‰ºˆÊ”¼•ª
+
+						memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+										&p_RcptDat->Electron_data.Ec.Brand.Qr.MchTradeNo[16],
+										16,
+										sizeof(p_RcptDat->Electron_data.Ec.Brand.Qr.MchTradeNo)/2);
+
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;				// g—p^•Ô‹pFg—piŒÅ’èj
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;				// Š„ˆøÏ‚İFV‹K¸ZiŒÅ’èj
+						i++;
+						j++;
+					}
+					else {
+						// ‚İ‚È‚µŒˆÏ
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];				// ’“Ôê‡‚
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_PAYTERMINAL_NO;			// Š„ˆøí•ÊFQRƒR[ƒhŒˆÏ x•¥’[––ID
+
+						memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+										p_RcptDat->Electron_data.Ec.Brand.Qr.PayTerminalNo,
+										16, 13);
+
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;				// g—p^•Ô‹pFg—piŒÅ’èj
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;				// Š„ˆøÏ‚İFV‹K¸ZiŒÅ’èj
+						i++;
+						j++;
+
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];				// ’“Ôê‡‚
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_DEAL_NO;					// Š„ˆøí•ÊFQRƒR[ƒhŒˆÏ æˆø”Ô†
+
+						memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+										p_RcptDat->Electron_data.Ec.inquiry_num,
+										16,
+										sizeof(p_RcptDat->Electron_data.Ec.inquiry_num));
+
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;				// g—p^•Ô‹pFg—piŒÅ’èj
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;				// Š„ˆøÏ‚İFV‹K¸ZiŒÅ’èj
+						i++;
+						j++;
+					}
+				}
+// MH364301(E) QRƒR[ƒhŒˆÏ‘Î‰
+			}
+		}
+// GG122600(S) ŒˆÏ¸Z’†~‚Í¸Zƒf[ƒ^‚É‚İ‚È‚µŒˆÏî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+		}
+// GG122600(E) ŒˆÏ¸Z’†~‚Í¸Zƒf[ƒ^‚É‚İ‚È‚µŒˆÏî•ñ‚ğƒZƒbƒg‚µ‚È‚¢
+// MH364301(S) “dqŒˆÏ‚Ì¸Z’†~ƒf[ƒ^‘—M‘Î‰
+		else if (p_RcptDat->Electron_data.Ec.E_Status.BIT.miryo_confirm == 1 &&
+				(p_RcptDat->PayClass == 2 || p_RcptDat->PayClass == 3)) {
+			// ˆ—‹æ•ª‚QA‚R‚ÅŒˆÏ¸Z’†~‚Ìê‡
+			if (EcUseKindCheck(p_RcptDat->Electron_data.Ec.e_pay_kind)) {
+				// ‹ó‚«‚ª4‚Â‚ ‚é‚©H
+				k = 4;
+				if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_ID_USED ||
+					p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QUIC_PAY_USED ||
+					p_RcptDat->Electron_data.Ec.e_pay_kind == EC_PITAPA_USED ||
+					p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QR_USED) {
+					// ‹ó‚«‚ª5‚Â‚ ‚é‚©H
+					k++;
+				}
+				/* ‹ó‚«´Ø±ŒŸõ */
+				for (i = 0; (i < NTNET_DIC_MAX2) &&
+						(0 != p_NtDat->DiscountData[i].ParkingNo); i++) {
+					;
+				}		/* ƒf[ƒ^‚ª‚ ‚éŠÔ				*/
+				if (i <= (NTNET_DIC_MAX2-k)) {
+					switch (p_RcptDat->Electron_data.Ec.e_pay_kind) {	// ŒˆÏí•Ê‚©‚çU‚è•ª‚¯
+					case	EC_EDY_USED:
+						wk_kind1 = NTNET_EDY_1;							// Š„ˆøí•ÊFEdy¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_EDY_2;							// Š„ˆøí•ÊFEdyx•¥ŠzAcŠz
+						wk_DiscNo = 3;
+						break;
+					case	EC_NANACO_USED:
+						wk_kind1 = NTNET_NANACO_1;						// Š„ˆøí•ÊFnanaco¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_NANACO_2;						// Š„ˆøí•ÊFnanacox•¥ŠzAcŠz
+						wk_DiscNo = 6;
+						break;
+					case	EC_WAON_USED:
+						wk_kind1 = NTNET_WAON_1;						// Š„ˆøí•ÊFWAON¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_WAON_2;						// Š„ˆøí•ÊFWAONx•¥ŠzAcŠz
+						wk_DiscNo = 5;
+						break;
+					case	EC_KOUTSUU_USED:
+						// Œğ’ÊŒnICƒJ[ƒh‚ÍSuica‚ÌID‚ğg—p‚·‚é
+						wk_kind1 = NTNET_SUICA_1;						// Š„ˆøí•ÊFSuica¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_SUICA_2;						// Š„ˆøí•ÊFSuicax•¥ŠzAcŠz
+						wk_DiscNo = 2;
+						break;
+					case	EC_ID_USED:
+						wk_kind1 = NTNET_ID_1;							// Š„ˆøí•ÊFiD¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_ID_2;							// Š„ˆøí•ÊFiDx•¥Šz
+						wk_DiscNo = 12;
+						break;
+					case	EC_QUIC_PAY_USED:
+						wk_kind1 = NTNET_QUICPAY_1;						// Š„ˆøí•ÊFQUICPay¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_QUICPAY_2;						// Š„ˆøí•ÊFQUICPayx•¥Šz
+						wk_DiscNo = 13;
+						break;
+					case	EC_PITAPA_USED:
+						wk_kind1 = NTNET_PITAPA_1;						// Š„ˆøí•ÊFPiTaPa¶°ÄŞ”Ô†
+						wk_kind2 = NTNET_PITAPA_2;						// Š„ˆøí•ÊFPiTaPax•¥Šz
+						wk_DiscNo = 4;
+						break;
+					case EC_QR_USED:
+						wk_kind1 = 0;									// Š„ˆøí•ÊFQR¶°ÄŞ”Ô†ig—p‚µ‚È‚¢‚½‚ß 0 j
+						wk_kind2 = 0;									// Š„ˆøí•ÊFQRx•¥Šzig—p‚µ‚È‚¢‚½‚ß 0 j
+						wk_DiscNo = 16;
+						break;
+					default:
+						wk_kind1 = 0;
+						wk_kind2 = 0;
+						wk_DiscNo = 0;
+						break;
+					}
+
+					if (wk_kind1 != 0 && wk_kind2 != 0) {
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+						p_NtDat->DiscountData[i].DiscSyu = wk_kind1;			// Š„ˆøí•Ê
+						memset( &p_NtDat->DiscountData[i].DiscNo, 0x20, 20 );
+						memset( &p_NtDat->DiscountData[i].DiscNo, 0x30, (size_t)(EcBrandEmoney_Digit[p_RcptDat->Electron_data.Ec.e_pay_kind - EC_USED]) );
+						// ¶‹l‚ß‚ÅZZ
+						memset( &p_NtDat->DiscountData[i].DiscNo, 'Z', 2 );
+
+						// “dqƒ}ƒl[ƒJ[ƒh”Ô†‚ÍˆÃ†‰»‘ÎÛ
+						memset( &t_Settlement, 0, sizeof(t_Settlement) );
+						memcpy( t_Settlement.cardno, 
+								(uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,	// Š„ˆø‹æ•ªˆÈ‰º16ƒoƒCƒg‚ÉƒJ[ƒh”Ô†‚ª“ü‚Á‚Ä‚¢‚é
+								sizeof(t_Settlement.cardno) );
+
+						// AES ˆÃ†‰»
+						AesCBCEncrypt( t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+						memcpy( (uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,
+								(uchar *)&t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+						i++;
+						j++;
+
+						// x•¥ŠzAcŠzix•¥Šz‚ÆcŠz‚Í0‰~‚Æ‚·‚éj
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+						p_NtDat->DiscountData[i].DiscSyu = wk_kind2;			// Š„ˆøí•Ê
+						p_NtDat->DiscountData[i].DiscNo = 3;					// Š„ˆø‹æ•ªi–¢—¹x•¥•s–¾j
+						p_NtDat->DiscountData[i].DiscCount = 1;					// g—p–‡”=1ŒÅ’è
+						p_NtDat->DiscountData[i].Discount = 0;					// Š„ˆøŠz=x•¥Šz0‰~
+						p_NtDat->DiscountData[i].DiscInfo1 = 0;					// Š„ˆøî•ñ1=0
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;	// Š„ˆøî•ñ2=0
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;		// g—p^•Ô‹p=0ŒÅ’è
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+						i++;
+						j++;
+
+						if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_ID_USED ||
+							p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QUIC_PAY_USED ||
+							p_RcptDat->Electron_data.Ec.e_pay_kind == EC_PITAPA_USED) {
+							// ³”F”Ô†
+							p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];			// ’“ÔêNo.
+							switch (p_RcptDat->Electron_data.Ec.e_pay_kind) {
+							case EC_ID_USED:
+								p_NtDat->DiscountData[i].DiscSyu = NTNET_ID_APPROVAL_NO;	// Š„ˆøí•Ê
+								memset((uchar*)&p_NtDat->DiscountData[i].DiscNo, 0x20, 16);
+								break;
+							case EC_QUIC_PAY_USED:
+								p_NtDat->DiscountData[i].DiscSyu = NTNET_QUIC_PAY_APPROVAL_NO;	// Š„ˆøí•Ê
+								memset((uchar*)&p_NtDat->DiscountData[i].DiscNo, 0x20, 16);
+								break;
+							case EC_PITAPA_USED:
+								p_NtDat->DiscountData[i].DiscSyu = NTNET_PITAPA_APPROVAL_NO;	// Š„ˆøí•Ê
+								memset((uchar*)&p_NtDat->DiscountData[i].DiscNo, 0x20, 16);
+								break;
+							}
+							p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;			// g—p^•Ô‹p=0ŒÅ’è
+							p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;			// Š„ˆøÏ‚İ=0ŒÅ’è
+							i++;
+							j++;
+						}
+					}
+					else if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_QR_USED) {
+						// x•¥ŠzAcŠzix•¥Šz‚ÆcŠz‚Í0‰~‚Æ‚·‚éj
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_QR;				// Š„ˆøí•Ê
+						p_NtDat->DiscountData[i].DiscNo = 3;						// Š„ˆø‹æ•ªi–¢—¹x•¥•s–¾j
+						p_NtDat->DiscountData[i].DiscCount = 1;						// g—p–‡”=1ŒÅ’è
+						p_NtDat->DiscountData[i].Discount = 0;						// Š„ˆøŠz=x•¥Šz0‰~
+						p_NtDat->DiscountData[i].DiscInfo1 = 0;						// Š„ˆøî•ñ1=0
+						p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;	// Š„ˆøî•ñ2=0
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;		// g—p^•Ô‹p=0ŒÅ’è
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+						i++;
+						j++;
+
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_PAYTERMINAL_NO;	// Š„ˆøí•Ê
+						if( p_RcptDat->Electron_data.Ec.E_Flag.BIT.deemSettleCancal == 1 ){	// ŒˆÏŒ‹‰Êƒf[ƒ^–¢óMH
+							// ŒˆÏŒ‹‰Êƒf[ƒ^‚ğóMo—ˆ‚È‚©‚Á‚½‚Ì‚Å16Œ…‚ğ0x20–„‚ßA13Œ…0x30–„‚ß
+							memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+									0x20, 16);
+							memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+									0x30, 13);
+						}
+						else{														// ‚İ‚È‚µ{Œ‹‰ÊOKóM‚É‚æ‚é‚İ‚È‚µŒˆÏH
+							// óM‚µ‚½ŒˆÏŒ‹‰Êƒf[ƒ^‚©‚çx•¥’[––ID‚ğ¾¯Ä
+							memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+											p_RcptDat->Electron_data.Ec.Brand.Qr.PayTerminalNo,
+											16, 13);
+						}
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;		// g—p^•Ô‹p=0ŒÅ’è
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+						i++;
+						j++;
+
+						p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+						p_NtDat->DiscountData[i].DiscSyu = NTNET_DEAL_NO;			// Š„ˆøí•Ê
+						if( p_RcptDat->Electron_data.Ec.E_Flag.BIT.deemSettleCancal == 1 ){	// ŒˆÏŒ‹‰Êƒf[ƒ^–¢óMH
+							// ŒˆÏŒ‹‰Êƒf[ƒ^‚ğóMo—ˆ‚È‚©‚Á‚½‚Ì‚Å16Œ…‚ğ0x20–„‚ßA15Œ…0x30–„‚ß
+							memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+									0x20, 16);
+							memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+									0x30, 15);
+						}
+						else{																// ‚İ‚È‚µ{Œ‹‰ÊOKóM‚É‚æ‚é‚İ‚È‚µŒˆÏH
+							// óM‚µ‚½ŒˆÏŒ‹‰Êƒf[ƒ^‚©‚çæˆø”Ô†‚ğ¾¯Ä
+							memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+											p_RcptDat->Electron_data.Ec.inquiry_num,
+											16,
+											sizeof(p_RcptDat->Electron_data.Ec.inquiry_num));
+						}
+						p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;		// g—p^•Ô‹p=0ŒÅ’è
+						p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+						i++;
+						j++;
+					}
+
+					// –â‚¢‡‚í‚¹”Ô†
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_INQUIRY_NUM;		// Š„ˆøí•Ê
+					memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+							0x20, 16);											// –â‚¢‡‚í‚¹”Ô†
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;		// g—p^•Ô‹p=1ŒÅ’è
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+					i++;
+					j++;
+
+					// –¢—¹x•¥•s–¾
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_MIRYO_UNKNOWN;		// Š„ˆøí•Ê
+					p_NtDat->DiscountData[i].DiscNo = wk_DiscNo;				// Š„ˆø‹æ•ªiŒˆÏƒuƒ‰ƒ“ƒhj
+					p_NtDat->DiscountData[i].DiscCount = 1;						// g—p–‡”=1ŒÅ’è
+					p_NtDat->DiscountData[i].Discount = 0;						// Š„ˆøŠz=0
+					p_NtDat->DiscountData[i].DiscInfo1 = p_RcptDat->Electron_data.Ec.pay_ryo;	// Š„ˆøî•ñ1=•s–¾Šz
+					p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;	// Š„ˆøî•ñ2=0
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;		// g—p^•Ô‹p=1ŒÅ’è
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+					i++;
+					j++;
+				}
+			}
+			else if (p_RcptDat->Electron_data.Ec.e_pay_kind == EC_CREDIT_USED) {
+				// ¸Ú¼Ş¯Ä¶°ÄŞŒˆÏ—L–³
+				p_NtDat->SeisanData.CreditIssue = 1;
+				memset( &t_Settlement, 0, sizeof(t_Settlement) );
+				// ‰ïˆõ”Ô†
+				memset( &t_Settlement.credit.CreditCardNo[0], 0x20, sizeof(t_Settlement.credit.CreditCardNo) );
+				// —˜—p‹àŠz
+				t_Settlement.credit.Credit_ryo = 0;
+				// “`•[”Ô†
+				t_Settlement.credit.CreditSlipNo = 0;
+				// ³”F”Ô†
+				t_Settlement.credit.CreditAppNo = 0;
+				// ‰ïĞ–¼
+				memset( &t_Settlement.credit.CreditName[0], 0x20, sizeof(t_Settlement.credit.CreditName) );
+				// —LŒøŠúŒÀ
+				t_Settlement.credit.CreditDate[0] = t_Settlement.credit.CreditDate[1] = 0;
+				// ’Ç”Ô
+				t_Settlement.credit.CreditProcessNo = 0;
+				// ’[––¯•Ê”Ô†
+				memset( &t_Settlement.credit.term_id[0], 0x20, sizeof(t_Settlement.credit.term_id) );
+				// KIDƒR[ƒh
+				memset(&p_NtDat->SeisanData.kid_code[0], 0x20, sizeof(p_NtDat->SeisanData.kid_code));
+
+				AesCBCEncrypt( (uchar *)&t_Settlement.credit, sizeof( t_Settlement.credit ) );
+				memcpy( (uchar *)&p_NtDat->SeisanData.CreditCardNo[0],
+						(uchar *)&t_Settlement.credit, sizeof( t_Settlement.credit ) );
+
+				/* ‹ó‚«´Ø±ŒŸõ */
+				for (i = 0; (i < NTNET_DIC_MAX2) &&
+						(0 != p_NtDat->DiscountData[i].ParkingNo); i++) {
+					;
+				}		/* ƒf[ƒ^‚ª‚ ‚éŠÔ				*/
+				// ‹ó‚«‚ª2‚Â‚ ‚é‚©H
+				if (i <= (NTNET_DIC_MAX2-2)) {
+					// –â‚¢‡‚í‚¹”Ô†
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];			// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_INQUIRY_NUM;			// Š„ˆøí•Ê
+					memset((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+							0x20, 16);												// –â‚¢‡‚í‚¹”Ô†
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;			// g—p^•Ô‹p=1ŒÅ’è
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;			// Š„ˆøÏ‚İ=0ŒÅ’è
+					i++;
+					j++;
+
+					// –¢—¹x•¥•s–¾
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];			// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = NTNET_MIRYO_UNKNOWN;			// Š„ˆøí•Ê
+					p_NtDat->DiscountData[i].DiscNo = 1;							// Š„ˆø‹æ•ªiŒˆÏƒuƒ‰ƒ“ƒhj
+					p_NtDat->DiscountData[i].DiscCount = 1;							// g—p–‡”=1ŒÅ’è
+					p_NtDat->DiscountData[i].Discount = 0;							// Š„ˆøŠz=0
+					p_NtDat->DiscountData[i].DiscInfo1 = p_RcptDat->credit.pay_ryo;	// Š„ˆøî•ñ1=•s–¾Šz
+					p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;		// Š„ˆøî•ñ2=0
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;			// g—p^•Ô‹p=1ŒÅ’è
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;			// Š„ˆøÏ‚İ=0ŒÅ’è
+					i++;
+					j++;
+				}
+			}
+		}
+// MH364301(E) “dqŒˆÏ‚Ì¸Z’†~ƒf[ƒ^‘—M‘Î‰
+	}
+// MH364301(S) SX20“‡‘Î‰
+//	else if (isSX10_USE()) {
+//		if (p_RcptDat->Electron_data.Suica.pay_ryo != 0) {
+	else if (SuicaUseKindCheck(p_RcptDat->Electron_data.Suica.e_pay_kind)) {
+		if (p_NtDat->SeisanData.PayClass != 2 && p_NtDat->SeisanData.PayClass != 3) {
+// MH364301(E) SX20“‡‘Î‰
+			/* ‹ó‚«´Ø±ŒŸõ */
+// MH364301(S) SX20“‡‘Î‰
+//			for (i = 0; (i < NTNET_DIC_MAX) &&
+			for (i = 0; (i < NTNET_DIC_MAX2) &&
+// MH364301(E) SX20“‡‘Î‰
+					(0 != p_NtDat->DiscountData[i].ParkingNo); i++) {
+				;
+			}		/* ƒf[ƒ^‚ª‚ ‚éŠÔ				*/
+// MH364301(S) SX20“‡‘Î‰
+//			if (i < (NTNET_DIC_MAX-1)) {
+			// ‹ó‚«‚ª2‚Â‚ ‚é‚©H
+			if (i <= (NTNET_DIC_MAX2-2)) {
+// MH364301(E) SX20“‡‘Î‰
+				switch(Ope_Disp_Media_Getsub(1)) {
+				case	OPE_DISP_MEDIA_TYPE_SUICA:
+					wk_kind1 = NTNET_SUICA_1;								// Š„ˆøí•ÊFSuica¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_SUICA_2;								// Š„ˆøí•ÊFSuicax•¥ŠzAcŠz
+					break;
+				case	OPE_DISP_MEDIA_TYPE_PASMO:
+					wk_kind1 = NTNET_PASMO_1;								// Š„ˆøí•ÊFPASMO¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_PASMO_2;								// Š„ˆøí•ÊFPASMOx•¥ŠzAcŠz
+					break;
+				case	OPE_DISP_MEDIA_TYPE_ICOCA:
+					wk_kind1 = NTNET_ICOCA_1;								// Š„ˆøí•ÊFICOCA¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_ICOCA_2;								// Š„ˆøí•ÊFICOCAx•¥ŠzAcŠz
+					break;
+				case	OPE_DISP_MEDIA_TYPE_ICCARD:
+					wk_kind1 = NTNET_ICCARD_1;								// Š„ˆøí•ÊFIC-Card¶°ÄŞ”Ô†
+					wk_kind2 = NTNET_ICCARD_2;								// Š„ˆøí•ÊFIC-Cardx•¥ŠzAcŠz
+					break;
+				default:
+					wk_kind1 = 0;
+					wk_kind2 = 0;
+					break;
+				}
+
+				if (wk_kind1 != 0 && wk_kind2 != 0) {
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = wk_kind1;			// Š„ˆøí•Ê
+					// ƒJ[ƒh”Ô†
+// MH364301(S) SX20“‡‘Î‰i20h‚ÅƒtƒBƒ‹‚³‚ê‚Ä‚¢‚È‚¢j
+//					memcpy(&p_NtDat->DiscountData[i].DiscNo, p_RcptDat->Electron_data.Suica.Card_ID, 16);
+					memcpyFlushLeft((uchar*)&p_NtDat->DiscountData[i].DiscNo,
+									p_RcptDat->Electron_data.Suica.Card_ID,
+									20,
+									sizeof(p_RcptDat->Electron_data.Suica.Card_ID));
+// MH364301(E) SX20“‡‘Î‰i20h‚ÅƒtƒBƒ‹‚³‚ê‚Ä‚¢‚È‚¢j
+
+// MH364301(S) SX20“‡‘Î‰
+					// “dqƒ}ƒl[ƒJ[ƒh”Ô†‚ÍˆÃ†‰»‘ÎÛ
+					memset( &t_Settlement, 0, sizeof(t_Settlement) );
+					memcpy( t_Settlement.cardno, 
+							(uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,	// Š„ˆø‹æ•ªˆÈ‰º16ƒoƒCƒg‚ÉƒJ[ƒh”Ô†‚ª“ü‚Á‚Ä‚¢‚é
+							sizeof(t_Settlement.cardno) );
+
+					// AES ˆÃ†‰»
+					AesCBCEncrypt( t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+					memcpy( (uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,
+							(uchar *)&t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+// MH364301(E) SX20“‡‘Î‰
+					i++;
+					j++;
+
+					p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+					p_NtDat->DiscountData[i].DiscSyu = wk_kind2;			// Š„ˆøí•Ê
+					p_NtDat->DiscountData[i].DiscNo = 0;					// Š„ˆø‹æ•ª
+					p_NtDat->DiscountData[i].DiscCount = 1;					// g—p–‡”
+					p_NtDat->DiscountData[i].Discount = p_RcptDat->Electron_data.Suica.pay_ryo;		// x•¥‹àŠz
+					p_NtDat->DiscountData[i].DiscInfo1 = p_RcptDat->Electron_data.Suica.pay_after;	// cŠz
+					p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;
+					p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;
+					p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;
+					i++;
+					j++;
+				}
+			}
+		}
+// MH364301(S) SX20“‡‘Î‰
+		else if (p_RcptDat->Electron_data.Ec.E_Status.BIT.miryo_confirm == 1 &&
+				(p_RcptDat->PayClass == 2 || p_RcptDat->PayClass == 3)) {
+			// ˆ—‹æ•ª‚QA‚R‚ÅŒˆÏ¸Z’†~‚Ìê‡
+			/* ‹ó‚«´Ø±ŒŸõ */
+			for (i = 0; (i < NTNET_DIC_MAX2) &&
+					(0 != p_NtDat->DiscountData[i].ParkingNo); i++) {
+				;
+			}		/* ƒf[ƒ^‚ª‚ ‚éŠÔ				*/
+			// ‹ó‚«‚ª3‚Â‚ ‚é‚©H
+			if (i <= (NTNET_DIC_MAX2-3)) {
+				// x•¥•s–¾î•ñ‚ğ¸Zƒf[ƒ^‚ÌŠ„ˆøî•ñ‚ÉƒZƒbƒg‚·‚é
+
+				// ƒJ[ƒh”Ô†
+				p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+				p_NtDat->DiscountData[i].DiscSyu = NTNET_SUICA_1;		// Š„ˆøí•Ê
+				memset( &p_NtDat->DiscountData[i].DiscNo, 0x20, 20 );
+				memset( &p_NtDat->DiscountData[i].DiscNo, 0x30, ECARDID_SIZE_SUICA );
+				// ¶‹l‚ß‚ÅZZ
+				memset( &p_NtDat->DiscountData[i].DiscNo, 'Z', 2 );
+
+				// “dqƒ}ƒl[ƒJ[ƒh”Ô†‚ÍˆÃ†‰»‘ÎÛ
+				memset( &t_Settlement, 0, sizeof(t_Settlement) );
+				memcpy( t_Settlement.cardno, 
+						(uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,	// Š„ˆø‹æ•ªˆÈ‰º16ƒoƒCƒg‚ÉƒJ[ƒh”Ô†‚ª“ü‚Á‚Ä‚¢‚é
+						sizeof(t_Settlement.cardno) );
+
+				// AES ˆÃ†‰»
+				AesCBCEncrypt( t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+				memcpy( (uchar *)((DISCOUNT_DATA2*)(&p_NtDat->DiscountData[i]))->CardNo,
+						(uchar *)&t_Settlement.cardno, sizeof( t_Settlement.cardno ) );
+				i++;
+				j++;
+
+				// x•¥ŠzAcŠzix•¥Šz‚ÆcŠz‚Í0‰~‚Æ‚·‚éj
+				p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];	// ’“ÔêNo.
+				p_NtDat->DiscountData[i].DiscSyu = NTNET_SUICA_2;		// Š„ˆøí•Ê
+				p_NtDat->DiscountData[i].DiscNo = 3;					// Š„ˆø‹æ•ª
+				p_NtDat->DiscountData[i].DiscCount = 1;					// g—p–‡”
+				p_NtDat->DiscountData[i].Discount = 0;					// Š„ˆøŠz=x•¥Šz0‰~
+				p_NtDat->DiscountData[i].DiscInfo1 = 0;					// Š„ˆøî•ñ1=0
+				p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;// Š„ˆøî•ñ2=0
+				p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 0;	// g—p^•Ô‹p=0ŒÅ’è
+				p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;	// Š„ˆøÏ‚İ=0ŒÅ’è
+				i++;
+				j++;
+
+				// –¢—¹x•¥•s–¾
+				p_NtDat->DiscountData[i].ParkingNo = CPrmSS[S_SYS][1];		// ’“ÔêNo.
+				p_NtDat->DiscountData[i].DiscSyu = NTNET_MIRYO_UNKNOWN;		// Š„ˆøí•Ê
+				p_NtDat->DiscountData[i].DiscNo = 2;						// Š„ˆø‹æ•ªiŒˆÏƒuƒ‰ƒ“ƒhj
+				p_NtDat->DiscountData[i].DiscCount = 1;						// g—p–‡”=1ŒÅ’è
+				p_NtDat->DiscountData[i].Discount = 0;						// Š„ˆøŠz=0
+				p_NtDat->DiscountData[i].DiscInfo1 = p_RcptDat->Electron_data.Suica.pay_ryo;	// Š„ˆøî•ñ1=•s–¾Šz
+				p_NtDat->DiscountData[i].uDiscData.common.DiscInfo2 = 0;	// Š„ˆøî•ñ2=0
+				p_NtDat->DiscountData[i].uDiscData.common.MoveMode = 1;		// g—p^•Ô‹p=1ŒÅ’è
+				p_NtDat->DiscountData[i].uDiscData.common.DiscFlg = 0;		// Š„ˆøÏ‚İ=0ŒÅ’è
+				i++;
+				j++;
+			}
+		}
+// MH364301(E) SX20“‡‘Î‰
+	}
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXj
+//	ret = sizeof( DATA_KIND_56_T ) - sizeof( DISCOUNT_DATA )*NTNET_DIC_MAX2;								// Š„ˆøƒf[ƒ^‚Ü‚Å‚ÌƒTƒCƒYZo
+//	ret += (ushort)sizeof( DISCOUNT_DATA )*j;																// ƒZƒbƒg‚µ‚½Š„ˆøƒf[ƒ^ƒTƒCƒY‚ğ‰ÁZ
+	ret = sizeof( DATA_KIND_56_T ) - sizeof( t_SeisanDiscountOld )*NTNET_DIC_MAX2;							// Š„ˆøƒf[ƒ^‚Ü‚Å‚ÌƒTƒCƒYZo
+	ret += (ushort)sizeof( t_SeisanDiscountOld )*j;															// ƒZƒbƒg‚µ‚½Š„ˆøƒf[ƒ^ƒTƒCƒY‚ğ‰ÁZ
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji¸Zƒf[ƒ^•ÏXj
+
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		ƒGƒ‰[ƒf[ƒ^(ƒf[ƒ^í•Ê63)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½ƒGƒ‰[ƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : ƒGƒ‰[ƒf[ƒ^(DATA_KIND_56_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^  
+///	@return		ret       : ƒGƒ‰[ƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_Data63_T( Err_log *p_RcptDat, DATA_KIND_63_T *p_NtDat )
+{
+	ushort ret;
+
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiƒhƒA•Â‚ÉÄ‘—‚µ‚È‚¢j
+	if(p_RcptDat->ErrDoor == ERR_LOG_RESEND_F) {
+		// ’[––ŠÔ’ÊM‚Å‚ÍƒhƒA•Â‚ÌÄ‘—‚ğ—}~‚·‚é
+		return 0;
+	}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiƒhƒA•Â‚ÉÄ‘—‚µ‚È‚¢j
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_63_T ) );
+	NTNET_Edit_BasicData( 63, 0, p_RcptDat->ErrSeqNo, &p_NtDat->DataBasic );	// Šî–{ƒf[ƒ^ì¬
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ’ÊM‚ÍƒVƒXƒeƒ€ID‚ğ1ŒÅ’è‚É‚·‚éj
+	p_NtDat->DataBasic.SystemID = 1;											// ’[––ŠÔ’ÊM‚Í1ŒÅ’è
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ’ÊM‚ÍƒVƒXƒeƒ€ID‚ğ1ŒÅ’è‚É‚·‚éj
+
+	p_NtDat->DataBasic.Year = (uchar)(p_RcptDat->Date_Time.Year % 100 );			// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)p_RcptDat->Date_Time.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)p_RcptDat->Date_Time.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)p_RcptDat->Date_Time.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)p_RcptDat->Date_Time.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;														// ˆ—•b
+
+	p_NtDat->Errsyu = p_RcptDat->Errsyu;											// ´×°í•Ê
+	p_NtDat->Errcod = p_RcptDat->Errcod;;											// ´×°º°ÄŞ
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+	if(p_NtDat->Errsyu == 0xFF && p_NtDat->Errcod == 0xFF) {
+		// EFFFF‚ÍE0000‚Å‘—M‚·‚é
+		p_NtDat->Errsyu = 0;
+		p_NtDat->Errcod = 0;
+	}
+	else if(p_NtDat->Errsyu == 0x00 && p_NtDat->Errcod == 0x03) {
+		// E0003‚ÍE0001‚Å‘—M‚·‚é
+		p_NtDat->Errcod = 0x01;
+	}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+
+	switch( p_RcptDat->Errdtc ){
+	case 1:																			// ”­¶
+		p_NtDat->Errdtc = 1;														// ´×°”­¶
+		break;
+	case 2:																			// ”­¶E‰ğœ
+		p_NtDat->Errdtc = 3;														// ´×°”­¶E‰ğœ
+		break;
+	default:																		// ‰ğœ
+		p_NtDat->Errdtc = 2;														// ´×°‰ğœ
+		break;
+	}
+
+	p_NtDat->Errlev = p_RcptDat->Errlev;											// ´×°ÚÍŞÙ
+	if( p_RcptDat->ErrDoor & ERR_LOG_DOOR_STS_F ){									// ƒhƒA•Â,1=ŠJ
+		p_NtDat->ErrDoor = 1;
+	}
+
+	if( p_RcptDat->Errinf == 2 ){													// ´×°î•ñ—L–³(bin)
+		memcpy( &p_NtDat->Errdat1[6],
+				&p_RcptDat->ErrBinDat,
+				4 );																// ´×°î•ñ
+	}else if( p_RcptDat->Errinf ==1 ){												//´×°î•ñ‚ªu—L‚èv‚ÅƒAƒXƒL[‚È‚ç
+		strncpy( (char*)&p_NtDat->Errdat2, (char*)&p_RcptDat->Errdat,sizeof( p_NtDat->Errdat2 )  );
+	}
+
+	ret = sizeof( DATA_KIND_63_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		ƒAƒ‰[ƒ€ƒf[ƒ^(ƒf[ƒ^í•Ê63)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½ƒAƒ‰[ƒ€ƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : ƒAƒ‰[ƒ€ƒf[ƒ^(DATA_KIND_56_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^  
+///	@return		ret       : ƒAƒ‰[ƒ€ƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort	NTNET_Edit_Data64_T( Arm_log *p_RcptDat, DATA_KIND_64_T *p_NtDat )
+{
+	ushort ret;
+
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiƒhƒA•Â‚ÉÄ‘—‚µ‚È‚¢j
+	if(p_RcptDat->ArmDoor == ERR_LOG_RESEND_F) {
+		// ’[––ŠÔ’ÊM‚Å‚ÍƒhƒA•Â‚ÌÄ‘—‚ğ—}~‚·‚é
+		return 0;
+	}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiƒhƒA•Â‚ÉÄ‘—‚µ‚È‚¢j
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_64_T ) );
+	NTNET_Edit_BasicData( 64, 0, p_RcptDat->ArmSeqNo, &p_NtDat->DataBasic);		// Šî–{ÃŞ°Àì¬
+
+	p_NtDat->DataBasic.Year = (uchar)(p_RcptDat->Date_Time.Year % 100 );			// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)p_RcptDat->Date_Time.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)p_RcptDat->Date_Time.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)p_RcptDat->Date_Time.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)p_RcptDat->Date_Time.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;														// ˆ—•b
+
+	p_NtDat->Armsyu = p_RcptDat->Armsyu;											// ±×°Ñí•Ê
+	p_NtDat->Armcod = p_RcptDat->Armcod;											// ±×°Ñº°ÄŞ
+	switch( p_RcptDat->Armdtc ){
+	case 1:																			// ”­¶
+		p_NtDat->Armdtc = 1;														// ±×°Ñ”­¶
+		break;
+	case 2:																			// ”­¶E‰ğœ
+		p_NtDat->Armdtc = 3;														// ±×°Ñ”­¶E‰ğœ
+		break;
+	default:																		// ‰ğœ
+		p_NtDat->Armdtc = 2;														// ±×°Ñ‰ğœ
+		break;
+	}
+	p_NtDat->Armlev = p_RcptDat->Armlev;											// ±×°ÑÚÍŞÙ
+	if( p_RcptDat->ArmDoor & ERR_LOG_DOOR_STS_F ){									// ƒhƒA•Â,1=ŠJ
+		p_NtDat->ArmDoor = 1;
+	}
+
+
+	// ±×°Ñî•ñ•t‚«“d•¶ì¬
+	if( 2 == p_RcptDat->Arminf ){													// ÊŞ²ÅØÃŞ°À‚ ‚è
+		memcpy(	&p_NtDat->Armdat1[6], 
+				&p_RcptDat->ArmBinDat , 4 );
+	}else if( 1 == p_RcptDat->Arminf ){												// asciiÃŞ°À‚ ‚è
+		if(p_RcptDat->Armsyu == 2){
+			if( ( (p_RcptDat->Armcod >= 40) && (p_RcptDat->Armcod <= 49) )
+			 || (p_RcptDat->Armcod == 54)){
+				memcpy(	&p_NtDat->Armdat1[4], 
+					&p_RcptDat->Armdat[0] , 6 );
+			}
+		}
+	}
+
+	ret = sizeof( DATA_KIND_64_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		’Ş‘KŠÇ—ƒf[ƒ^(ƒf[ƒ^í•Ê135)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½’Ş‘KŠÇ—ƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : ’Ş‘KŠÇ—ƒf[ƒ^(DATA_KIND_56_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^  
+///	@return		ret       : ’Ş‘KŠÇ—ƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort	NTNET_Edit_Data135_T( TURI_KAN *p_RcptDat, DATA_KIND_135_T *p_NtDat )
+{
+	char	i;
+	ushort	ret = 0;
+	uchar	pos = 0;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_135_T ) );
+	NTNET_Edit_BasicData( 135, 0, p_RcptDat->SeqNo, &p_NtDat->DataBasic);	// Šî–{ÃŞ°Àì¬
+
+	p_NtDat->DataBasic.Year = (uchar)(p_RcptDat->ProcDate.Year % 100 );		// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)p_RcptDat->ProcDate.Mon;				// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)p_RcptDat->ProcDate.Day;				// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)p_RcptDat->ProcDate.Hour;				// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)p_RcptDat->ProcDate.Min;				// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;												// ˆ—•b
+
+	p_NtDat->CenterSeqNo = p_RcptDat->CenterSeqNo;							// ƒZƒ“ƒ^[’Ç”Ôi’Ş‘KŠÇ—j
+	p_NtDat->Oiban = CountSel( &p_RcptDat->Oiban );							// ‹à‘KŠÇ—‡Œv’Ç”Ô
+	p_NtDat->PayClass = p_RcptDat->PayClass;								// ˆ—‹æ•ª
+	p_NtDat->KakariNo = p_RcptDat->Kakari_no;								// ŒWˆõ‡‚
+
+	// ƒRƒCƒ“‹àí1`4
+	for( i=0; i<4; i++ ){
+		p_NtDat->turi_dat[i].Kind = c_coin[i];								// ‹àí‹àŠz(10/50/100/500)
+		p_NtDat->turi_dat[i].gen_mai = p_RcptDat->turi_dat[i].gen_mai;		// Œ»İi•ÏX‘Oj•Û—L–‡”
+		p_NtDat->turi_dat[i].zen_mai = p_RcptDat->turi_dat[i].zen_mai;		// ‘O‰ñ•Û—L–‡”
+		p_NtDat->turi_dat[i].sei_nyu = p_RcptDat->turi_dat[i].sei_nyu;		// ¸Z“ü‹à–‡”
+		if(p_RcptDat->turi_dat[i].sei_syu <= 0xFFFF){
+			p_NtDat->turi_dat[i].sei_syu = p_RcptDat->turi_dat[i].sei_syu;	// ¸Zo‹à–‡”
+		}
+		else{
+			p_NtDat->turi_dat[i].sei_syu = 0xFFFF;							// ¸Zo‹à–‡”
+		}
+		p_NtDat->turi_dat[i].jyun_syu = 0;									// zŠÂo‹à–‡”
+		if(p_RcptDat->turi_dat[i].hojyu <= 0xFFFF){
+			p_NtDat->turi_dat[i].hojyu = p_RcptDat->turi_dat[i].hojyu;		// ’Ş‘K•â[–‡”
+		}
+		else{
+			p_NtDat->turi_dat[i].hojyu = 0xFFFF;							// ’Ş‘K•â[–‡”
+		}
+		if(p_RcptDat->turi_dat[i].hojyu_safe <= 0xFFFF){
+			p_NtDat->turi_dat[i].hojyu_safe = p_RcptDat->turi_dat[i].hojyu_safe;// ’Ş‘K•â[‹àŒÉ”À‘—–‡”
+		}
+		else{
+			p_NtDat->turi_dat[i].hojyu_safe = 0xFFFF;						// ’Ş‘K•â[‹àŒÉ”À‘—–‡”
+		}
+		if(p_RcptDat->turi_dat[i].kyosei <= 0xFFFF){
+			p_NtDat->turi_dat[i].turi_kyosei = p_RcptDat->turi_dat[i].kyosei;	// ‹­§•¥o–‡”(’Ş‘KŒû)
+		}
+		else{
+			p_NtDat->turi_dat[i].turi_kyosei = 0xFFFF;						// ‹­§•¥o–‡”(’Ş‘KŒû)
+		}
+		p_NtDat->turi_dat[i].kin_kyosei = 0;								// ‹­§•¥o–‡”(‹àŒÉ)
+		p_NtDat->turi_dat[i].sin_mai = p_RcptDat->turi_dat[i].sin_mai;		// V‹Kİ’è–‡”
+	}
+
+		
+	for( i=0; i<2; i++ ){
+		switch( (( p_RcptDat->sub_tube >> (i*8)) & 0x000F ) ){
+			case 0x01:
+				pos = 0;
+				p_NtDat->yturi_dat[i].Kind = 10;								// ‹àí‹àŠz(10‰~)
+				break;
+			case 0x02:
+				pos = 1;
+				p_NtDat->yturi_dat[i].Kind = 50;								// ‹àí‹àŠz(50‰~)
+				break;
+			case 0x04:
+				pos = 2;
+				p_NtDat->yturi_dat[i].Kind = 100;								// ‹àí‹àŠz(100‰~)
+				break;
+			case 0:
+			default:															// Ú‘±‚È‚µ
+				continue;
+		}
+		p_NtDat->yturi_dat[i].gen_mai = p_RcptDat->turi_dat[pos].ygen_mai;		// Œ»İi•ÏX‘Oj•Û—L–‡”
+		p_NtDat->yturi_dat[i].zen_mai = p_RcptDat->turi_dat[pos].yzen_mai;		// ‘O‰ñ•Û—L–‡”
+		p_NtDat->yturi_dat[i].sei_nyu = 0;										// ¸Z“ü‹à–‡”
+		if(p_RcptDat->turi_dat[pos].ysei_syu <= 0xFFFF){
+			p_NtDat->yturi_dat[i].sei_syu = p_RcptDat->turi_dat[pos].ysei_syu;	// ¸Zo‹à–‡”
+		}
+		else{
+			p_NtDat->yturi_dat[i].sei_syu = 0xFFFF;								// ¸Zo‹à–‡”
+		}
+		p_NtDat->yturi_dat[i].jyun_syu = 0;										// zŠÂo‹à–‡”
+		p_NtDat->yturi_dat[i].hojyu = 0;										// ’Ş‘K•â[–‡”
+		p_NtDat->yturi_dat[i].hojyu_safe = 0;									// ’Ş‘K•â[‹àŒÉ”À‘—–‡”
+		if(p_RcptDat->turi_dat[pos].ykyosei <= 0xFFFF){
+			p_NtDat->yturi_dat[i].turi_kyosei = p_RcptDat->turi_dat[pos].ykyosei;		// ‹­§•¥o–‡”(’Ş‘KŒû)
+		}
+		else{
+			p_NtDat->yturi_dat[i].turi_kyosei = 0xFFFF;							// ‹­§•¥o–‡”(’Ş‘KŒû)
+		}
+		p_NtDat->yturi_dat[i].kin_kyosei = 0;									// ‹­§•¥o–‡”(‹àŒÉ)
+		p_NtDat->yturi_dat[i].sin_mai = p_RcptDat->turi_dat[pos].ysin_mai;		// V‹Kİ’è–‡”
+	}
+	ret = sizeof( DATA_KIND_135_T ); 
+	return ret;
+}
+
+// ===================================== //
+//
+//	ƒƒOËNT-NET•ÏŠ·•ÏŠ·ˆ—(WŒv)
+//
+// ===================================== //
+//[]----------------------------------------------------------------------[]
+///	@brief		WŒvŠî–{ƒf[ƒ^(ƒf[ƒ^í•Ê42)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : WŒvŠî–{ƒf[ƒ^(DATA_KIND_42_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : WŒvŠî–{ƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiKihon_T( SYUKEI *syukei, ushort Type, DATA_KIND_42_T *p_NtDat )
+{
+	ushort	ret;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_42_T ) );
+	NTNET_Edit_BasicData( 42, 0, syukei->SeqNo[0], &p_NtDat->DataBasic );		// Šî–{ƒf[ƒ^ì¬
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 						= syukei->CenterSeqNo;			// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type								= Type;							// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo							= syukei->Kakari_no;			// ŒWˆõNo.
+	p_NtDat->SeqNo								= CountSel( &syukei->Oiban );	// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+	ntnet_DateTimeCnv(&p_NtDat->NowTime, &syukei->NowTime);						// ¡‰ñWŒv
+	ntnet_DateTimeCnv(&p_NtDat->LastTime, &syukei->OldTime);					// ‘O‰ñWŒv
+	p_NtDat->SettleNum							= syukei->Seisan_Tcnt;			// ‘¸Z‰ñ”
+	p_NtDat->Kakeuri							= syukei->Kakeuri_Tryo;			// ‘Š|”„Šz
+	p_NtDat->Cash								= syukei->Genuri_Tryo;			// ‘Œ»‹à”„ãŠz
+	p_NtDat->Uriage								= syukei->Uri_Tryo;				// ‘”„ãŠz
+	p_NtDat->Tax								= syukei->Tax_Tryo;				// ‘Á”ïÅŠz
+	p_NtDat->Charge								= syukei->Turi_modosi_ryo;		// ’Ş‘K•¥–ßŠz
+	p_NtDat->CoinTotalNum						= syukei->Ckinko_goukei_cnt;	// ƒRƒCƒ“‹àŒÉ‡Œv‰ñ”
+	p_NtDat->NoteTotalNum						= syukei->Skinko_goukei_cnt;	// †•¼‹àŒÉ‡Œv‰ñ”
+	p_NtDat->CyclicCoinTotalNum					= syukei->Junkan_goukei_cnt;	// zŠÂƒRƒCƒ“‡Œv‰ñ”
+	p_NtDat->NoteOutTotalNum					= syukei->Siheih_goukei_cnt;	// †•¼•¥o‹@‡Œv‰ñ”
+	p_NtDat->Uri_Tryo_Gai						= 0;							// ‘”„ã‘ÎÛŠO‹àŠz
+	p_NtDat->SalesParkingNo						= (ulong)CPrmSS[S_SYS][1];		// ”„ãæ’“Ôê‡‚
+	p_NtDat->SettleNumServiceTime				= syukei->In_svst_seisan;		// ƒT[ƒrƒXƒ^ƒCƒ€“à¸Z‰ñ”
+	p_NtDat->Shortage.Num						= syukei->Harai_husoku_cnt;		// •¥o•s‘«‰ñ”
+	p_NtDat->Shortage.Amount					= syukei->Harai_husoku_ryo;		// •¥o•s‘«‹àŠz
+	p_NtDat->Cancel.Num							= syukei->Seisan_chusi_cnt;		// ¸Z’†~‰ñ”
+	p_NtDat->Cancel.Amount						= syukei->Seisan_chusi_ryo;		// ¸Z’†~‹àŠz
+	p_NtDat->AntiPassOffSettle					= syukei->Apass_off_seisan;		// ƒAƒ“ƒ`ƒpƒXOFF¸Z‰ñ”
+	p_NtDat->ReceiptIssue						= syukei->Ryosyuu_pri_cnt;		// —ÌûØ”­s–‡”
+	p_NtDat->WarrantIssue						= syukei->Azukari_pri_cnt;		// —a‚èØ”­s–‡”
+	p_NtDat->AllSystem.CarOutIllegal.Num		= syukei->Husei_out_Tcnt;		// ‘S‘•’u  •s³oŒÉ‰ñ”
+	p_NtDat->AllSystem.CarOutIllegal.Amount		= syukei->Husei_out_Tryo;		//                 ‹àŠz
+	p_NtDat->AllSystem.CarOutForce.Num			= syukei->Kyousei_out_Tcnt;		//         ‹­§oŒÉ‰ñ”
+	p_NtDat->AllSystem.CarOutForce.Amount		= syukei->Kyousei_out_Tryo;		//                 ‹àŠz
+	p_NtDat->AllSystem.AcceptTicket				= syukei->Uketuke_pri_Tcnt;		//         ó•tŒ””­s‰ñ”
+	p_NtDat->AllSystem.ModifySettle.Num			= syukei->Syuusei_seisan_Tcnt;	// C³¸Z‰ñ”
+	p_NtDat->AllSystem.ModifySettle.Amount		= syukei->Syuusei_seisan_Tryo;	//         ‹àŠz
+	p_NtDat->CarInTotal							= syukei->In_car_Tcnt;			// ‘“üŒÉ‘ä”
+	p_NtDat->CarOutTotal						= syukei->Out_car_Tcnt;			// ‘oŒÉ‘ä”
+	p_NtDat->CarIn1								= syukei->In_car_cnt[0];		// “üŒÉ1“üŒÉ‘ä”
+	p_NtDat->CarOut1							= syukei->Out_car_cnt[0];		// oŒÉ1oŒÉ‘ä”
+	p_NtDat->CarIn2								= syukei->In_car_cnt[1];		// “üŒÉ2“üŒÉ‘ä”
+	p_NtDat->CarOut2							= syukei->Out_car_cnt[1];		// oŒÉ2oŒÉ‘ä”
+	p_NtDat->CarIn3								= syukei->In_car_cnt[2];		// “üŒÉ3“üŒÉ‘ä”
+	p_NtDat->CarOut3							= syukei->Out_car_cnt[2];		// oŒÉ3oŒÉ‘ä”
+// ‹­§Š®—¹·°‚Å‚Ì–¢“ü‹à‚ÍŠî–{ÃŞ°À‚É€–Ú‚ğVİ‚µ‚Ä‘—M‚·‚é
+	p_NtDat->MiyoCount							= syukei->Syuusei_seisan_Mcnt;	// –¢“ü‹à‰ñ”
+	p_NtDat->MiroMoney							= syukei->Syuusei_seisan_Mryo;	// –¢“ü‹àŠz
+	p_NtDat->LagExtensionCnt					= syukei->Lag_extension_cnt;	// ƒ‰ƒOƒ^ƒCƒ€‰„’·‰ñ”
+	p_NtDat->FurikaeCnt							= syukei->Furikae_seisan_cnt2;	// U‘Ö‰ñ”
+	p_NtDat->FurikaeTotal						= syukei->Furikae_seisan_ryo2;	// U‘ÖŠz
+	p_NtDat->RemoteCnt							= syukei->Remote_seisan_cnt;	// ‰“Šu¸Z‰ñ”
+	p_NtDat->RemoteTotal						= syukei->Remote_seisan_ryo;	// ‰“Šu¸ZŠz
+
+	ret = sizeof( DATA_KIND_42_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		—¿‹àí•Ê–ˆWŒvƒf[ƒ^(ƒf[ƒ^í•Ê43)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : —¿‹àí•Ê–ˆWŒvƒf[ƒ^(DATA_KIND_43_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : —¿‹àí•Ê–ˆWŒvƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiRyokinMai_T( SYUKEI *syukei, ushort Type, DATA_KIND_43_T *p_NtDat )
+{
+	int		i;
+	int		j;
+	ushort	ret;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_43_T ) );
+	NTNET_Edit_BasicData( 43, 0, syukei->SeqNo[1], &p_NtDat->DataBasic );		// Šî–{ƒf[ƒ^ì¬
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 			= syukei->CenterSeqNo;						// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type					= Type;										// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo				= syukei->Kakari_no;						// ŒWˆõNo.
+	p_NtDat->SeqNo					= CountSel( &syukei->Oiban );				// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+
+	for (i = 0, j = 0; i < RYOUKIN_SYU_CNT; i++) {								// í•Ê01`50
+		if( prm_get( COM_PRM, S_SHA, (short)(i*6+1), 2 , 5 ) == 1 ) {			// —¿‹àí•Ê‚Ìİ’è‚ ‚è
+			// İ’è‚³‚ê‚Ä‚¢‚é—¿‹àí•Ê‚ÍAg—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àWŒv€–Ú‚ğƒZƒbƒg‚·‚é
+			p_NtDat->Kind[j].Kind	= i + 1;									// —¿‹àí•Ê
+			p_NtDat->Kind[j].Settle.Num			= syukei->Rsei_cnt[i];			// ¸Z‰ñ”
+			p_NtDat->Kind[j].Settle.Amount		= syukei->Rsei_ryo[i];			// ”„ãŠz
+			p_NtDat->Kind[j].Discount.Num		= syukei->Rtwari_cnt[i];		// Š„ˆø‰ñ”
+			p_NtDat->Kind[j].Discount.Amount	= syukei->Rtwari_ryo[i];		// Š„ˆøŠz
+			j++;
+		}
+	}
+
+	ret = sizeof( DATA_KIND_43_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		•ª—ŞWŒvƒf[ƒ^(ƒf[ƒ^í•Ê44)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : •ª—ŞWŒvƒf[ƒ^(DATA_KIND_44_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : •ª—ŞWŒvƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiBunrui_T( SYUKEI *syukei, ushort Type, DATA_KIND_44_T *p_NtDat )
+{
+	int		i;
+	char	j = 0;
+	char	cnt = 0;
+	char	flg[3] = {0,0,0};
+	char	pram_set[] = {0,0,50,100};
+	ushort	ret;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_44_T ) );
+	NTNET_Edit_BasicData( 44, 0, syukei->SeqNo[2], &p_NtDat->DataBasic );		// Šî–{ƒf[ƒ^ì¬
+
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 			= syukei->CenterSeqNo;						// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type					= Type;										// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo				= syukei->Kakari_no;						// ŒWˆõNo.
+	p_NtDat->SeqNo					= CountSel( &syukei->Oiban );				// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+
+/*•ª—ŞWŒv‚P*/
+	for(j = 1 ; j <= 3 ; j++){
+		for(i = 1 ; i <= 6 ; i++){
+			if(j == (uchar)prm_get(COM_PRM, S_BUN, 52, 1, (char)i)){
+				flg[cnt] = j;
+				cnt++;
+				break;
+			}
+			if(j == (uchar)prm_get(COM_PRM, S_BUN, 53, 1, (char)i)){
+				flg[cnt] = j;
+				cnt++;
+				break;
+			}
+		}
+	}
+	if(flg[0]){
+		p_NtDat->Kind					= CPrmSS[S_BUN][1]+pram_set[flg[0]];	// ’“Ô•ª—ŞWŒv‚Ìí—Ş
+		for (i = 0; i < BUNRUI_CNT; i++) {										// •ª—Ş01`48
+			p_NtDat->Group[i].Num		= syukei->Bunrui1_cnt[flg[0]-1][i];		//            ‘ä”1
+			p_NtDat->Group[i].Amount	= syukei->Bunrui1_ryo[flg[0]-1][i];		//            ‘ä”2^‹àŠz
+		}
+		p_NtDat->GroupTotal.Num		= syukei->Bunrui1_cnt1[flg[0]-1];			// •ª—ŞˆÈã   ‘ä”1
+		p_NtDat->GroupTotal.Amount		= syukei->Bunrui1_ryo1[flg[0]-1];		//            ‘ä”2^‹àŠz
+		p_NtDat->Unknown.Num			= syukei->Bunrui1_cnt2[flg[0]-1];		// •ª—Ş•s–¾   ‘ä”1
+		p_NtDat->Unknown.Amount		= syukei->Bunrui1_ryo2[flg[0]-1];			//            ‘ä”2^‹àŠz
+		flg[0] = 0;
+	}
+/*•ª—ŞWŒv‚Q*/
+	if(flg[1]){
+		p_NtDat->Kind2					= CPrmSS[S_BUN][1]+pram_set[flg[1]];	// ’“Ô•ª—ŞWŒv‚Ìí—Ş
+		for (i = 0; i < BUNRUI_CNT; i++) {										// •ª—Ş01`48
+			p_NtDat->Group2[i].Num		= syukei->Bunrui1_cnt[flg[1]-1][i];		//            ‘ä”1
+			p_NtDat->Group2[i].Amount	= syukei->Bunrui1_ryo[flg[1]-1][i];		//            ‘ä”2^‹àŠz
+		}
+		p_NtDat->GroupTotal2.Num		= syukei->Bunrui1_cnt1[flg[1]-1];		// •ª—ŞˆÈã   ‘ä”1
+		p_NtDat->GroupTotal2.Amount		= syukei->Bunrui1_ryo1[flg[1]-1];		//            ‘ä”2^‹àŠz
+		p_NtDat->Unknown2.Num			= syukei->Bunrui1_cnt2[flg[1]-1];		// •ª—Ş•s–¾   ‘ä”1
+		p_NtDat->Unknown2.Amount		= syukei->Bunrui1_ryo2[flg[1]-1];		//            ‘ä”2^‹àŠz
+		flg[1] = 0;
+	}
+/*•ª—ŞWŒv‚R*/
+	if(flg[2]){
+		p_NtDat->Kind3					= CPrmSS[S_BUN][1]+pram_set[flg[2]];	// ’“Ô•ª—ŞWŒv‚Ìí—Ş
+		for (i = 0; i < BUNRUI_CNT; i++) {										// •ª—Ş01`48
+			p_NtDat->Group3[i].Num		= syukei->Bunrui1_cnt[flg[2]-1][i];		//            ‘ä”1
+			p_NtDat->Group3[i].Amount	= syukei->Bunrui1_ryo[flg[2]-1][i];		//            ‘ä”2^‹àŠz
+		}
+		p_NtDat->GroupTotal3.Num		= syukei->Bunrui1_cnt1[flg[2]-1];		// •ª—ŞˆÈã   ‘ä”1
+		p_NtDat->GroupTotal3.Amount		= syukei->Bunrui1_ryo1[flg[2]-1];		//            ‘ä”2^‹àŠz
+		p_NtDat->Unknown3.Num			= syukei->Bunrui1_cnt2[flg[2]-1];		// •ª—Ş•s–¾   ‘ä”1
+		p_NtDat->Unknown3.Amount		= syukei->Bunrui1_ryo2[flg[2]-1];		//            ‘ä”2^‹àŠz
+		flg[2] = 0;
+	}
+
+	ret = sizeof( DATA_KIND_44_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		Š„ˆøWŒvƒf[ƒ^(ƒf[ƒ^í•Ê45)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : Š„ˆøWŒvƒf[ƒ^(DATA_KIND_45_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : Š„ˆøWŒvƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiWaribiki_T( SYUKEI *syukei, ushort Type, DATA_KIND_45_T *p_NtDat )
+{
+	int		i;
+	int		parking;
+	int		group;
+	ushort	ret;
+	ushort	pos;
+	uchar	set;
+	ushort	mod;
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+	ulong	sei_cnt, sei_ryo;		// WŒv—p
+	int		j;
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+// MH364300 GG119A23(S) // GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+	ushort 	brand_no;
+// MH364300 GG119A23(E) // GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+// MH364301(S) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+	ulong	prm_get_mise;
+// MH364301(E) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_45_T ) );
+	NTNET_Edit_BasicData( 45, 0, syukei->SeqNo[3], &p_NtDat->DataBasic );		// Šî–{ƒf[ƒ^ì¬
+
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 			= syukei->CenterSeqNo;						// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type					= Type;										// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo				= syukei->Kakari_no;						// ŒWˆõNo.
+	p_NtDat->SeqNo					= CountSel( &syukei->Oiban );				// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+	i = 0;
+
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+// ƒNƒŒƒWƒbƒg
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+//	if (syukei->Ccrd_sei_cnt != 0 || syukei->Ccrd_sei_ryo != 0) {
+// GG122600(S) g—pƒ}ƒl[‘I‘ğİ’è(50-0001,2)‚ğQÆ‚µ‚È‚¢
+//	if ( isEcBrandNoEnabledForSetting(BRANDNO_CREDIT) ) {
+	if (isEcBrandNoEnabledForRecvTbl(BRANDNO_CREDIT) ||
+		syukei->Ccrd_sei_cnt != 0 || syukei->Ccrd_sei_ryo != 0) {
+		// ƒuƒ‰ƒ“ƒhƒe[ƒuƒ‹‚ğŒŸõ‚µ‚ÄŒ©‚Â‚©‚ç‚È‚­‚Ä‚àWŒv‚³‚ê‚Ä‚¢‚ê‚Î
+		// Š„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+// GG122600(E) g—pƒ}ƒl[‘I‘ğİ’è(50-0001,2)‚ğQÆ‚µ‚È‚¢
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+
+	    p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];				// Šî–{’“Ôê”Ô†¾¯Ä
+		p_NtDat->Discount[i].Kind	   = 30;
+		p_NtDat->Discount[i].Num	   = syukei->Ccrd_sei_cnt;
+		p_NtDat->Discount[i].Amount	   = syukei->Ccrd_sei_ryo;
+		i++;
+	}
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+
+	// ƒT[ƒrƒXŒ”
+	for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+		if(CPrmSS[S_SYS][1+parking]) {											// ’“Ôêİ’è‚ ‚è
+			if(parking == 0) {													// Šî–{’“Ôê
+				pos = 6;
+			}
+			else if(parking == 1) {												// Šg’£1’“Ôê
+				pos = 1;
+			}
+			else if(parking == 2) {												// Šg’£3’“Ôê
+				pos = 2;
+			}
+			else if(parking == 3) {												// Šg’£3’“Ôê
+				pos = 3;
+			}
+			if(prm_get(COM_PRM, S_SYS, 71, 1, pos)) {							// ‘ÎÛ‚Ì’“Ôê‚Åg—p‰Â
+				for (group = 0; group < SERVICE_SYU_CNT; group++) {
+					set = (uchar)prm_get(COM_PRM, S_SER, 1 + 3 * group, 1, 1);
+					if (set >= 1 && set <= 4) {										// í•Êg—pİ’è‚ ‚è
+						// İ’è‚ª‚ ‚ê‚Îg—p‚Ì—L–³‚ÉS‚ç‚¸İ’è‚·‚é
+						p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+						p_NtDat->Discount[i].Kind		= 1;
+						p_NtDat->Discount[i].Group		= group + 1;
+						p_NtDat->Discount[i].Num		= syukei->Stik_use_cnt[parking][group];
+						p_NtDat->Discount[i].Amount		= syukei->Stik_use_ryo[parking][group];
+						i++;
+					}
+				}
+			}
+		}
+	}
+
+	// ƒvƒŠƒyƒCƒh
+// MH364301(S) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+//	if(1 == prm_get(COM_PRM, S_PRP, 1, 1, 1)) {									// ƒvƒŠƒyƒCƒhİ’è‚ ‚è
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiİ’èQÆ•û–@‚ğŒ³‚É–ß‚·j
+//	if(PREPAID_CARD_Is_Used) {													// ƒvƒŠƒyƒCƒhİ’è‚ ‚è
+	if(1 == prm_get(COM_PRM, S_PRP, 1, 1, 1)) {									// ƒvƒŠƒyƒCƒhİ’è‚ ‚è
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiİ’èQÆ•û–@‚ğŒ³‚É–ß‚·j
+// MH364301(E) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+		for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+			if (CPrmSS[S_SYS][1+parking]) {
+				if(parking == 0) {												// Šî–{’“Ôê
+					pos = 6;
+				}
+				else if(parking == 1) {											// Šg’£1’“Ôê
+					pos = 1;
+				}
+				else if(parking == 2) {											// Šg’£3’“Ôê
+					pos = 2;
+				}
+				else if(parking == 3) {											// Šg’£3’“Ôê
+					pos = 3;
+				}
+				if(prm_get(COM_PRM, S_SYS, 72, 1, pos)) {						// ‘ÎÛ‚Ì’“Ôê‚Åg—p‰Â
+					// İ’è‚ª‚ ‚ê‚Îg—p‚Ì—L–³‚ÉS‚ç‚¸İ’è‚·‚é
+					p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+					p_NtDat->Discount[i].Kind		= 11;
+					p_NtDat->Discount[i].Num		= syukei->Pcrd_use_cnt[parking];
+					p_NtDat->Discount[i].Amount		= syukei->Pcrd_use_ryo[parking];
+					i++;
+				}
+			}
+		}
+	}
+
+	// ‰ñ”Œ”
+// MH364301(S) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+//	if(2 == prm_get(COM_PRM, S_PRP, 1, 1, 1)) {									// ‰ñ”Œ”İ’è‚ ‚è
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiİ’èQÆ•û–@‚ğŒ³‚É–ß‚·j
+//	if(COUPON_CARD_Is_Used) {													// ‰ñ”Œ”İ’è‚ ‚è
+	if(2 == prm_get(COM_PRM, S_PRP, 1, 1, 1)) {									// ‰ñ”Œ”İ’è‚ ‚è
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiİ’èQÆ•û–@‚ğŒ³‚É–ß‚·j
+// MH364301(E) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+		for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+			if (CPrmSS[S_SYS][1+parking]) {
+				if(parking == 0) {												// Šî–{’“Ôê
+					pos = 6;
+				}
+				else if(parking == 1) {											// Šg’£1’“Ôê
+					pos = 1;
+				}
+				else if(parking == 2) {											// Šg’£3’“Ôê
+					pos = 2;
+				}
+				else if(parking == 3) {											// Šg’£3’“Ôê
+					pos = 3;
+				}
+				if(prm_get(COM_PRM, S_SYS, 72, 1, pos)) {						// ‘ÎÛ‚Ì’“Ôê‚Åg—p‰Â
+					// İ’è‚ª‚ ‚ê‚Îg—p‚Ì—L–³‚ÉS‚ç‚¸İ’è‚·‚é
+					p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+					p_NtDat->Discount[i].Kind		= 5;
+					p_NtDat->Discount[i].Num		= syukei->Ktik_use_cnt[parking];
+					p_NtDat->Discount[i].Amount		= syukei->Ktik_use_ryo[parking];
+					i++;
+				}
+			}
+		}
+	}
+
+// “XŠ„ˆø “XNo.–ˆ
+	for( parking = 0; parking < PKNO_WARI_CNT; parking++ ){
+		for( group = 0; group < MISE_NO_CNT; group++ ){
+			if( syukei->Mno_use_cnt4[parking][group] == 0
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Å‚ÍMno_use_cnt4‚ğulong‚É•ÏXÏ‚İj
+//// MH364300 GG119A35(S) ‰ü‘P˜A—•\No.89‘Î‰
+//			 && syukei->Mno_use_cnt4ex[parking][group] == 0
+//// MH364300 GG119A35(E) ‰ü‘P˜A—•\No.89‘Î‰
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Å‚ÍMno_use_cnt4‚ğulong‚É•ÏXÏ‚İj
+			 && syukei->Mno_use_ryo4[parking][group] == 0 ){
+				// ƒf[ƒ^‚ª‚O‚Ìê‡‚Í“d•¶‚ÉŠi”[‚¹‚¸ƒXƒLƒbƒv‚·‚éB
+				continue;
+			} else {
+				p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+				p_NtDat->Discount[i].Kind		= 2;
+// MH364300 GG119A18(S) ‰ü‘P˜A—•\No.27‘Î‰
+//				if( CPrmSS[S_TAT][1] == 1L ){
+				if (prm_get(COM_PRM, S_TAT, 1, 1, 1) == 1L) {
+// MH364300 GG119A18(E) ‰ü‘P˜A—•\No.27‘Î‰
+					p_NtDat->Discount[i].Kind = 3;
+// MH364301(S) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+//					p_NtDat->Discount[i].Info = ( (group + 1) > 100 ?
+//												CPrmSS[S_TAT][32+((group + 1)-101)]:CPrmSS[S_STO][3+3*group]);
+					if( (group + 1) > 100 ){
+						prm_get_mise = prm_get( COM_PRM, S_TAT, (short)(32+((group + 1)-101)), 2, 1 );
+					}
+					else{
+						prm_get_mise = prm_get( COM_PRM, S_STO, (short)(3+3*group), 2, 1 );
+					}
+					p_NtDat->Discount[i].Info = prm_get_mise;
+// MH364301(E) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+				}
+				p_NtDat->Discount[i].Group		= group + 1;
+// MH364300 GG119A35(S) ‰ü‘P˜A—•\No.89‘Î‰
+//				p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt4[parking][group];
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Å‚ÍMno_use_cnt4‚ğulong‚É•ÏXÏ‚İj
+//				p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt4[parking][group] + ((ulong)(syukei->Mno_use_cnt4ex[parking][group]) << 16);
+				p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt4[parking][group];
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiGT-4100‚Å‚ÍMno_use_cnt4‚ğulong‚É•ÏXÏ‚İj
+// MH364300 GG119A35(E) ‰ü‘P˜A—•\No.89‘Î‰
+				p_NtDat->Discount[i].Amount	= syukei->Mno_use_ryo4[parking][group];
+				i++;
+			}
+		}
+	}
+// “XŠ„ˆø ’“ÔêNo.–ˆ
+	for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+		if (syukei->Mno_use_cnt1[parking] == 0
+		 && syukei->Mno_use_ryo1[parking] == 0) {
+			// ƒf[ƒ^‚ª‚O‚Ìê‡‚Í“d•¶‚ÉŠi”[‚¹‚¸ƒXƒLƒbƒv‚·‚éB
+			continue;
+		} else {
+			p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+			p_NtDat->Discount[i].Kind		= 60;
+			p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt1[parking];
+			p_NtDat->Discount[i].Amount	= syukei->Mno_use_ryo1[parking];
+			i++;
+		}
+	}
+// “XŠ„ˆø 1`100‡Œv
+	for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+		if (syukei->Mno_use_cnt2[parking] == 0
+		 && syukei->Mno_use_ryo2[parking] == 0) {
+			// ƒf[ƒ^‚ª‚O‚Ìê‡‚Í“d•¶‚ÉŠi”[‚¹‚¸ƒXƒLƒbƒv‚·‚éB
+			continue;
+		} else {
+			p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+			p_NtDat->Discount[i].Kind		= 61;
+			p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt2[parking];
+			p_NtDat->Discount[i].Amount	= syukei->Mno_use_ryo2[parking];
+			i++;
+		}
+	}
+
+// “XŠ„ˆø 101`255‡Œv
+	for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+		if (syukei->Mno_use_cnt3[parking] == 0
+		 && syukei->Mno_use_ryo3[parking] == 0) {
+			// ƒf[ƒ^‚ª‚O‚Ìê‡‚Í“d•¶‚ÉŠi”[‚¹‚¸ƒXƒLƒbƒv‚·‚éB
+			continue;
+		} else {
+			p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1+parking];
+			p_NtDat->Discount[i].Kind		= 62;
+			p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt3[parking];
+			p_NtDat->Discount[i].Amount	= syukei->Mno_use_ryo3[parking];
+			i++;
+		}
+	}
+	if( _is_ParkingWeb_pip() && syukei->Mno_use_cnt5 ){
+		p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1];
+		p_NtDat->Discount[i].Kind		= 2;
+		p_NtDat->Discount[i].Group		= CPrmSS[S_CEN][45];
+		p_NtDat->Discount[i].Num		= syukei->Mno_use_cnt5;
+		p_NtDat->Discount[i].Amount		= syukei->Mno_use_ryo5;
+		i++;
+	}
+	
+	// ‘SŠ„ˆø
+	for(group = 0; group < MISE_NO_CNT; ++group) {								// “XŠ„ˆøİ’è‚ª‚ ‚é‚©ƒ`ƒFƒbƒN
+// MH364301(S) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+//		if((CPrmSS[S_STO][1 + 3 * group]) || (CPrmSS[S_STO][3 + 3 * group])){	// “XŠ„ˆøİ’è(–ğŠ„orí•ÊØŠ·)‚ ‚è
+		if((prm_get( COM_PRM, S_STO, (short)(1 + 3 * group), 1, 1 )) ||
+		   (prm_get( COM_PRM, S_STO, (short)(3 + 3 * group), 2, 1 ))){			// “XŠ„ˆøİ’è(–ğŠ„orí•ÊØŠ·)‚ ‚è
+// MH364301(E) ƒCƒ“ƒ{ƒCƒX‘Î‰i¸Z’†~‚Ì—ÌûØ”­s‘Î‰j
+			break;
+		}
+	}
+	// ParkingWebŒo—R‚ÌParkiPro‘Î‰‚ ‚èH
+	if( _is_ParkingWeb_pip() || (group != MISE_NO_CNT) ){
+		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// Šî–{’“Ôê”Ô†¾¯Ä
+		p_NtDat->Discount[i].Kind		= 63;
+		p_NtDat->Discount[i].Num		= syukei->Mno_use_Tcnt;
+		p_NtDat->Discount[i].Amount	= syukei->Mno_use_Tryo;
+		i++;
+	}
+
+	// í•ÊŠ„ˆø
+	for (group = 0; group < RYOUKIN_SYU_CNT; group++) {
+		if (1 == prm_get(COM_PRM, S_SHA, 1 + 6 * group, 2, 5) && 				// í•Êİ’è‚ ‚è
+			0 != prm_get(COM_PRM, S_SHA, 1 + 6 * group, 4, 1)) { 				// ÔíŠ„ˆø‚ ‚è
+			p_NtDat->Discount[i].ParkingNo	= CPrmSS[S_SYS][1];
+			p_NtDat->Discount[i].Kind		= 50;
+			p_NtDat->Discount[i].Group		= group + 1;
+			p_NtDat->Discount[i].Num		= syukei->Rtwari_cnt[group];
+			p_NtDat->Discount[i].Amount		= syukei->Rtwari_ryo[group];
+			i++;
+		}
+	}
+
+// “dqŒˆÏ‚Ì—ÌûŠz‚ª‚ ‚éê‡‚ÍAİ’è‚ÉŠÖ‚í‚ç‚¸‘—M‚·‚é
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+// MH364301(S) SX20“‡‘Î‰
+//	if( isEC_USE() ){
+	if (isEMoneyReader()) {
+// MH364301(E) SX20“‡‘Î‰
+// MH364301(S) ˆ—–¢—¹æˆøî•ñ‚ğWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+		if( syukei->Ec_minashi_cnt ){
+			// ‚İ‚È‚µŒˆÏ
+			p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];					// ’“ÔêNoF©’“Ô”Ô†
+			p_NtDat->Discount[i].Kind = NTNET_DEEMED_PAY;						// Š„ˆøí•ÊF1021i‚İ‚È‚µŒˆÏjŒÅ’è
+			p_NtDat->Discount[i].Group = 0;										// Š„ˆø‹æ•ªF(0)æˆø¬Œ÷•ª
+			p_NtDat->Discount[i].Num = syukei->Ec_minashi_cnt;					// Š„ˆø‰ñ”F
+			p_NtDat->Discount[i].Callback = 0;									// ‰ñû–‡”F–¢g—p(0)
+			p_NtDat->Discount[i].Amount = syukei->Ec_minashi_ryo;				// Š„ˆøŠz  F
+			p_NtDat->Discount[i].Info = 0;										// Š„ˆøî•ñF–¢g—p(0)
+			p_NtDat->Discount[i].Rsv = 0;										// —\”õ@@F–¢g—p(0)
+
+			i++;
+		}
+
+		if( syukei->miryo_pay_ok_cnt ){
+			// –¢—¹x•¥Ï‚İ
+			p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];					// ’“ÔêNoF©’“Ô”Ô†
+			p_NtDat->Discount[i].Kind = NTNET_MIRYO_PAY;						// Š„ˆøí•ÊF1022i–¢—¹x•¥Ï‚İjŒÅ’è
+			p_NtDat->Discount[i].Group = 0;										// Š„ˆø‹æ•ªF(0)æˆø¬Œ÷•ª
+			p_NtDat->Discount[i].Num = syukei->miryo_pay_ok_cnt;				// Š„ˆø‰ñ”F
+			p_NtDat->Discount[i].Callback = 0;									// ‰ñû–‡”F–¢g—p(0)
+			p_NtDat->Discount[i].Amount = syukei->miryo_pay_ok_ryo;				// Š„ˆøŠz  F
+			p_NtDat->Discount[i].Info = 0;										// Š„ˆøî•ñF–¢g—p(0)
+			p_NtDat->Discount[i].Rsv = 0;										// —\”õ@@F–¢g—p(0)
+
+			i++;
+		}
+
+		if( syukei->miryo_unknown_cnt ){
+			// –¢—¹x•¥•s–¾
+			p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];					// ’“ÔêNoF©’“Ô”Ô†
+			p_NtDat->Discount[i].Kind = NTNET_MIRYO_UNKNOWN;					// Š„ˆøí•ÊF8021i–¢—¹x•¥•s–¾jŒÅ’è
+			p_NtDat->Discount[i].Group = 0;										// Š„ˆø‹æ•ªF(0)æˆø¬Œ÷•ª
+			p_NtDat->Discount[i].Num = syukei->miryo_unknown_cnt;				// Š„ˆø‰ñ”F
+			p_NtDat->Discount[i].Callback = 0;									// ‰ñû–‡”F–¢g—p(0)
+			p_NtDat->Discount[i].Amount = syukei->miryo_unknown_ryo;			// Š„ˆøŠz  F
+			p_NtDat->Discount[i].Info = 0;										// Š„ˆøî•ñF–¢g—p(0)
+			p_NtDat->Discount[i].Rsv = 0;										// —\”õ@@F–¢g—p(0)
+
+			i++;
+		}
+// MH364301(E) ˆ—–¢—¹æˆøî•ñ‚ğWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+		for (j = 0; j < EC_BRAND_TOTAL_MAX; j++) {
+			switch (ec_discount_kind_tbl[j]) {
+				case	NTNET_EDY_0:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_EDY;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->Electron_edy_cnt;
+						sei_ryo = syukei->Electron_edy_ryo;
+					}
+					break;
+				case	NTNET_NANACO_0:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_NANACO;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->nanaco_sei_cnt;
+						sei_ryo = syukei->nanaco_sei_ryo;
+					}
+					break;
+				case	NTNET_WAON_0:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_WAON;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->waon_sei_cnt;
+						sei_ryo = syukei->waon_sei_ryo;
+					}
+					break;
+				case	NTNET_SAPICA_0:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_SAPICA;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->sapica_sei_cnt;
+						sei_ryo = syukei->sapica_sei_ryo;
+					}
+					break;
+				case	NTNET_SUICA_1:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_KOUTSUU;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->koutsuu_sei_cnt;
+						sei_ryo = syukei->koutsuu_sei_ryo;
+					}
+					break;
+				case	NTNET_ID_0:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_ID;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->id_sei_cnt;
+						sei_ryo = syukei->id_sei_ryo;
+					}
+					break;
+				case	NTNET_QUICPAY_0:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = BRANDNO_QUIC_PAY;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = syukei->quicpay_sei_cnt;
+						sei_ryo = syukei->quicpay_sei_ryo;
+					}
+					break;
+// MH364301(S) PiTaPa‘Î‰
+				case	NTNET_PITAPA_0:
+					{
+						brand_no = BRANDNO_PITAPA;
+						sei_cnt = syukei->pitapa_sei_cnt;
+						sei_ryo = syukei->pitapa_sei_ryo;
+					}
+					break;
+// MH364301(E) PiTaPa‘Î‰
+// MH364301(S) QRƒR[ƒhŒˆÏ‘Î‰
+				case	NTNET_QR:
+					{
+						brand_no = BRANDNO_QR;
+						sei_cnt = syukei->qr_sei_cnt;
+						sei_ryo = syukei->qr_sei_ryo;
+					}
+					break;
+// MH364301(E) QRƒR[ƒhŒˆÏ‘Î‰
+				default	:
+					{
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						brand_no = 0;
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+						sei_cnt = 0L;
+						sei_ryo = 0L;
+					}
+					break;
+			}
+// GG122600(S) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+//			if (sei_cnt != 0L) {
+// GG122600(S) g—pƒ}ƒl[‘I‘ğİ’è(50-0001,2)‚ğQÆ‚µ‚È‚¢
+//			if( isEcBrandNoEnabledForSetting(brand_no) ){
+			if( isEcBrandNoEnabledForRecvTbl(brand_no) ||
+				sei_cnt != 0 || sei_ryo != 0) {
+				// ƒuƒ‰ƒ“ƒhƒe[ƒuƒ‹‚ğŒŸõ‚µ‚ÄŒ©‚Â‚©‚ç‚È‚­‚Ä‚àWŒv‚³‚ê‚Ä‚¢‚ê‚Î
+				// Š„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+// GG122600(E) g—pƒ}ƒl[‘I‘ğİ’è(50-0001,2)‚ğQÆ‚µ‚È‚¢
+// GG122600(E) g—p‚³‚ê‚Ä‚¢‚È‚¢ê‡‚Å‚àŠ„ˆøWŒvƒf[ƒ^‚ÉƒZƒbƒg‚·‚é
+			// ŒˆÏWŒv
+				p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];				// ’“ÔêNoF©’“Ô”Ô†
+				p_NtDat->Discount[i].Kind = ec_discount_kind_tbl[j];			// Š„ˆøí•ÊFEdy/nanaco/WAON/SAPICA/Œğ’ÊŒnIC¶°ÄŞ
+				p_NtDat->Discount[i].Group = 0;									// Š„ˆø‹æ•ªF(0)æˆø¬Œ÷•ª
+				p_NtDat->Discount[i].Num = sei_cnt;								// Š„ˆø‰ñ”F
+				p_NtDat->Discount[i].Callback = 0;								// ‰ñû–‡”F–¢g—p(0)
+				p_NtDat->Discount[i].Amount = sei_ryo;							// Š„ˆøŠz  F
+				p_NtDat->Discount[i].Info = 0;									// Š„ˆøî•ñF–¢g—p(0)
+				p_NtDat->Discount[i].Rsv = 0;									// —\”õ@@F–¢g—p(0)
+
+				i++;
+			}
+		}
+// MH364301(S) SX20“‡‘Î‰
+//	} else {
+// MH364301(E) SX20“‡‘Î‰
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+// MH364301(S) SX20“‡‘Î‰
+//	if(prm_get(COM_PRM, S_PAY,24, 1, 3) == 1){
+	if (isSX10_USE()) {
+// MH364301(E) SX20“‡‘Î‰
+		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// ’“ÔêNoF©’“Ô”Ô†
+		p_NtDat->Discount[i].Kind = NTNET_SUICA_1;								// Š„ˆøí•ÊF31iSuicaŒˆÏjŒÅ’è
+		p_NtDat->Discount[i].Group = 0;											// Š„ˆø‹æ•ªF–¢g—p(0)
+		p_NtDat->Discount[i].Callback = 0;										// ‰ñû–‡”F–¢g—p(0)
+		p_NtDat->Discount[i].Info = 0;											// Š„ˆøî•ñF–¢g—p(0)
+		// Suica
+		if( syukei->Electron_sei_cnt ){
+			p_NtDat->Discount[i].Num = syukei->Electron_sei_cnt;				// Š„ˆø‰ñ”F
+			p_NtDat->Discount[i].Amount = syukei->Electron_sei_ryo;				// Š„ˆøŠz  F
+		}
+
+		// PASMO
+		if( syukei->Electron_psm_cnt ){
+			p_NtDat->Discount[i].Num += syukei->Electron_psm_cnt;				// Š„ˆø‰ñ”F
+			p_NtDat->Discount[i].Amount += syukei->Electron_psm_ryo;			// Š„ˆøŠz  F
+		}
+
+		// ICOCA
+		if( syukei->Electron_ico_cnt ){
+			p_NtDat->Discount[i].Num += syukei->Electron_ico_cnt;				// Š„ˆø‰ñ”F
+			p_NtDat->Discount[i].Amount += syukei->Electron_ico_ryo;			// Š„ˆøŠz  F
+		}
+
+		i++;
+	}
+
+// MH364300 GG119A23(S) // GG122600(S) G.So ICƒNƒŒƒWƒbƒg‘Î‰ •s—v‹@”\íœ(Edy)
+//	// Edy
+//	if( syukei->Electron_edy_cnt ){
+//		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// ’“ÔêNoF©’“Ô”Ô†
+//		p_NtDat->Discount[i].Kind = NTNET_EDY_0;								// Š„ˆøí•ÊF32iEdyŒˆÏjŒÅ’è
+//		p_NtDat->Discount[i].Group = 0;											// Š„ˆø‹æ•ªF(0)æˆø¬Œ÷•ª
+//		p_NtDat->Discount[i].Num = syukei->Electron_edy_cnt;					// Š„ˆø‰ñ”F
+//		p_NtDat->Discount[i].Callback = 0;										// ‰ñû–‡”F–¢g—p(0)
+//		p_NtDat->Discount[i].Amount = syukei->Electron_edy_ryo;					// Š„ˆøŠz  F
+//		p_NtDat->Discount[i].Info = 0;											// Š„ˆøî•ñF–¢g—p(0)
+//		i++;
+//	}
+//
+//	if( syukei->Electron_Arm_cnt ){
+//		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// ’“ÔêNoF©’“Ô”Ô†
+//		p_NtDat->Discount[i].Kind = NTNET_EDY_0;								// Š„ˆøí•ÊF32iEdyŒˆÏjŒÅ’è
+//		p_NtDat->Discount[i].Group = 1;											// Š„ˆø‹æ•ªF(1)±×°Ñæˆø•ª
+//		p_NtDat->Discount[i].Num = syukei->Electron_Arm_cnt;					// Š„ˆø‰ñ”F
+//		p_NtDat->Discount[i].Callback = 0;										// ‰ñû–‡”F–¢g—p(0)
+//		p_NtDat->Discount[i].Amount = syukei->Electron_Arm_ryo;					// Š„ˆøŠz  F
+//		p_NtDat->Discount[i].Info = 0;											// Š„ˆøî•ñF–¢g—p(0)
+//		i++;
+//	}
+//
+// MH364300 GG119A23(E) // GG122600(E) G.So ICƒNƒŒƒWƒbƒg‘Î‰ •s—v‹@”\íœ(Edy)
+	// IC-Card
+	if( syukei->Electron_icd_cnt ){
+		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// ’“ÔêNoF©’“Ô”Ô†
+		p_NtDat->Discount[i].Kind = NTNET_ICCARD_0;								// Š„ˆøí•ÊF36iIC-CardŒˆÏjŒÅ’è
+		p_NtDat->Discount[i].Group = 0;											// Š„ˆø‹æ•ªF(0)æˆø¬Œ÷•ª
+		p_NtDat->Discount[i].Num = syukei->Electron_icd_cnt;					// Š„ˆø‰ñ”F
+		p_NtDat->Discount[i].Callback = 0;										// ‰ñû–‡”F–¢g—p(0)
+		p_NtDat->Discount[i].Amount = syukei->Electron_icd_ryo;					// Š„ˆøŠz  F
+		p_NtDat->Discount[i].Info = 0;											// Š„ˆøî•ñF–¢g—p(0)
+		i++;
+	}
+// MH364300 GG119A23(S) // GG122600(S) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+	}
+// MH364300 GG119A23(E) // GG122600(E) D.Inaba ICƒNƒŒƒWƒbƒg‘Î‰
+
+	if( _is_Normal_pip() ){
+		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// ’“ÔêNoF©’“Ô”Ô†
+		p_NtDat->Discount[i].Kind = NTNET_GENGAKU;								// Š„ˆøí•ÊFŒ¸Šz¸Z
+		p_NtDat->Discount[i].Group = 0;											// Š„ˆø‹æ•ªF–¢g—p(0)
+		p_NtDat->Discount[i].Num = syukei->Gengaku_seisan_cnt;					// Š„ˆø‰ñ”F
+		p_NtDat->Discount[i].Callback = 0;										// ‰ñû–‡”F–¢g—p(0)
+		p_NtDat->Discount[i].Amount = syukei->Gengaku_seisan_ryo;				// Š„ˆøŠz  F
+		p_NtDat->Discount[i].Info = 0;											// Š„ˆøî•ñF–¢g—p(0)
+		i++;
+	}
+
+	if( _is_Normal_pip() ){
+		p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];						// ’“ÔêNoF©’“Ô”Ô†
+		p_NtDat->Discount[i].Kind = NTNET_FURIKAE;								// Š„ˆøí•ÊFU‘Ö¸Z
+		p_NtDat->Discount[i].Group = 0;											// Š„ˆø‹æ•ªF–¢g—p(0)
+		p_NtDat->Discount[i].Num = syukei->Furikae_seisan_cnt;					// Š„ˆø‰ñ”F
+		p_NtDat->Discount[i].Callback = 0;										// ‰ñû–‡”F–¢g—p(0)
+		p_NtDat->Discount[i].Amount = syukei->Furikae_seisan_ryo;				// Š„ˆøŠz  F
+		p_NtDat->Discount[i].Info = 0;											// Š„ˆøî•ñF–¢g—p(0)
+		i++;
+	}
+
+	if( _is_ParkingWeb_pip() ){
+// MH364300 GG119A23(S) // GG122600(S) ICƒNƒŒƒWƒbƒg‘Î‰^g—pƒ}ƒl[‘I‘ğİ’è(50-0001,2)‚ğQÆ‚µ‚È‚¢
+//		for( mod=MOD_TYPE_EMONEY; mod<MOD_TYPE_MAX; mod++ ){
+//			switch( mod ){
+//					break;
+//				case MOD_TYPE_EMONEY:
+//					if( !prm_get( COM_PRM, S_PAY, 24, 1, 3 )  ){
+//						continue;
+//					}
+//					break;
+//				default:
+//					continue;
+//					break;
+//			}
+		for( mod=0; mod<MOD_TYPE_MAX; mod++ ){
+			switch( mod ){
+				case MOD_TYPE_CREDIT:
+					// ƒNƒŒƒWƒbƒgg—pİ’è‚ ‚èH
+					if (!isEcBrandNoEnabledForRecvTbl(BRANDNO_CREDIT)) {
+						continue;
+					}
+					break;
+				case MOD_TYPE_EMONEY:
+// MH364301(S) SX20“‡‘Î‰
+//					if( !prm_get( COM_PRM, S_PAY, 24, 1, 3 ) &&
+					if( !isSX10_USE() &&
+// MH364301(E) SX20“‡‘Î‰
+						!isEcEmoneyEnabled(0, 0) ){
+						continue;
+					}
+					break;
+				default:
+					continue;
+					break;
+			}
+// MH364300 GG119A23(E) // GG122600(E) ICƒNƒŒƒWƒbƒg‘Î‰^g—pƒ}ƒl[‘I‘ğİ’è(50-0001,2)‚ğQÆ‚µ‚È‚¢
+			p_NtDat->Discount[i].ParkingNo = CPrmSS[S_SYS][1];					// ’“ÔêNoF©’“Ô”Ô†
+			p_NtDat->Discount[i].Kind = NTNET_KABARAI;							// Š„ˆøí•ÊFU‘Ö¸Z(ParkingWeb”Å)
+			p_NtDat->Discount[i].Group = mod;									// Š„ˆø‹æ•ªF”}‘Ìí•Ê
+			if( syukei->Furikae_CardKabarai[mod] ){
+				p_NtDat->Discount[i].Num = syukei->Furikae_Card_cnt[mod];		// Š„ˆø‰ñ”F‰ñ”
+				p_NtDat->Discount[i].Callback = 0;								// ‰ñû–‡”F–¢g—p(0)
+				p_NtDat->Discount[i].Amount = syukei->Furikae_CardKabarai[mod];	// Š„ˆøŠz  F‰ß•¥‚¢‹àŠz
+				p_NtDat->Discount[i].Info = 0;									// Š„ˆøî•ñF–¢g—p(0)
+			}
+			i++;
+		}
+	}
+
+	ret = sizeof( DATA_KIND_45_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		’èŠúWŒvƒf[ƒ^(ƒf[ƒ^í•Ê46)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : ’èŠúWŒvƒf[ƒ^(DATA_KIND_46_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : ’èŠúWŒvƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiTeiki_T( SYUKEI *syukei, ushort Type, DATA_KIND_46_T *p_NtDat )
+{
+	int		i;
+	int		parking;
+	int		kind;
+	ushort	pos;
+	ushort	ret;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_46_T ) );
+	NTNET_Edit_BasicData( 46, 0, syukei->SeqNo[4], &p_NtDat->DataBasic );		// Šî–{ƒf[ƒ^ì¬
+
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 			= syukei->CenterSeqNo;						// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type					= Type;										// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo				= syukei->Kakari_no;						// ŒWˆõNo.
+	p_NtDat->SeqNo					= CountSel( &syukei->Oiban );				// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+	
+	i = 0;
+	for (parking = 0; parking < PKNO_SYU_CNT; parking++) {
+		if(CPrmSS[S_SYS][1+parking]) {											// ’“Ôêİ’è‚ ‚è
+			if(parking == 0) {													// Šî–{’“Ôê
+				pos = 6;
+			}
+			else if(parking == 1) {												// Šg’£1’“Ôê
+				pos = 1;
+			}
+			else if(parking == 2) {												// Šg’£3’“Ôê
+				pos = 2;
+			}
+			else if(parking == 3) {												// Šg’£3’“Ôê
+				pos = 3;
+			}
+			if( prm_get(COM_PRM, S_SYS, 70, 1, pos) ){							// ‘ÎÛ‚Ì’“Ôê‚Åg—p‰Â
+				// ’èŠúŒ”í•Ê”=15
+				for( kind = 0; kind < TEIKI_SYU_CNT; kind++ ){
+					// ’èŠúg—pH
+					if( 0 != prm_get(COM_PRM, S_PAS, 1 + (10 * kind), 2, 1) ){
+						p_NtDat->Pass[i].ParkingNo		= CPrmSS[S_SYS][1+parking];	// ’“ÔêNo.
+						p_NtDat->Pass[i].Kind			= kind + 1;					// í•Ê
+						p_NtDat->Pass[i].Num			= syukei->Teiki_use_cnt[parking][kind];	// ‰ñ”
+						p_NtDat->Pass[i].Update.Num		= syukei->Teiki_kou_cnt[parking][kind];	// XV‰ñ”
+						p_NtDat->Pass[i].Update.Amount	= syukei->Teiki_kou_ryo[parking][kind];	// XV”„ã‹àŠz
+						i++;
+					}
+				}
+			}
+		}
+	}
+
+	ret = sizeof( DATA_KIND_46_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		‹à‘KWŒvƒf[ƒ^(ƒf[ƒ^í•Ê48)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : ‹à‘KWŒvƒf[ƒ^(DATA_KIND_48_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : ‹à‘KWŒvƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiKinsen_T( SYUKEI *syukei, ushort Type, DATA_KIND_48_T *p_NtDat )
+{
+	static const ushort c_coin[COIN_SYU_CNT] = {10, 50, 100, 500};
+	ulong	w;
+	int		i;
+	ushort	ret;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_48_T ) );
+	NTNET_Edit_BasicData( 48, 0, syukei->SeqNo[6], &p_NtDat->DataBasic);	// ‚s‡ŒvFƒf[ƒ^•Ûƒtƒ‰ƒO = 0
+
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 			= syukei->CenterSeqNo;						// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type					= Type;										// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo				= syukei->Kakari_no;						// ŒWˆõNo.
+	p_NtDat->SeqNo					= CountSel( &syukei->Oiban );				// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+
+	p_NtDat->Total					= syukei->Kinko_Tryo;						// ‹àŒÉ‘“ü‹àŠz
+	p_NtDat->NoteTotal				= syukei->Note_Tryo;						// †•¼‹àŒÉ‘“ü‹àŠz
+	p_NtDat->CoinTotal				= syukei->Coin_Tryo;						// ƒRƒCƒ“‹àŒÉ‘“ü‹àŠz
+	for (i = 0; i < COIN_SYU_CNT; i++) {										// ƒRƒCƒ“1`4
+		p_NtDat->Coin[i].Kind		= c_coin[i];								//        ‹àí
+		p_NtDat->Coin[i].Num		= syukei->Coin_cnt[i];						//        –‡”
+	}
+	p_NtDat->Note[0].Kind			= 1000;										// †•¼1  ‹àí
+	p_NtDat->Note[0].Num2			= syukei->Note_cnt[0];						//        †•¼–‡”
+	w = 0;
+	for (i = 0; i < COIN_SYU_CNT; i++) {
+		w += ((syukei->tou[i] + syukei->hoj[i]) * c_coin[i]);
+	}
+	p_NtDat->CycleAccept			= w;										// zŠÂ•”‘“ü‹àŠz
+	w = 0;
+	for (i = 0; i < COIN_SYU_CNT; i++) {
+		w += ((syukei->sei[i] + syukei->kyo[i]) * c_coin[i]);
+	}
+	p_NtDat->CyclePay				= w;										// zŠÂ•”‘o‹àŠz
+	p_NtDat->NoteAcceptTotal		= syukei->tou[4] * 1000;					// †•¼‘“ü‹àŠz
+	for (i = 0; i < _countof(p_NtDat->Cycle); i++) {
+		p_NtDat->Cycle[i].CoinKind			= c_coin[i];						// zŠÂ1`4 ƒRƒCƒ“‹àí
+		p_NtDat->Cycle[i].Accept			= syukei->tou[i];					//          “ü‹à–‡”
+		p_NtDat->Cycle[i].Pay				= syukei->sei[i];					//          o‹à–‡”
+		p_NtDat->Cycle[i].ChargeSupply		= syukei->hoj[i];					//          ’Ş‘K•â[–‡”
+		p_NtDat->Cycle[i].SlotInventory		= syukei->kyo[i];					//          ƒCƒ“ƒxƒ“ƒgƒŠ–‡”(æoŒû)
+	}
+
+	ret = sizeof( DATA_KIND_48_T ); 
+	return ret;
+}
+
+//[]----------------------------------------------------------------------[]
+///	@brief		WŒvI—¹’Ê’mƒf[ƒ^(ƒf[ƒ^í•Ê53)•ÒWˆ—
+//[]----------------------------------------------------------------------[]
+///	@param[in]	p_RcptDat : ƒƒO‚©‚çæ‚èo‚µ‚½WŒvƒf[ƒ^‚Ìƒ|ƒCƒ“ƒ^
+///	@param[out]	p_NtDat   : WŒvI—¹’Ê’mƒf[ƒ^(DATA_KIND_53_TŒ^)‚Ö‚Ìƒ|ƒCƒ“ƒ^
+///	@return		ret       : WŒvI—¹’Ê’mƒf[ƒ^‚Ìƒf[ƒ^ƒTƒCƒY(ƒVƒXƒeƒ€ID`) 
+//[]------------------------------------- Copyright(C) 2016 AMANO Corp.---[]
+ushort NTNET_Edit_SyukeiSyuryo_T( SYUKEI *syukei, ushort Type, DATA_KIND_53_T *p_NtDat )
+{
+	ushort	ret;
+
+	memset( p_NtDat, 0, sizeof( DATA_KIND_53_T ) );
+	NTNET_Edit_BasicData( 53, 0, syukei->SeqNo[7], &p_NtDat->DataBasic);	// ‚s‡ŒvFƒf[ƒ^•Ûƒtƒ‰ƒO = 0
+
+	p_NtDat->DataBasic.Year = (uchar)(syukei->NowTime.Year % 100 );				// ˆ—”N
+	p_NtDat->DataBasic.Mon = (uchar)syukei->NowTime.Mon;						// ˆ—Œ
+	p_NtDat->DataBasic.Day = (uchar)syukei->NowTime.Day;						// ˆ—“ú
+	p_NtDat->DataBasic.Hour = (uchar)syukei->NowTime.Hour;						// ˆ—
+	p_NtDat->DataBasic.Min = (uchar)syukei->NowTime.Min;						// ˆ—•ª
+	p_NtDat->DataBasic.Sec = 0;													// ˆ—•b
+
+	p_NtDat->CenterSeqNo 			= syukei->CenterSeqNo;						// ƒZƒ“ƒ^[’Ç”ÔiWŒvj
+	p_NtDat->Type					= Type;										// WŒvƒ^ƒCƒv
+	p_NtDat->KakariNo				= syukei->Kakari_no;						// ŒWˆõNo.
+	p_NtDat->SeqNo					= CountSel( &syukei->Oiban );				// WŒv’Ç”Ô
+	switch( prm_get(COM_PRM, S_SYS, 13, 1, 1) ){
+		case 0:		// ŒÂ•Ê’Ç”Ô
+			if( Type == 2 ){													// GTWŒv
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_T_TOTAL][1];	// I—¹’Ç”Ô
+			}
+			break;
+		case 1:		// ’Ê‚µ’Ç‚¢”Ô
+			if( Type == 1 || Type == 2 ){
+				p_NtDat->StartSeqNo		= syukei->oiban_range[_OBN_WHOLE][0];	// ŠJn’Ç”Ô
+				p_NtDat->EndSeqNo		= syukei->oiban_range[_OBN_WHOLE][1];	// I—¹’Ç”Ô
+			}
+			break;
+		default:
+			break;
+	}
+
+	ret = sizeof( DATA_KIND_53_T ); 
+	return ret;
+}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 // •s‹ï‡C³(S) K.Onodera 2016/11/30 #1586 U‘ÖŒ³¸Zƒf[ƒ^‚ÌæÁƒf[ƒ^‚ÅA‘ä”ŠÇ—’Ç”Ô‚Ì”NŒ“ú•ª‚ª‘—M‚Ì”NŒ“ú•ª‚É‚È‚Á‚Ä‚¢‚é
 void SetVehicleCountDate( ulong val ){
 	VehicleCountDateTime = val;
@@ -19667,3 +22770,150 @@ unsigned short	NTNET_Edit_Data61(	LongPark_log_Pweb 	*p_RcptDat,		// ’·Šú’“Ôî•
 	return ret;
 }
 // MH322917(E) A.Iiizumi 2018/09/03 ’·Šú’“ÔŒŸo‹@”\‚ÌŠg’£‘Î‰(“d•¶‘Î‰)
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+/*[]----------------------------------------------------------------------[]*/
+/*| ’[––ŠÔƒf[ƒ^óMˆ—                                                   |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : NTNET_CtrlRecvData                                      |*/
+/*| PARAMETER    : void                                                    |*/
+/*| RETURN VALUE : void                                                    |*/
+/*[]------------------------------------- Copyright(C) 2025 AMANO Corp.---[]*/
+void NTNET_CtrlRecvTermData()
+{
+	switch( RecvNtnetTermDt.DataBasic.DataKind ){
+	case 109:							// ƒf[ƒ^—v‹2
+			if( RecvNtnetTermDt.RData109.ControlData[8] ){							// ’[––î•ñÃŞ°À—v‹‚ ‚è
+				NTNET_Snd_Data230_T( RecvNtnetTermDt.RData109.DataBasic.MachineNo );	// NT-NET’[––î•ñÃŞ°Àì¬
+			}
+			if (RecvNtnetTermDt.RData109.ControlData[7]) {		// “®ìƒJƒEƒ“ƒgƒf[ƒ^‘—M
+				NTNET_Snd_Data228(RecvNtnetTermDt.RData109.DataBasic.MachineNo, 1);
+			}
+
+		break;
+		
+	default:
+		break;
+	}
+}
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMji’[––ŠÔ‚Æ‰“Šu‚ğ•¹—p‚·‚éj
+// GM849100(S) M.Fujikawa 2025/01/10 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj
+/*[]----------------------------------------------------------------------[]*/
+/*| ’[––î•ñÃŞ°À(ÃŞ°Àí•Ê230)ì¬ˆ—                                      |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : NTNET_Snd_Data230_T                                       |*/
+/*| PARAMETER    : MachineNo : ‘—Mæ’[––‹@ŠB‡‚                            |*/
+/*| RETURN VALUE : void                                                    |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| Author       : M.Fujiakwa                                                  |*/
+/*| Date         : 2025-01-10                                              |*/
+/*| UpDate       :                                                         |*/
+/*[]------------------------------------- Copyright(C) 2025 AMANO Corp.---[]*/
+void	NTNET_Snd_Data230_T( ulong MachineNo )
+{
+	memset( &SendNtnetDt, 0, sizeof( DATA_KIND_230_T ) );
+
+	BasicDataMake( 230, 1 );										// Šî–{ÃŞ°Àì¬
+
+	SendNtnetDt.SData230_T.SMachineNo = MachineNo;					// ‘—Mæ’[––‹@ŠB‡‚
+	memset( SendNtnetDt.SData230_T.ProgramVer, 0x20, 12 );			// CRM¿ÌÄÊŞ°¼Ş®İŠi”[´Ø±¸Ø±
+	memcpy( &SendNtnetDt.SData230_T.ProgramVer[4], VERSNO.ver_part, 8 );	// CRM¿ÌÄÊŞ°¼Ş®İŠi”[(‰E‹l‚ß)
+
+	// Ú‘±‹@Ší‚Ìó‘Ô‚ğƒZƒbƒg‚·‚é
+	SetUnitInfo( &SendNtnetDt.SData230_T.UnitInfo[0] );
+
+	NTBUF_SetSendNtData( &SendNtnetDt, sizeof( DATA_KIND_230_T ), NTNET_BUF_PRIOR );	// ÃŞ°À‘—M“o˜^
+}
+
+void
+SetUnitInfo( UNIT_DATA *info )
+{
+
+	uchar	cnt = 0;
+
+
+
+	// ƒf[ƒ^‚ğƒZƒbƒg‚·‚é—Ìˆæ(UnitInfo[0])‚Ì‚OƒNƒŠƒA‚Í‚±‚ÌŠÖ”‚ÌŒÄ‚ÑŒ³‚Å‚â‚Á‚Ä‚¢‚éB
+	// ‚»‚ê‚É‚æ‚èŠeƒ†ƒjƒbƒg‚Ìó‘Ô‚ÍˆÈ‰º‚Ì‚æ‚¤‚É‚È‚Á‚Ä‚¢‚éB
+	// ó‘ÔƒXƒe[ƒ^ƒX‚OF³íAƒGƒ‰[í•Ê‚OF‚È‚µAƒGƒ‰[‚m‚‚OF‚È‚µ
+
+	// ‚OFƒŠ[ƒ_[‚Pó‘Ôƒ`ƒFƒbƒN
+	// Ú‘±‚È‚µ‚È‚Ì‚Å–¢Ú‘±(0xFFFF)ŒÅ’è
+	info[0].Status = 0xFFFF;
+
+	// ‚PFƒŠ[ƒ_[‚Qó‘Ôƒ`ƒFƒbƒN
+	// ‚È‚¢‚Ì‚Å–¢Ú‘±(0xFFFF)ŒÅ’è
+	info[1].Status = 0xFFFF;
+
+	// ‚QF”­Œ”ƒ†ƒjƒbƒgó‘Ôƒ`ƒFƒbƒN
+	// ‚È‚¢‚Ì‚Å–¢Ú‘±(0xFFFF)ŒÅ’è
+	info[2].Status = 0xFFFF;
+
+	// ‚RFƒWƒƒ[ƒiƒ‹ƒvƒŠƒ“ƒ^ó‘Ôƒ`ƒFƒbƒN
+	// –¼“S‹¦¤‚Å‚Íg—p‚µ‚È‚¢‚Ì‚Å–¢Ú‘±(0xFFFF)ŒÅ’è
+	// “dqƒWƒƒ[ƒiƒ‹l—¶‚à•K—v‚¾‚ªƒR[ƒ‹ƒZƒ“ƒ^[‚Åg—p‚µ‚È‚¢‚Ì‚ÅAˆê’U–¢Ú‘±‚É‚·‚é
+	info[3].Status = 0xFFFF;
+
+	// ‚SFƒŒƒV[ƒgƒvƒŠƒ“ƒ^ó‘Ôƒ`ƒFƒbƒN
+	for( cnt = 0; cnt < Err_Ptr_R[0]; cnt++ ) {
+		// ƒGƒ‰[”­¶’†‚©ƒ`ƒFƒbƒN
+		if( IsErrorOccuerd( (char)ERRMDL_PRINTER, (char)Err_Ptr_R[(cnt+1)] ) == 1 ) {
+			info[4].Status = 1;						// ˆÙí’li‚Pj‚ğƒZƒbƒg
+			info[4].Err_md = ERRMDL_PRINTER;		// ƒ‚ƒWƒ…[ƒ‹‚m‚‚ğƒZƒbƒg
+			info[4].Err_no = Err_Ptr_R[(cnt+1)];	// ƒGƒ‰[‚m‚‚ğƒZƒbƒg
+			break;
+		}
+	}
+
+	// ‚TFƒRƒCƒ“ƒƒbƒNó‘Ôƒ`ƒFƒbƒN
+	for( cnt = 0; cnt < Err_Coin[0]; cnt++ ) {
+		// ƒGƒ‰[”­¶’†‚©ƒ`ƒFƒbƒN@Ë@”­¶’†
+		if( IsErrorOccuerd( (char)ERRMDL_COIM, (char)Err_Coin[(cnt+1)] ) == 1 ) {
+			info[5].Status = 1;					// ˆÙí’li‚Pj‚ğƒZƒbƒg
+			info[5].Err_md = ERRMDL_COIM;		// ƒ‚ƒWƒ…[ƒ‹‚m‚‚ğƒZƒbƒg
+			info[5].Err_no = Err_Coin[(cnt+1)];	// ƒGƒ‰[‚m‚‚ğƒZƒbƒg
+			break;
+		}
+	}
+
+	// ‚UF†•¼ƒŠ[ƒ_[ó‘Ôƒ`ƒFƒbƒN
+	for( cnt = 0; cnt < Err_Note[0]; cnt++ ) {
+		// ƒGƒ‰[”­¶’†‚©ƒ`ƒFƒbƒN@Ë@”­¶’†
+		if( IsErrorOccuerd( (char)ERRMDL_NOTE, (char)Err_Note[(cnt+1)] ) == 1 ) {
+			info[6].Status = 1;						// ˆÙí’li‚Pj‚ğƒZƒbƒg
+			info[6].Err_md = ERRMDL_NOTE;			// ƒ‚ƒWƒ…[ƒ‹‚m‚‚ğƒZƒbƒg
+			info[6].Err_no = Err_Note[(cnt+1)];		// ƒGƒ‰[‚m‚‚ğƒZƒbƒg
+			break;
+		}
+	}
+
+	// ‚VFƒQ[ƒg‘•’uó‘Ôƒ`ƒFƒbƒN
+	// ‚b‚o‚ri–‘O¸Z‹@j
+	// Ú‘±‚È‚µ‚È‚Ì‚Å–¢Ú‘±(0xFFFF)ŒÅ’è
+	info[7].Status = 0xFFFF;
+
+	// ‚WFƒIƒvƒVƒ‡ƒ“ƒ†ƒjƒbƒgiQRƒR[ƒhƒŠ[ƒ_[jƒ`ƒFƒbƒN
+	if( prm_get( COM_PRM, S_PAY, 25, 1, 5 ) != 0 ){
+		for( cnt = 0; cnt < Err_QR[0]; cnt++ ) {
+			if( IsErrorOccuerd( (char)ERRMDL_BARCODE, (char)Err_QR[(cnt+1)] ) == 1 ){
+				info[8].Status = 1;						// ˆÙí’li‚Pj‚ğƒZƒbƒg
+				info[8].Err_md = ERRMDL_BARCODE;		// ƒ‚ƒWƒ…[ƒ‹‚m‚‚ğƒZƒbƒg
+				info[8].Err_no = Err_QR[(cnt+1)];		// ƒGƒ‰[‚m‚‚ğƒZƒbƒg
+			}
+		}
+	}else{
+		// Ú‘±‚È‚µ‚È‚Ì‚Å–¢Ú‘±(0xFFFF)ŒÅ’è
+		info[8].Status = 0xFFFF;
+	}
+
+	// ‚XFƒJƒ‰[•\¦ƒ†ƒjƒbƒgó‘Ôƒ`ƒFƒbƒN
+	for( cnt = 0; cnt < Err_LCD[0]; cnt++ ) {
+		if( IsErrorOccuerd( (char)ERRMDL_TKLSLCD, (char)Err_LCD[(cnt+1)] ) == 1 ){
+			info[9].Status = 1;						// ˆÙí’li‚Pj‚ğƒZƒbƒg
+			info[9].Err_md = ERRMDL_TKLSLCD;		// ƒ‚ƒWƒ…[ƒ‹‚m‚‚ğƒZƒbƒg
+			info[9].Err_no = Err_LCD[(cnt+1)];		// ƒGƒ‰[‚m‚‚ğƒZƒbƒg
+		}
+	}
+
+	return;
+}
+// GM849100(E) M.Fujikawa 2025/01/10 –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMj

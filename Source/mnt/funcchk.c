@@ -41,6 +41,9 @@
 #include	"pip_def.h"
 #include	"ntnet_def.h"
 #include	"cre_ctrl.h"
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+#include	"ntcom.h"
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 #include	"FlashSerial.h"
 #include	"updateope.h"
 
@@ -141,6 +144,11 @@ unsigned short	Fchk_Stack_StsPrint( void );
 void	Fchk_Stak_chek( void );
 ushort	FncChk_PiP(void);
 ushort	FncChk_pipclr(void);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+ushort	FunChk_Ntnet( void );
+ushort	check_nt_dtclr( void );
+void	DataCntDsp( ushort dataCnt, ushort type, ushort	line );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 // MH810103 GG119202(S) 不要機能削除(センタークレジット)
 //ushort FncChk_Cre( void );
 // MH810103 GG119202(E) 不要機能削除(センタークレジット)
@@ -598,6 +606,14 @@ unsigned short FncChkMain( void )
 				OPECTL.Ope_Mnt_flg	= 0;			// ｵﾍﾟﾚｰｼｮﾝﾒﾝﾃﾅﾝｽﾌﾗｸﾞﾘｾｯﾄ
 				break;
 // MH321800(E) D.Inaba ICクレジット対応 (決済リーダチェック追加)				
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+			case NTNET_CHK:						// １６．ＮＴ－ＮＥＴチェック
+				wopelg( OPLOG_NTNETCHK, 0, 0 );		// 操作履歴登録
+				OPECTL.Ope_Mnt_flg	= 15;		// ｵﾍﾟﾚｰｼｮﾝﾒﾝﾃﾅﾝｽﾌﾗｸﾞｾｯﾄ
+				usFncEvent = FunChk_Ntnet();
+				OPECTL.Ope_Mnt_flg	= 0;		// ｵﾍﾟﾚｰｼｮﾝﾒﾝﾃﾅﾝｽﾌﾗｸﾞﾘｾｯﾄ
+				break;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 			case MOD_EXT:
 				DP_CP[0] = org[0];
 				DP_CP[1] = org[1];
@@ -7386,7 +7402,10 @@ ushort dsp_unflushed_count(uchar type, uchar page)
 	ushort col, cnt;
 // MH810100(E) K.Onodera  2019/12/20 車番チケットレス(フラップ式->ゲート式変更に伴う処理見直し)
 
-	NTBUF_GetBufCount(&buf);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//	NTBUF_GetBufCount(&buf);
+	NTBUF_GetBufCount(&buf, TRUE);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	pt1 = (ulong*)&buf;
 	if (type == 0) {
 	// 合計表示
@@ -14846,3 +14865,359 @@ static ushort FncChk_DC_OibanClear( void )
 	}
 }
 // MH810100(E) Y.Yamauchi 2020/01/07 車番チケットレス(メンテナンス)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+/*[]----------------------------------------------------------------------[]*/
+/*| NTNETﾁｪｯｸ                                                              |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : FunChk_Ntnet( void )                                    |*/
+/*| PARAMETER    : void                                                    |*/
+/*| RETURN VALUE : unsigned short                                          |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| Update       :                                                         |*/
+/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+unsigned short	FunChk_Ntnet( void )
+{
+	ushort	usFntnetEvent;
+	ushort	ret = 0;
+	char	wk[2];
+	char	org[2];
+
+	/* 設定ﾊﾟﾗﾒｰﾀ-NTNET接続参照 */
+	if (! (_is_ntnet()) ) {			// LOCAL NTNETでは無い
+		BUZPIPI();
+		return MOD_EXT;
+	}
+
+	org[0] = DP_CP[0];
+	org[1] = DP_CP[1];
+	DP_CP[0] = DP_CP[1] = 0;
+	while (1) {
+		dispclr();
+		grachr(0, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR[0]);								/* "＜ＮＴ－ＮＥＴ＞　　　　　　　" */
+		usFntnetEvent = Menu_Slt(FNTNETMENU, FNTNET_CHK_TBL, (char)FNTNET_CHK_MAX, (char)1);
+
+		wk[0] = DP_CP[0];
+		wk[1] = DP_CP[1];
+
+		switch(usFntnetEvent){		/* FunctionKey Enter */
+		case FNTNET1_CHK:	// １．データクリア
+			usFntnetEvent = check_nt_dtclr();
+			break;
+// MH341107(S) K.Onodera 2016/11/11 AI-V対応(端末間)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間の追番クリアメニューを削除）
+//		case CCOM_SEQCLR:	// ２．センター追番クリア
+//			if( prm_get(COM_PRM, S_NTN, 121, 1, 1) != 0 ){
+//				usFntnetEvent = FncChk_cOibanClr();
+//			}else{
+//				BUZPIPI();
+//			}
+//			break;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間の追番クリアメニューを削除）
+// MH341107(E) K.Onodera 2016/11/11 AI-V対応(端末間)
+		case MOD_EXT:
+			DP_CP[0] = org[0];
+			DP_CP[1] = org[1];
+			ret = MOD_EXT;
+			break;
+		default:
+			break;
+		}
+		if (ret == MOD_EXT) {				// KEY_TEN_F5
+			break;
+		}
+		if (usFntnetEvent == MOD_CHG) {		// KEY_MODECHG
+			ret = MOD_CHG;
+			break;
+		}
+		DP_CP[0] = wk[0];
+		DP_CP[1] = wk[1];
+	}
+	return(ret);
+}
+
+/*[]----------------------------------------------------------------------[]*/
+/*| NTNETﾁｪｯｸ - ﾃﾞｰﾀｸﾘｱ                                                    |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : check_nt_dtclr( void )                                  |*/
+/*| PARAMETER    : void                                                    |*/
+/*| RETURN VALUE : unsigned short                                          |*/
+/*[]------------------------------------- Copyright(C) 2013 AMANO Corp.---[]*/
+ushort	check_nt_dtclr( void )
+{
+	ushort	msg;
+	ushort	w_Count;
+	t_NtBufCount	buf;
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+	uchar	mode = 0;		// 画面モード(0：初期状態、1：F2キー押下後)
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+
+	dispclr();
+	grachr(0, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR[0]);	// "＜ＮＴ－ＮＥＴチェック＞　　　"
+	memset(&buf,0x00,sizeof(buf));
+	NTBUF_GetBufCount(&buf, FALSE);									// データ件数を取得する
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	grachr(1, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[0]);	// "精算　　9999件　モニタ  9999件" ,
+	grachr(1, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[5]);	// "精算　　9999件　集計　  9999件" ,
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+	if( buf.sndbuf_sale > 9999 ) {
+		w_Count = 9999;
+	} else {
+		w_Count = (ushort)buf.sndbuf_sale;
+	}
+	DataCntDsp( w_Count, 0, 1 );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	if( buf.sndbuf_monitor > 9999 ) {
+//		w_Count = 9999;
+//	} else {
+//		w_Count = (ushort)buf.sndbuf_monitor;
+//	}
+//	DataCntDsp( w_Count, 1, 1 );
+//
+//	grachr(2, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[1]);	// "集計　　9999件　操作　　9999件" ,
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+	if( buf.sndbuf_ttotal > 9999 ) {
+		w_Count = 9999;
+	} else {
+		w_Count = (ushort)buf.sndbuf_ttotal;
+	}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	DataCntDsp( w_Count, 0, 2 );
+//	if( buf.sndbuf_ope_monitor > 9999 ) {
+//		w_Count = 9999;
+//	} else {
+//		w_Count = (ushort)buf.sndbuf_ope_monitor;
+//	}
+//	DataCntDsp( w_Count, 1, 2 );
+	w_Count = 0;													// フェーズ1では送信しないため常に0件とする
+	DataCntDsp( w_Count, 1, 1 );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	grachr(3, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[2]);	// "エラー　9999件　金銭管理9999件" ,
+	grachr(2, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[6]);	// "エラー　9999件　金銭管理9999件" ,
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+	if( buf.sndbuf_error > 9999 ) {
+		w_Count = 9999;
+	} else {
+		w_Count = (ushort) buf.sndbuf_error;
+	}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	DataCntDsp( w_Count, 0, 3 );
+	DataCntDsp( w_Count, 0, 2 );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+	if( buf.sndbuf_money > 9999 ) {
+		w_Count = 9999;
+	} else {
+		w_Count = (ushort)buf.sndbuf_money;
+	}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	DataCntDsp( w_Count, 1, 3 );
+	w_Count = 0;													// フェーズ1では送信しないため常に0件とする
+	DataCntDsp( w_Count, 1, 2 );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//// MH341107(S) K.Onodera 2016/11/11 AI-V対応(端末間)
+//	if( prm_get(COM_PRM, S_NTN, 121, 1, 1) == 0 ){			// 既存形式の場合
+//// MH341107(E) K.Onodera 2016/11/11 AI-V対応(端末間)
+//	grachr(4, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[3]);	// "アラーム9999件　その他　9999件" ,
+//	if( buf.sndbuf_alarm > 9999 ) {
+//		w_Count = 9999;
+//	} else {
+//		w_Count = (ushort)buf.sndbuf_alarm;
+//	}
+//	DataCntDsp( w_Count, 0, 4 );
+//	w_Count = (ushort)(	buf.sndbuf_coin + 			// ｺｲﾝ金庫集計（現在未使用）
+//					   	buf.sndbuf_note +			// 紙幣金庫集計（現在未使用）
+//					   	buf.sndbuf_prior +			// 優先ﾊﾞｯﾌｧ
+//						buf.sndbuf_normal );		// 通常ﾊﾞｯﾌｧ
+//    if( w_Count > 9999 ) {
+//		w_Count = 9999;
+//    }
+//	DataCntDsp( w_Count, 1, 4 );
+//// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（入庫））
+////	grachr(5, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[4]);	// "入庫　　9999件　　　　　　　　" ,
+////	if( buf.sndbuf_incar > 9999 ) {
+////		w_Count = 9999;
+////	} else {
+////		w_Count = (ushort) buf.sndbuf_incar;
+////	}
+////	DataCntDsp( w_Count, 0, 5 );
+//// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（入庫））
+//// MH341107(S) K.Onodera 2016/11/11 AI-V対応(端末間)
+//	} else {
+//		grachr(4, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[5]);	// "アラーム9999件　釣銭管理9999件" ,
+//		if( buf.sndbuf_alarm > 9999 ) {
+//			w_Count = 9999;
+//		} else {
+//			w_Count = (ushort)buf.sndbuf_alarm;
+//		}
+//		DataCntDsp( w_Count, 0, 4 );
+//		w_Count = (ushort)buf.sndbuf_turi;	 			// 釣銭管理
+//		if( w_Count > 9999 ){
+//			w_Count = 9999;
+//		}
+//		DataCntDsp( w_Count, 1, 4 );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（入庫））
+//		grachr(5, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[6]);	// "入庫　　9999件　その他　9999件" ,
+//		if( buf.sndbuf_incar > 9999 ) {
+//			w_Count = 9999;
+//		} else {
+//			w_Count = (ushort) buf.sndbuf_incar;
+//		}
+//		DataCntDsp( w_Count, 0, 5 );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//		grachr(5, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[7]);	// "その他　9999件　　　　　　　　" ,
+		grachr(3, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[7]);	// "その他　9999件　　　　　　　　" ,
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（入庫））
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//		w_Count = (ushort)(	buf.sndbuf_coin + 			// ｺｲﾝ金庫集計（現在未使用）
+//						   	buf.sndbuf_note +			// 紙幣金庫集計（現在未使用）
+		w_Count = (ushort)(	
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+						   	buf.sndbuf_prior +			// 優先ﾊﾞｯﾌｧ
+							buf.sndbuf_normal );		// 通常ﾊﾞｯﾌｧ
+		if( w_Count > 9999 ){
+			w_Count = 9999;
+		}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（入庫））
+//		DataCntDsp( w_Count, 1, 5 );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//		DataCntDsp( w_Count, 0, 5 );
+		DataCntDsp( w_Count, 0, 3 );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（入庫））
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+//	}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（NT-NETチェック画面に送信対象のみ表示する）
+// MH341107(E) K.Onodera 2016/11/11 AI-V対応(端末間)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（出庫））
+//// MH364300 GG119A34(S) 改善連絡表No.83対応
+//	if (IS_SEND_OUTCAR_DATA) {
+//		grachr(6, 0, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR1[7]);	// "出庫　　9999件　　　　　　　　" ,
+//		if( buf.sndbuf_outcar > 9999 ) {
+//			w_Count = 9999;
+//		} else {
+//			w_Count = (ushort)buf.sndbuf_outcar;
+//		}
+//		DataCntDsp( w_Count, 0, 6 );
+//	}
+//// MH364300 GG119A34(E) 改善連絡表No.83対応
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100未使用ログ（出庫））
+
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+//	grachr(6, 1, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR[1]);	// データをクリアしますか？ 
+//	Fun_Dsp(FUNMSG[19]);				/* "　　　　　　 はい いいえ　　　" */
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//	Fun_Dsp(FUNMSG[121]);				/* "    　全ｸﾘｱ 　　　       終了 " */
+	Fun_Dsp(FUNMSG[129]);				/* "    　全ｸﾘｱ 　　　       終了 " */
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+
+	for ( ; ; ) {
+		msg = StoF( GetMessage(), 1 );
+
+		switch( msg ){		/* FunctionKey Enter */
+		case KEY_MODECHG:
+			return MOD_CHG;
+
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+		case KEY_TEN_F2:	/* "全ｸﾘｱ" */
+			if (mode == 0) {
+				BUZPI();
+				displclr(6);
+				grachr(6, 1, 30, 0, COLOR_BLACK, LCD_BLINK_OFF, NTNETSTR[1]);	// データをクリアしますか？
+				Fun_Dsp(FUNMSG[19]);											/* "　　　　　　 はい いいえ　　　" */
+				mode = 1;
+			}
+			break;
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+
+		case KEY_TEN_F3:	/* "はい" */
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+			if (mode == 1) {
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+			BUZPI();
+			NTBUF_AllClr();	/* NTNETデータ全クリア */
+
+			// NTCOMタスクを再起動
+			NTCom_ClearData(1);
+			return MOD_EXT;
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+			}
+			break;
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+
+		case KEY_TEN_F4:	/* "いいえ" */
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+			if (mode == 1) {
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+			BUZPI();
+			return MOD_EXT;
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+			}
+			break;
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+
+// MH364300 GG119A34(S) 改善連絡表No.83対応
+		case KEY_TEN_F5:	/* "終了" */
+			if (mode == 0) {
+				BUZPI();
+				return MOD_EXT;
+			}
+			break;
+// MH364300 GG119A34(E) 改善連絡表No.83対応
+
+		default:
+			break;
+		}
+	}
+}
+
+/*[]-----------------------------------------------------------------------[]*/
+/*|		ＮＴ－ＮＥＴデータ件数表示処理２									|*/
+/*[]-----------------------------------------------------------------------[]*/
+/*|	MODULE NAME		:	LogCntDsp2( LogCnt )								|*/
+/*|	PARAMETER		:	ushort	dataCnt	:	データ件数						|*/
+/*|					:	ushort	type:		0:左／1:右						|*/
+/*|					:	ushort	line:		表示行位置						|*/
+/*|	RETURN VALUE	:	void												|*/
+/*[]------------------------------------- Copyright(C) 2013 AMANO Corp.----[]*/
+void	DataCntDsp( ushort dataCnt, ushort type, ushort	line )
+{
+	ushort	w_len, w_pos, w_pos2;
+
+	// 実件数を最大件数(9999)以内に補正する
+	if( dataCnt > 9999 ) {
+		dataCnt = 9999;
+	}
+	
+	// 件数の桁数をもとめる
+	if( dataCnt >= 1000 ) {			
+		w_len = 4;
+	} else if (dataCnt >= 100 ) {
+		w_len = 3;
+	} else if (dataCnt >= 10 ) {
+		w_len = 2;
+	} else {
+		w_len = 1;
+	}
+
+	// 表示位置を決定する
+	if( type == 0 ) {
+		w_pos = 8 - (w_len - 4);			
+		w_pos2 = 12;			
+	} else {
+		w_pos = 24 - (w_len - 4);			
+		w_pos2 = 28;			
+	}
+	
+	// 件数を表示する（０サプレス）
+	opedsp3( line, w_pos, dataCnt, w_len, 0, 0 ,COLOR_BLACK, LCD_BLINK_OFF );
+	grachr( line, w_pos2, 2, 0, COLOR_BLACK, LCD_BLINK_OFF, (uchar*)"件" );
+}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）

@@ -2635,6 +2635,10 @@ unsigned short	UsMnt_ParkCnt(void)
 _RELOAD:	// 「再読」キー押下時jumpラベル
 
 // 親機と通信しない設定なら起動しない
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+		// NOTE: GT-4100は01-0039(駐車台数管理方式）は0固定なので、最初の判定でreturnするので
+		//       ここの_is_ntnet_normal()は修正しない
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
 		if (!_is_ntnet_normal()) {
 			BUZPIPI();
 			return MOD_EXT;

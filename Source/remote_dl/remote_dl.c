@@ -6351,7 +6351,10 @@ ulong remotedl_unsent_data_count_get(void)
 	ulong data_count = 0;
 	ulong *pBufCnt;
 
-	NTBUF_GetBufCount(&g_bufcnt);
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//	NTBUF_GetBufCount(&g_bufcnt);
+	NTBUF_GetBufCount(&g_bufcnt, TRUE);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	pBufCnt = (ulong *)&g_bufcnt;
 
 	for (i = 0; i <= 1; i++) {

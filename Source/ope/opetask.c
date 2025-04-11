@@ -50,6 +50,9 @@
 #include	"updateope.h"
 #include	"strdef.h"
 #include	"pip_def.h"
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+#include	"ntcom.h"
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 #include	"FlashSerial.h"
 #include	"ftpctrl.h"
 #include	"ifm_ctrl.h"
@@ -2405,7 +2408,11 @@ char	memclr( char flg )
 		coin_kinko_evt = 0;		// コイン金庫イベント
 		note_kinko_evt = 0;		// 紙幣金庫イベント
 		Mifare_WrtNgDataUpdate( 1, (t_MIF_CardData*)0L );			// Mifare書込み失敗ｶｰﾄﾞ情報ｸﾘｱ
-		NTBUF_AllClr();												//NT-NETバッファ内のデータを全て削除
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//		NTBUF_AllClr();												//NT-NETバッファ内のデータを全て削除
+		NTBUF_AllClr_startup();										//NT-NETバッファ内のデータを全て削除
+		NTCom_ClearData(0);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 // MH321800(S) Y.Tanizaki ICクレジット対応 不要機能削除(Edy)
 //		auto_cnt_prn	= 0;	// 自動センター通信状態		初期化
@@ -2757,9 +2764,11 @@ void	auto_syuukei( void )
 /*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
 void	Ope_ErrAlmClear( void )
 {
-	/* 親機へｸﾘｱ電文送信 */
-	NTNET_Snd_Data120_CL();											// NT-NET HOSTｴﾗｰ解除ﾃﾞｰﾀ送信
-	NTNET_Snd_Data121_CL();											// NT-NET HOSTｱﾗｰﾑ解除ﾃﾞｰﾀ送信
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//	/* 親機へｸﾘｱ電文送信 */
+//	NTNET_Snd_Data120_CL();											// NT-NET HOSTｴﾗｰ解除ﾃﾞｰﾀ送信
+//	NTNET_Snd_Data121_CL();											// NT-NET HOSTｱﾗｰﾑ解除ﾃﾞｰﾀ送信
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 	/* 送信したことをLOGに残す */
 
@@ -2790,6 +2799,11 @@ void	Ope_ErrAlmClear( void )
 	Arm_work.ArmDoor = 0;											// ﾄﾞｱ閉状態とする
 	Arm_work.Arminf = 0;											// ｱﾗｰﾑ情報有無
 	Log_regist( LOG_ALARM );										// ｱﾗｰﾑﾛｸﾞ登録
+
+// GM849100(S) 名鉄協商コールセンター対応　アラームデータをエラー９６ｘｘで送信
+	// AFFFFはalm_chk()で登録していないので、ここでE9699(全アラーム解除を)登録する
+	err_chk2(ERRMDL_ALARM, (char)99, 2, 0, 0, NULL);
+// GM849100(E) 名鉄協商コールセンター対応　アラームデータをエラー９６ｘｘで送信
 
 	IFM_Snd_ErrorClear();											// IFMへ全エラー解除通知
 }

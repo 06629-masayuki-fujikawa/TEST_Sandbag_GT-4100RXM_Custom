@@ -1497,6 +1497,12 @@ void	PayData_set( uchar wflg, uchar typ )
 	}
 // GG124100(E) R.Endo 2021/11/04 車番チケットレス3.0 #6147 出庫済み精算後に遠隔精算した場合、NT-NET精算データの処理日時と入庫日時が不正になる
 // MH810100(E) m.saito 2020/05/13 車番チケットレス(領収証印字：未精算出庫対応)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）
+	// 精算時と送信データ作成が同じではないので、送信データ作成時に自動集計など発生するかもしれない
+	// 精算ログに精算時に前回T合計時刻を入れて、送信データ作成時にskyの前回T合計時刻を参照しないようにする
+	memcpy(&PayData.Before_Ts_Time, &sky.tsyuk.OldTime, sizeof(sky.tsyuk.OldTime));
+	PayData.Before_Ts_Time.Sec = 0;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）
 }
 
 // GG129004(S) R.Endo 2024/12/04 電子領収証対応（QRコード発行案内表示タイマー）
@@ -2390,6 +2396,22 @@ short	opncls( void )
 		}
 	}
 // MH322914 (e) kasiyama 2016/07/11 トラブル信号で休業中に強制営業できるのを修正[共通バグNo.1249](MH341106)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+//	else if(( prm_get( COM_PRM,S_NTN,41,1,1 ) == 2 )&&			// NT-NET 精算ﾃﾞｰﾀ送信ﾊﾞｯﾌｧFULL時休業? かつ
+	if(( prm_get( COM_PRM,S_SSS,41,1,1 ) == 2 )&&				// NT-NET 精算ﾃﾞｰﾀ送信ﾊﾞｯﾌｧFULL時休業? かつ
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+	   (_is_ntnet_normal())){ 									// NT-NETの設定有効
+		if(IsErrorOccuerd(ERRMDL_NTNET, ERR_NTNET_ID22_BUFFULL)) {
+			// バッファフルが発生していれば休業
+			bufferfull = 1;
+		}
+		else {
+			// バッファフル解除状態でバッファフル状態なら発生状態に変更する
+			Log_CheckBufferFull(TRUE, eLOG_PAYMENT, eLOG_TARGET_NTNET);
+		}
+	}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 	/** ﾄﾗﾌﾞﾙ **/
 	if( opncls_TrbClsChk() ){									// 休業とするﾄﾗﾌﾞﾙ要因有り
@@ -6118,7 +6140,10 @@ void	LongTermParkingRel( ulong LockNo , uchar knd, flp_com *flp)
 	ushort	wHour;
 	ushort	wHour2;
 
-	if((LockNo == 0)||(LockNo > 324)){
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用SRAM削減）
+//	if((LockNo == 0)||(LockNo > 324)){
+	if((LockNo == 0)||(LockNo > LOCK_MAX)){
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用SRAM削減）
 		return;// インデックス破壊防止
 	}
 	prm_wk = (uchar)prm_get(COM_PRM, S_TYP, 135, 1, 5);		// 長期駐車検出する

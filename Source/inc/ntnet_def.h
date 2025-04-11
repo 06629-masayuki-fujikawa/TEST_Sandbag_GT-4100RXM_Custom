@@ -17,6 +17,11 @@
 //#define		NTNET_MODEL_CODE		220
 #define		NTNET_MODEL_CODE		581
 // MH810100(E) K.Onodera 2019/12/25 車番チケットレス(仮)
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+#define	NTBUF_NEARFULL_COUNT			6
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+
 /*--------------------------------------------------------------------------*/
 /*	車室問合せﾃﾞｰﾀ(ﾃﾞｰﾀ種別01)												*/
 /*--------------------------------------------------------------------------*/
@@ -248,6 +253,15 @@ typedef	struct {
 #define		NTNET_QUIC_PAY_APPROVAL_NO	8102						// 割引種別 QUICPAY承認番号
 #define		NTNET_PITAPA_APPROVAL_NO	8103						// 割引種別 PITAPA承認番号
 // MH810105(E) MH364301 QRコード決済対応
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）
+#define		NTNET_MEITETU_IN_MONEY		9200							// 名鉄個別割引種別：入金
+#define		NTNET_MEITETU_OUT_MONEY		9201							// 名鉄個別割引種別：出金
+
+#define		NTNET_SHABANINFO_1			60100						// 車番情報1
+#define		NTNET_SHABANINFO_2			60101						// 車番情報2
+#define		NTNET_SHABANINFO_3			60102						// 車番情報3
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）
 
 typedef	struct {
 	ulong			ParkingNo;										// 駐車場№
@@ -878,6 +892,18 @@ typedef struct {
 	ulong			slip_no;			// 伝票番号
 	uchar			reserve[2];
 } CREINFO_r14;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+typedef struct {	// クレジット（ID56/57:精算データ用）
+	uchar			CreditCardNo[20];								// ｸﾚｼﾞｯﾄｶｰﾄﾞ会員№
+	ulong			Credit_ryo;										// ｸﾚｼﾞｯﾄｶｰﾄﾞ利用金額
+	ulong			CreditSlipNo;									// ｸﾚｼﾞｯﾄｶｰﾄﾞ伝票番号
+	ulong			CreditAppNo;									// ｸﾚｼﾞｯﾄｶｰﾄﾞ承認番号
+	uchar			CreditName[10];									// ｸﾚｼﾞｯﾄｶｰﾄﾞ会社名
+	uchar			CreditDate[2];									// ｸﾚｼﾞｯﾄｶｰﾄﾞ有効期限(年月)
+	ulong			CreditProcessNo;								// ｸﾚｼﾞｯﾄｶｰﾄﾞｾﾝﾀ処理追い番
+	uchar			term_id[16];									// 端末識別番号
+} SETTLEMENT_CREDIT;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 typedef struct {	// 精算媒体（ID152:精算情報データ用）
 	uchar			card_id[30];									// カード番号
@@ -885,6 +911,10 @@ typedef struct {	// 精算媒体（ID152:精算情報データ用）
 	uchar			reserve[2];										// 空き
 } SETTLEMENT_OUTMEDIA;
 typedef union {
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	SETTLEMENT_CREDIT	credit;										// クレジット（ID56/57:精算データ用）
+	uchar				cardno[16];									// 電子マネー（ID56/57:精算データ用）
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	SETTLEMENT_OUTMEDIA	media;
 } SETTLEMENT_INFO;
 // 仕様変更(E) K.Onodera 2016/11/01 精算データフォーマット対応
@@ -3077,6 +3107,409 @@ typedef struct {
 
 // MH322914 (s) kasiyama 2016/07/15 AI-V対応
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+// ============================================================== //
+//
+//	端末間通信用フォーマット
+//
+// ============================================================== //
+
+/*--------------------------------------------------------------------------*/
+/*	精算ﾃﾞｰﾀ(ﾃﾞｰﾀ種別56,57)													*/
+/*--------------------------------------------------------------------------*/
+// GM849100(S) M.Fujikawa 2025/01/09 名鉄協商コールセンター対応（NT-NET端末間通信）
+//#define		NTNET_DIC_MAX2	20										// 割引数（データ種別56/57）
+#define		NTNET_MNY_MAX	2										// 投入／払出金額
+#define		NTNET_DIC_MAX2	98										// 割引数（データ種別56/57）
+// GM849100(E) M.Fujikawa 2025/01/09 名鉄協商コールセンター対応（NT-NET端末間通信）
+
+typedef struct {
+	uchar			no;												// オプション代金番号
+	uchar			reserve;										// 予備（調整用）
+	ulong			ryo;											// オプション代金金額
+} t_opt_price;
+
+typedef struct {
+	t_MoneyInOut	MoneyInOut;										// 金銭情報（投入金額／払戻金額）
+// 不具合修正(S) K.Onodera 2016/12/20 #1684 端末間通信での精算データ(ID:57)で売上先駐車場№が正しい位置にセットされていない
+//	ulong			TotalSale;										// 合計金額(物販)
+//	ulong			DeleteSeq;										// 削除データ追番
+//	ulong			SalesParkingNo;									// 売上先駐車場No.
+	ulong			SalesParkingNo;									// 売上先駐車場No.
+	ulong			TotalSale;										// 合計金額(物販)
+	ulong			DeleteSeq;										// 削除データ追番
+// 不具合修正(E) K.Onodera 2016/12/20 #1684 端末間通信での精算データ(ID:57)で売上先駐車場№が正しい位置にセットされていない
+	ushort			FusokuCardKind;									// 払出し不足媒体種別(現金以外)
+	ushort			FusokuCard;										// 払出し不足額(現金以外)
+// GM849100(S) M.Fujikawa 2025/01/09 名鉄協商コールセンター対応（NT-NET端末間通信）
+//	uchar			Reserve1[12];									// 予備1
+	ulong			ParkingTime;									// 駐車時間
+	ushort			MaxFeeFlag;										// 最大適用フラグ
+	ushort			MaxFeeCount;									// 最大適用回数
+	uchar			MaxFeeSetting;									// 最大料金設定有無
+	uchar			Reserve1[3];									// 予備1
+// GM849100(E) M.Fujikawa 2025/01/09 名鉄協商コールセンター対応（NT-NET端末間通信）
+	ulong			PayCount;										// 精算追い番
+	ushort			PayMethod;										// 精算方法
+	ushort			PayClass;										// 処理区分
+	ushort			PayMode;										// 精算ﾓｰﾄﾞ
+	ulong			LockNo;											// 区画情報
+	ushort			CardType;										// 駐車券ﾀｲﾌﾟ
+	ushort			CMachineNo;										// 駐車券機械№
+	ulong			CardNo;											// 駐車券番号(発券追い番)
+	date_time_rec2	OutTime;										// 出庫年月日時分秒
+	ushort			KakariNo;										// 係員№
+	ushort			OutKind;										// 精算出庫
+	ushort			CountSet;										// 在車ｶｳﾝﾄ
+	ushort			Before_pst;										// 前回％割引率
+	ulong			BeforePwari;									// 前回％割引金額
+	ulong			BeforeTime;										// 前回割引時間数
+	ulong			BeforeTwari;									// 前回時間割引金額
+	ulong			BeforeRwari;									// 前回料金割引金額
+// GM849100(S) M.Fujikawa 2025/01/09 名鉄協商コールセンター対応（NT-NET端末間通信）
+//	ushort			ReceiptIssue;									// 領収証発行有無
+	uchar			SealIssue;										//シール発行有無
+	uchar			ReceiptIssue;									// 領収証発行有無
+// GM849100(E) M.Fujikawa 2025/01/09 名鉄協商コールセンター対応（NT-NET端末間通信）
+	date_time_rec2	InTime;											// 入庫年月日時分秒
+	date_time_rec2	PayTime;										// 事前精算年月日時分秒(CPS精算時ｾｯﾄ)
+	ulong			TaxPrice;										// 課税対象額
+	ulong			TotalPrice;										// 合計金額
+	ulong			Tax;											// 消費税額
+	ushort			Syubet;											// 料金種別
+	ulong			Price;											// 駐車料金
+	ulong			TotalDiscount;									// 総割引額
+	long			CashPrice;										// 現金売上
+	ulong			InPrice;										// 投入金額
+	ulong			ChgPrice;										// 釣銭金額
+	ulong			Fusoku;											// 釣銭払出不足金額
+	ushort			FusokuFlg;										// 釣銭払出不足発生ﾌﾗｸﾞ
+	ushort			PayObsFlg;										// 精算中障害発生ﾌﾗｸﾞ
+	ushort			ChgOverFlg;										// 払戻上限額ｵｰﾊﾞｰ発生ﾌﾗｸﾞ
+	ushort			PassCheck;										// ｱﾝﾁﾊﾟｽﾁｪｯｸ
+	PASS_DATA		PassData;										// 定期券ﾃﾞｰﾀ
+	ulong			PassRenewalPric;								// 定期券更新料金
+	ushort			PassRenewalCondition;							// 定期券更新条件
+	ushort			PassRenewalPeriod;								// 定期券更新期間
+	uchar			UpCount;										// 更新回数
+	uchar			ReIssueCount;									// 再発行回数
+	t_opt_price		Opt_Price[4];									// オプション代金
+	date_time_rec2	BeforePayTime;									// 前回事前精算年月日時分秒（精算後券で精算時）
+	uchar			MatchIP[8];										// ﾏｯﾁﾝｸﾞIPｱﾄﾞﾚｽ
+	uchar			MatchVTD[8];									// ﾏｯﾁﾝｸﾞVTD/車番
+	uchar			CreditIssue;									// ｸﾚｼﾞｯﾄｶｰﾄﾞ決済有無
+	uchar			CredirReserve1;									// ｸﾚｼﾞｯﾄｶｰﾄﾞ予備1（調整用）
+	uchar			CreditCardNo[20];								// ｸﾚｼﾞｯﾄｶｰﾄﾞ会員№
+	ulong			Credit_ryo;										// ｸﾚｼﾞｯﾄｶｰﾄﾞ利用金額
+	ulong			CreditSlipNo;									// ｸﾚｼﾞｯﾄｶｰﾄﾞ伝票番号
+	ulong			CreditAppNo;									// ｸﾚｼﾞｯﾄｶｰﾄﾞ承認番号
+	uchar			CreditName[10];									// ｸﾚｼﾞｯﾄｶｰﾄﾞ会社名
+	uchar			CreditDate[2];									// ｸﾚｼﾞｯﾄｶｰﾄﾞ有効期限(年月)
+	ulong			CreditProcessNo;								// ｸﾚｼﾞｯﾄｶｰﾄﾞｾﾝﾀ処理追い番
+	uchar			term_id[16];									// 端末識別番号
+	uchar			kid_code[6];									// KIDｺｰﾄﾞ
+	ulong			Reserve2;										// 予備2
+// MH364304(S) データ保管サービス対応（登録番号をセットする）
+//	ulong			Reserve3;										// 予備3
+//	ulong			Reserve4;										// 予備4
+	ulong			RegistNum1;										// 登録番号1（下位9桁 BIN）
+	ushort			RegistNum2;										// 登録番号2（上位4桁 BIN）
+	uchar			RegistNum3;										// 登録番号3（先頭1文字）
+// MH364304(S) データ保管サービス対応（適用税率をセットする）
+	uchar			TaxRate;										// 適用税率
+// MH364304(E) データ保管サービス対応（適用税率をセットする）
+// MH364304(E) データ保管サービス対応（登録番号をセットする）
+// MH364304(S) データ保管サービス対応（課税対象をセットする）
+//	ulong			Reserve5;										// 予備5
+	ulong			TaxableDiscount;								// 課税対象（b0～b19）
+// MH364304(E) データ保管サービス対応（課税対象をセットする）
+// MH364304(S) データ保管サービス対応（適格請求書情報有無をセットする）
+//	ulong			Reserve6;										// 予備6
+	ushort			Invoice;										// 適格請求書情報有無
+	ushort			Reserve6;
+// MH364304(E) データ保管サービス対応（適格請求書情報有無をセットする）
+	ulong			Reserve7;										// 予備7
+	ulong			Reserve8;										// 予備8
+	t_MediaInfo2	Media[1];										// 出庫媒体種別
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）（GT-7700:GM747904参考）
+	date_time_rec2	Before_Ts_Time;									// 前回Ｔ合計の時間		計8byte
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）（GT-7700:GM747904参考）
+} t_SeisanData_T;
+
+typedef	struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	t_SeisanData_T	SeisanData;										// 精算データ本体
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）（GT-7700:GM747904参考）
+//	DISCOUNT_DATA	DiscountData[NTNET_DIC_MAX2];					// 割引関連
+	IN_OUT_MONEY	MoneyData[NTNET_MNY_MAX];						// 投入・払出金額
+	t_SeisanDiscountOld	DiscountData[NTNET_DIC_MAX2];				// 割引関連
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（精算データ変更）（GT-7700:GM747904参考）
+} DATA_KIND_56_T;
+
+/*--------------------------------------------------------------------------*/
+/*	集計基本ﾃﾞｰﾀ(ﾃﾞｰﾀ種別42)												*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	ushort			Type;											// 集計タイプ
+	ushort			KakariNo;										// 係員No.
+	ulong			SeqNo;											// 集計追番
+	ulong			StartSeqNo;										// 開始追番
+	ulong			EndSeqNo;										// 終了追番
+	date_time_rec2	NowTime;										// 今回集計
+	date_time_rec2	LastTime;										// 前回集計
+	ulong			SettleNum;										// 総精算回数
+	ulong			Kakeuri;										// 総掛売額
+	ulong			Cash;											// 総現金売上額
+	ulong			Uriage;											// 総売上額
+	ulong			Tax;											// 総消費税額
+	ulong			Charge;											// 釣銭払戻額
+	ulong			CoinTotalNum;									// コイン金庫合計回数
+	ulong			NoteTotalNum;									// 紙幣金庫合計回数
+	ulong			CyclicCoinTotalNum;								// ホッパー合計回数
+	ulong			NoteOutTotalNum;								// 紙幣払出機合計回数
+	ulong			Uri_Tryo_Gai;									// 総売上外額
+	ulong			SalesParkingNo;									// 売上先駐車場No.
+	ulong			Rsv1;											// 予備
+	ulong			CarOutWithoutPay;								// 精算なしモード時出庫台数
+	ulong			SettleNumServiceTime;							// サービスタイム内精算回数
+	ulong			CarOutLagTime;									// ラグタイム内出庫回数
+	t_SyuSub		Shortage;										// 払出不足
+	t_SyuSub		Cancel;											// 精算中止
+	t_SyuSub		AutoSettle;										// 半自動精算
+	t_SyuSub		ManualSettle;									// マニュアル精算
+	ulong			AntiPassOffSettle;								// アンチパスOFF精算回数
+	ulong			CarOutGateOpen;									// ゲート開放時出庫台数
+	ulong			CarOutForce;									// 強制出庫台数
+	t_SyuSub		LostSettle;										// 紛失精算
+	ulong			ReceiptCallback;								// 領収証回収枚数
+	ulong			ReceiptIssue;									// 領収証発行枚数
+	ulong			WarrantIssue;									// 預り証発行枚数
+	t_SyuSub_AllSystem	AllSystem;									// 全装置
+	ulong			CarInTotal;										// 総入庫台数
+	ulong			CarOutTotal;									// 総出庫台数
+	ulong			CarIn1;											// 入庫1入庫台数
+	ulong			CarOut1;										// 出庫1出庫台数
+	ulong			CarIn2;											// 入庫2入庫台数
+	ulong			CarOut2;										// 出庫2出庫台数
+	ulong			CarIn3;											// 入庫3入庫台数
+	ulong			CarOut3;										// 出庫3出庫台数
+	ulong			MiyoCount;										// 未入金回数
+	ulong			MiroMoney;										// 未入金額
+	ulong			LagExtensionCnt;								// ラグタイム延長回数
+	ulong			FurikaeCnt;										// 振替回数
+	ulong			FurikaeTotal;									// 振替額
+	ulong			RemoteCnt;										// 遠隔精算回数
+	ulong			RemoteTotal;									// 遠隔精算金額
+	ulong			Rsv2[6];										// 予備8～13
+} DATA_KIND_42_T;
+
+/*--------------------------------------------------------------------------*/
+/*	料金種別毎集計ﾃﾞｰﾀ(ﾃﾞｰﾀ種別43)											*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	ushort			Type;											// 集計タイプ
+	ushort			KakariNo;										// 係員No.
+	ulong			SeqNo;											// 集計追番
+	ulong			StartSeqNo;										// 開始追番
+	ulong			EndSeqNo;										// 終了追番
+	t_SyuSub_RyokinKind	Kind[50];									// 種別01～50
+} DATA_KIND_43_T;
+
+/*--------------------------------------------------------------------------*/
+/*	分類集計ﾃﾞｰﾀ(ﾃﾞｰﾀ種別44)												*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	ushort			Type;											// 集計タイプ
+	ushort			KakariNo;										// 係員No.
+	ulong			SeqNo;											// 集計追番
+	ulong			StartSeqNo;										// 開始追番
+	ulong			EndSeqNo;										// 終了追番
+	ulong			Kind;											// 駐車分類集計の種類
+	t_SyuSub		Group[BUNRUI_CNT];								// 分類1～48
+	t_SyuSub		GroupTotal;										// 分類以上
+	ulong			LostSettle;										// 紛失精算 台数
+	ulong			AntiPassOffSettle;								// アンチパスOFF精算 台数
+	ulong			CarOutForce;									// 強制出庫 台数
+	ulong			FirstTimePass;									// 初回定期 台数
+	t_SyuSub		Unknown;										// 分類不明
+	uchar			Rsv[32];										// 予備
+	ulong			Kind2;											// 駐車分類集計の種類_2
+	t_SyuSub		Group2[BUNRUI_CNT];								// 分類1～48_2
+	t_SyuSub		GroupTotal2;									// 分類以上_2
+	ulong			LostSettle2;									// 紛失精算 台数_2
+	ulong			AntiPassOffSettle2;								// アンチパスOFF精算 台数_2
+	ulong			CarOutForce2;									// 強制出庫 台数_2
+	ulong			FirstTimePass2;									// 初回定期 台数_2
+	t_SyuSub		Unknown2;										// 分類不明_2
+	uchar			Rsv2[32];										// 予備_2
+	ulong			Kind3;											// 駐車分類集計の種類_3
+	t_SyuSub		Group3[BUNRUI_CNT];								// 分類1～48_3
+	t_SyuSub		GroupTotal3;									// 分類以上_3
+	ulong			LostSettle3;									// 紛失精算 台数_3
+	ulong			AntiPassOffSettle3;								// アンチパスOFF精算 台数_3
+	ulong			CarOutForce3;									// 強制出庫 台数_3
+	ulong			FirstTimePass3;									// 初回定期 台数_3
+	t_SyuSub		Unknown3;										// 分類不明_3
+	uchar			Rsv3[32];										// 予備_3
+} DATA_KIND_44_T;
+
+/*--------------------------------------------------------------------------*/
+/*	割引集計ﾃﾞｰﾀ(ﾃﾞｰﾀ種別45)												*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	ushort			Type;											// 集計タイプ
+	ushort			KakariNo;										// 係員No.
+	ulong			SeqNo;											// 集計追番
+	ulong			StartSeqNo;										// 開始追番
+	ulong			EndSeqNo;										// 終了追番
+	t_SyuSub_Discount	Discount[500];								// 割引 001～500
+} DATA_KIND_45_T;
+
+/*--------------------------------------------------------------------------*/
+/*	定期集計ﾃﾞｰﾀ(ﾃﾞｰﾀ種別46)												*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	uchar			kind;											// オプション代金種別
+	ulong			count;											// 回数
+	ulong			sales;											// 売上金額
+} t_SyuSub_Opt_Price;
+typedef struct {
+	DATA_BASIC			DataBasic;									// 基本ﾃﾞｰﾀ
+	ulong				CenterSeqNo;								// ｾﾝﾀｰ追番
+	ushort				Type;										// 集計タイプ
+	ushort				KakariNo;									// 係員No.
+	ulong				SeqNo;										// 集計追番
+	ulong				StartSeqNo;									// 開始追番
+	ulong				EndSeqNo;									// 終了追番
+	t_SyuSub_Opt_Price	Opt_Price[6];								// オプション代金
+	t_SyuSub_Pass		Pass[100];									// 定期券 001～100
+} DATA_KIND_46_T;
+
+/*--------------------------------------------------------------------------*/
+/*	金銭集計ﾃﾞｰﾀ(ﾃﾞｰﾀ種別48)												*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	ushort			Type;											// 集計タイプ
+	ushort			KakariNo;										// 係員No.
+	ulong			SeqNo;											// 集計追番
+	ulong			StartSeqNo;										// 開始追番
+	ulong			EndSeqNo;										// 終了追番
+	ulong			Total;											// 金庫総入金額
+	ulong			NoteTotal;										// 紙幣金庫総入金額
+	ulong			CoinTotal;										// コイン金庫総入金額
+	t_SyuSub_Coin	Coin[4];										// コイン1～4
+	t_SyuSub_Coin	CoinRsv[4];										// コイン予備1～4
+	t_SyuSub_Note	Note[4];										// 紙幣1～4
+	t_SyuSub_Note	NoteRsv[4];										// 紙幣予備1～4
+	ulong			CycleAccept;									// 循環部総入金額
+	ulong			CyclePay;										// 循環部総出金額
+	ulong			NoteAcceptTotal;								// 紙幣総入金額
+	ulong			NotePayTotal;									// 紙幣総払出金額
+	ulong			StockPayTotal;									// 予蓄部総出金額
+	t_SyuSub_Cycle	Cycle[4];										// 循環1～4
+	t_SyuSub_Cycle	CycleRsv[4];									// 循環予備1～4
+	t_SyuSub_Stock	Stock[2];										// 予蓄部1～2
+	t_SyuSub_Note	NotePay[4];										// 紙幣払出1～4
+	t_SyuSub_Note	NotePayRsv[4];									// 紙幣払出予備1～4
+} DATA_KIND_48_T;
+
+/*--------------------------------------------------------------------------*/
+/*	集計終了通知ﾃﾞｰﾀ(ﾃﾞｰﾀ種別53)											*/
+/*--------------------------------------------------------------------------*/
+typedef struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// ｾﾝﾀｰ追番
+	ushort			Type;											// 集計タイプ
+	ushort			KakariNo;										// 係員No.
+	ulong			SeqNo;											// 集計追番
+	ulong			StartSeqNo;										// 開始追番
+	ulong			EndSeqNo;										// 終了追番
+	ulong			MachineNo[32];									// 複数集計した端末の機械No.-001～-032
+} DATA_KIND_53_T;
+
+/*	ｴﾗｰﾃﾞｰﾀ(ﾃﾞｰﾀ種別63)														*/
+/*--------------------------------------------------------------------------*/
+typedef	struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	uchar			Errsyu;											// ｴﾗｰ種別
+	uchar			Errcod;											// ｴﾗｰｺｰﾄﾞ
+	uchar			Errdtc;											// ｴﾗｰｽﾃｰﾀｽ(発生/解除)
+	uchar			Errlev;											// ｴﾗｰﾚﾍﾞﾙ
+	uchar			ErrDoor;										// ﾄﾞｱ状態(0:close,1:open)
+	uchar			Errdat1[10];									// ｴﾗｰ情報(ﾊﾞｲﾅﾘ)
+	uchar			Errdat2[160];									// ｴﾗｰ情報(acsiiｺｰﾄﾞ)
+} DATA_KIND_63_T;
+
+/*--------------------------------------------------------------------------*/
+/*	ｱﾗｰﾑﾃﾞｰﾀ(ﾃﾞｰﾀ種別64)													*/
+/*--------------------------------------------------------------------------*/
+typedef	struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	uchar			Armsyu;											// ｱﾗｰﾑ種別
+	uchar			Armcod;											// ｱﾗｰﾑｺｰﾄﾞ
+	uchar			Armdtc;											// ｱﾗｰﾑｽﾃｰﾀｽ(発生/解除)
+	uchar			Armlev;											// ｱﾗｰﾑﾚﾍﾞﾙ
+	uchar			ArmDoor;										// ﾄﾞｱ状態(0:close,1:open)
+	uchar			Armdat1[10];									// ｱﾗｰﾑ情報(ﾊﾞｲﾅﾘ)
+	uchar			Armdat2[160];									// ｱﾗｰﾑ情報(acsiiｺｰﾄﾞ)
+} DATA_KIND_64_T;
+
+/*--------------------------------------------------------------------------*/
+/*	釣銭管理集計ﾃﾞｰﾀ(ﾃﾞｰﾀ種別135)											*/
+/*--------------------------------------------------------------------------*/
+typedef	struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			CenterSeqNo;									// センター追番
+	ulong			Oiban;											// 金銭管理合計追番
+	ushort			PayClass;										// 処理区分
+	ushort			KakariNo;										// 係員№
+	TURI_DATA		turi_dat[4];									// 金銭ﾃﾞｰﾀ(4金種分)
+	TURI_DATA		yturi_dat[5];									// 金銭ﾃﾞｰﾀ(5予蓄分)
+	uchar			Reserve[32];									// 予備
+} DATA_KIND_135_T;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+// GM849100(S) M.Fujikawa 2025/01/10 名鉄協商コールセンター対応（NT-NET端末間通信）
+/*--------------------------------------------------------------------------*/
+/*	端末情報ﾃﾞｰﾀ(ﾃﾞｰﾀ種別230)												*/
+/*--------------------------------------------------------------------------*/
+typedef	struct {
+	ushort			Status;								// ユニット状態
+	uchar			Err_md;								// エラー種別（モジュールＮｏ）
+	uchar			Err_no;								// エラー番号
+} UNIT_DATA;
+
+/*--------------------------------------------------------------------------*/
+/*	端末情報ﾃﾞｰﾀ(ﾃﾞｰﾀ種別230)												*/
+/*--------------------------------------------------------------------------*/
+typedef	struct {
+	DATA_BASIC		DataBasic;										// 基本ﾃﾞｰﾀ
+	ulong			SMachineNo;										// 送信先端末機械№
+	uchar			ProgramVer[12];									// ﾌﾟﾛｸﾞﾗﾑﾊﾞｰｼﾞｮﾝ
+	UNIT_DATA		UnitInfo[10];
+																	// [0]: リーダー１
+																	// [1]: リーダー２
+																	// [2]: 発券ユニット（なし）
+																	// [3]: ジャーナルプリンタ
+																	// [4]: レシートプリンタ
+																	// [5]: コインメック
+																	// [6]: 紙幣リーダー
+																	// [7]: ゲート装置
+																	// [8]: オプションユニット
+	uchar			Dummy[80];
+} DATA_KIND_230_T;
+// GM849100(E) M.Fujikawa 2025/01/10 名鉄協商コールセンター対応（NT-NET端末間通信）
+
 // システムID：16
 #define PIP_REQ_KIND_RECEIPT_AGAIN			1			// 領収書再発行要求
 #define PIP_RES_KIND_RECEIPT_AGAIN			2			// 領収証再発行応答
@@ -3632,6 +4065,12 @@ typedef	union {
 // MH322917(S) A.Iiizumi 2018/08/31 長期駐車検出機能の拡張対応(電文対応)
 	DATA_KIND_61_r10	SData61_r10;
 // MH322917(E) A.Iiizumi 2018/08/31 長期駐車検出機能の拡張対応(電文対応)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	DATA_KIND_56_T	SData56_T;
+	DATA_KIND_63_T	SData63_T;
+	DATA_KIND_64_T	SData64_T;
+	DATA_KIND_230_T	SData230_T;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 } SEND_NTNET_DT;
 
@@ -4027,6 +4466,18 @@ extern	DATA_KIND_126	Ntnet_Prev_SData126;						// 前回送信 金銭管理データ
 // MH322914 (s) kasiyama 2016/07/13 テーブルデータの件数が不正に加算される[共通バグNo.1221](MH341106)
 extern	TURI_KAN	turi_kan_bk;									// 前回ログ作成 金銭管理データ
 // MH322914 (e) kasiyama 2016/07/13 テーブルデータの件数が不正に加算される[共通バグNo.1221](MH341106)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+// 名鉄協商コールセンター対応で使用する端末間通信送受信データ
+// RECV_NTNET_DTを端末間通信用に定義するとメモリが不足するため、名鉄協商コールセンター対応で
+// 受信するデータIDのみ定義する
+typedef	union {
+	DATA_BASIC		DataBasic;
+	DATA_KIND_109	RData109;
+} RECV_NTNET_TERM_DT;
+
+extern RECV_NTNET_TERM_DT	RecvNtnetTermDt;						// 端末間通信用受信データバッファ
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+
 /*--------------------------------------------------------------------------*/
 /*			P R O T O T Y P E S												*/
 /*--------------------------------------------------------------------------*/
@@ -4090,6 +4541,16 @@ extern	unsigned short	NTNET_Edit_SyukeiSyuryo( SYUKEI *, ushort, DATA_KIND_41 * 
 // MH810100(S) K.Onodera 2019/11/15 車番チケットレス (RT精算データ対応)
 //extern	unsigned char	NTNET_Edit_isData20_54(enter_log 		*p_RcptDat);	//	入庫フォーマット判定(20/54)
 // MH810100(E) K.Onodera 2019/11/15 車番チケットレス (RT精算データ対応)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+extern	unsigned short	NTNET_Edit_SyukeiKihon_T( SYUKEI *, ushort, DATA_KIND_42_T * );
+extern	unsigned short	NTNET_Edit_SyukeiRyokinMai_T( SYUKEI *, ushort, DATA_KIND_43_T * );
+extern	unsigned short	NTNET_Edit_SyukeiBunrui_T( SYUKEI *, ushort, DATA_KIND_44_T * );
+extern	unsigned short	NTNET_Edit_SyukeiWaribiki_T( SYUKEI *, ushort, DATA_KIND_45_T * );
+extern	unsigned short	NTNET_Edit_SyukeiTeiki_T( SYUKEI *, ushort, DATA_KIND_46_T * );
+extern	unsigned short	NTNET_Edit_SyukeiKinsen_T( SYUKEI *, ushort, DATA_KIND_48_T * );
+extern	unsigned short	NTNET_Edit_SyukeiSyuryo_T( SYUKEI *, ushort, DATA_KIND_53_T * );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+
 extern	unsigned char	NTNET_Edit_isData22_56(Receipt_data 	*p_RcptDat);	//	精算フォーマット判定(22/56)
 extern	unsigned char	NTNET_Edit_isData236_58(ParkCar_log 	*p_RcptDat);	//	駐車台数フォーマット判定(236/58)
 // MH810100(S) K.Onodera 2019/11/15 車番チケットレス (RT精算データ対応)
@@ -4102,6 +4563,12 @@ extern	unsigned char	NTNET_Edit_isData236_58(ParkCar_log 	*p_RcptDat);	//	駐車台
 //// 仕様変更(E) K.Onodera 2016/11/01 精算データフォーマット対応
 // MH810100(E) K.Onodera 2019/11/15 車番チケットレス (RT精算データ対応)
 // MH810105(S) MH364301 QRコード決済対応
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+extern	unsigned short	NTNET_Edit_Data56_T( Receipt_data *p_RcptDat, DATA_KIND_56_T *p_NtDat );
+extern	unsigned short	NTNET_Edit_Data63_T( Err_log *, DATA_KIND_63_T * );
+extern	unsigned short	NTNET_Edit_Data64_T( Arm_log *, DATA_KIND_64_T * );
+extern unsigned short	NTNET_Edit_Data135_T( TURI_KAN *, DATA_KIND_135_T * );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 ////	新精算NT-NETフォーマット設定(22ﾌｫｰﾏｯﾄにFmtRev, PARKCAR_DATA1を付加)	// 参照 = NTNET_Edit_Data22
 //extern	unsigned short	NTNET_Edit_Data56(Receipt_data *p_RcptDat,	DATA_KIND_56 	*p_NtDat );
 ////	新精算NT-NETフォーマット設定(22ﾌｫｰﾏｯﾄにFmtRev, PARKCAR_DATA1を付加)	// 参照 = NTNET_Edit_Data22_SK

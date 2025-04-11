@@ -762,7 +762,10 @@ extern	ushort	OpeSig_1shotInfo[OutPortMax];				// 出力信号 1shot出力要求情報（残
 
 #define		ALL_COUNT			1							// 通し追番
 #define		PAYMENT_COUNT		2							// 精算追番
-#define		CANCEL_COUNT		3							// 精算中止追番
+// GM849100(S) 名鉄協商コールセンター対応（精算／精算中止の追番を１つにする）（GT-7700：GM747902参考）
+//#define		CANCEL_COUNT		3							// 精算中止追番
+#define		CANCEL_COUNT		PAYMENT_COUNT				// 精算中止追番（精算追番と共通）
+// GM849100(E) 名鉄協商コールセンター対応（精算／精算中止の追番を１つにする）（GT-7700：GM747902参考）
 #define		DEPOSIT_COUNT		4							// 預り証追番
 #define		T_TOTAL_COUNT		5							// T合計追番
 #define		GT_TOTAL_COUNT		6							// GT合計追番
@@ -1022,6 +1025,13 @@ extern	unsigned char	Pri_Open_Status_J;			// プリンタカバー状態
 #define		ERRMDL_SUBCPU				80					/* ｻﾌﾞCPUﾓｼﾞｭｰﾙｺｰﾄﾞ				*/
 #define		ERRMDL_CAN					86					/* CANﾓｼﾞｭｰﾙｺｰﾄﾞ		*/
 #define		ERRMDL_CREDIT				88					/* クレジット		*/
+// GM849100(S) M.Fujikawa 2025/01/17 名鉄協商コールセンター対応 アラームデータをエラー９６ｘｘで送信で送信（GM747900参考）
+#define		ERRMDL_ALARM				96					// 注意！：エラーモジュールＮｏ９６はアラーム登録処理'alm_chk2'でデータを
+															// 　　　　送信する際、エラーデータに変換するするときに使用する。
+															// 　　　　なのでエラーテーブル'ErrAct_index'、'moj_no'、'ErrAct'に
+															// 　　　　モジュール９６は定義しない。
+															// アラームデータをエラーデータにする　モジュールＮｏ９６
+// GM849100(E) M.Fujikawa 2025/01/17 名鉄協商コールセンター対応 アラームデータをエラー９６ｘｘで送信で送信（GM747900参考）
 // MH321800(S) G.So ICクレジット対応
 #define		ERRMDL_EC					32					/* 決済リーダﾓｼﾞｭｰﾙｺｰﾄﾞ	*/
 // MH321800(E) G.So ICクレジット対応
@@ -1682,6 +1692,9 @@ enum {
 // GG124100(S) R.Endo 2022/09/12 車番チケットレス3.0 #6343 クラウド料金計算対応
 	mod_cc,									// クラウド版料金計算エンジン
 // GG124100(E) R.Endo 2022/09/12 車番チケットレス3.0 #6343 クラウド料金計算対応
+// GM849100(S) M.Fujikawa 2025/01/17 名鉄協商コールセンター対応 アラームデータをエラー９６ｘｘで送信で送信
+	mod_alarm,
+// GM849100(E) M.Fujikawa 2025/01/17 名鉄協商コールセンター対応 アラームデータをエラー９６ｘｘで送信で送信
 
 	mod_SubCPU,								// ｻﾌﾞCPU機能
 	mod_Credit,
@@ -2954,6 +2967,9 @@ extern	void	date_uriage_prmcng_judge( void );
 // MH810105 GG119202(S) T合計連動印字対応
 extern	void			ec_linked_total_print(ushort pri_req, T_FrmSyuukei *pFrmSyuukei);
 // MH810105 GG119202(E) T合計連動印字対応
+// GM849100(S) M.Fujikawa 2025/03/11 名鉄協商コールセンター対応 コードチェック#257073
+extern	ulong			set_parking_time( date_time_rec *InTime, date_time_rec *OutTime );
+// GM849100(E) M.Fujikawa 2025/03/11 名鉄協商コールセンター対応 コードチェック#257073
 
 /* turikan.c */
 extern	void			turikan_proc( short );
@@ -3296,6 +3312,9 @@ extern ushort			getAlmLevel( ushort no, ushort code );
 // 不具合修正(S) K.Onodera 2016/10/13 #1505 アラーム01-61(5000円札釣り切れ)発生を含むデータが応答されてしまう
 extern BOOL 			isDefToErrAlmTbl( uchar type, uchar no, uchar code );
 // 不具合修正(E) K.Onodera 2016/10/13 #1505 アラーム01-61(5000円札釣り切れ)発生を含むデータが応答されてしまう
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+extern uchar chk_arm_send_ntnet(uchar Armsyu, uchar Armcod);
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 /* sigctrl.c */
 extern	void			Out1shotSig_Interval( void );
