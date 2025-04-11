@@ -1,0 +1,390 @@
+;/*[]----------------------------------------------------------------------[]*/
+;/*| TASKCHG,TASKINIT                                                       |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| Author      : A.Iiizumi                                                |*/
+;/*| Date        : 2011-12-26                                               |*/
+;/*| UpDate      :                                                          |*/
+;/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+;
+;
+;	*** section "B" : Uninitialized data area in internal RAM ***
+;
+	.SECTION  B,DATA
+;
+	.GLB	_RUNTSK   ; (DWORD)    : task No. (This task is running now)
+	.GLB	_TASKSP   ; (DWORD)* 8 : SP for task 0,1,2,3,4,5,6,7,8,9,10,11,12,13
+	.GLB	_xSTACK_TBL	; (USHORT)* 13 : STACK_SIZ_TBL
+	.GLB	_xSTK_RANGE_BTM ; (ULONG)  : STK_RANGE_BTM
+;
+STK14SZ .EQU    0A00h
+STK13SZ .EQU    100h
+STK12SZ .EQU    900h
+STK11SZ .EQU    1000h
+STK10SZ .EQU    400h
+STK9SZ  .EQU    900h
+STK8SZ  .EQU    1000h;(+A00h)
+STK7SZ  .EQU    0C00h
+STK6SZ  .EQU    700h
+STK5SZ  .EQU    0E00h
+STK4SZ  .EQU    1100h;(+600h)
+STK3SZ  .EQU    0C00h;(+600h)
+STK2SZ  .EQU    1400h;(+A00h)
+STK1SZ  .EQU    800h
+
+STACK0  .EQU    20000h
+STACK1  .EQU    STACK0-STK1SZ    ; idle
+STACK2  .EQU    STACK1-STK2SZ    ; ope
+STACK3  .EQU    STACK2-STK3SZ    ; coin
+STACK4  .EQU    STACK3-STK4SZ    ; pri
+STACK5  .EQU    STACK4-STK5SZ    ; lkcom
+STACK6  .EQU    STACK5-STK6SZ    ; flashrom
+STACK7  .EQU    STACK6-STK7SZ    ; ntnet
+STACK8  .EQU    STACK7-STK8SZ    ; remote dl
+STACK9  .EQU    STACK8-STK9SZ    ; can
+STACK10 .EQU    STACK9-STK10SZ   ; FB7000
+STACK11 .EQU    STACK10-STK11SZ  ; p stack
+STACK12 .EQU    STACK11-STK12SZ  ; idle_sub
+STACK13 .EQU    STACK12-STK13SZ  ; pip
+STACK14 .EQU    STACK13-STK14SZ  ; rau
+;
+STK_RANGE_TOP   .EQU    STACK14
+STK_RANGE_BTM   .EQU    STACK0
+STK_CLEAR_CODE  .EQU    0EDEDEDEDh
+;
+;
+;	*** section "P" :/* Internal ROM	*/
+;
+    .SECTION  P,CODE
+;
+	.GLB	_idletask
+	.GLB	_opetask
+	.GLB	_cnmtask
+	.GLB	_pritask
+	.GLB	_PktTask
+	.GLB	_flatask
+	.GLB	_ntnet_task
+	.GLB	_remotedl_task
+	.GLB	_cantask
+	.GLB	_FBtask
+	.GLB	_ksgtask
+	.GLB	_idle_subtask
+	.GLB	_piptask
+	.GLB	_rautask
+;
+	.GLB	_taskchg
+	.GLB	_TASKINIT
+;
+;/*[]----------------------------------------------------------------------[]*/
+;/*| taskchg                                                                |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| MODULE NAME  : taskchg(R1)                                             |*/
+;/*| PARAMETER    : (R1) = task No.                                         |*/
+;/*| RETURN VALUE : void                                                    |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| Author       : A.Iiizumi                                               |*/
+;/*| Date         : 2011-12-26                                              |*/
+;/*| UpDate       :                                                         |*/
+;/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+;
+;  void
+;  taskchg(R1)
+;  unsigned short  R1;
+;  {
+;
+_taskchg:
+;NOTE:RXシリーズではR0がSPの役割を果たす
+	PUSH.L	R1
+	PUSH.L	R2
+	PUSH.L	R3
+	PUSH.L	R4
+	PUSH.L	R5
+	PUSH.L	R6
+	PUSH.L	R7
+	PUSH.L	R8
+	PUSH.L	R9
+	PUSH.L	R10
+	PUSH.L	R11
+	PUSH.L	R12
+	PUSH.L	R13
+	PUSH.L	R14
+	PUSH.L	R15
+;
+	MOV.L	#_RUNTSK:32,R5
+	MOV.L	[R5],R2         ;R2に現在動作しているタスクNoを格納
+	SHLL	#2,R2           ;タスクNoの値を4倍する(TASKSP[]がDWORDサイズのため)
+
+	ADD	#_TASKSP:32,R2  ;タスクスタックポインタの先頭アドレスからインデックス分加算して
+                                ;現在動作しているタスクのスタックポインタをR2に格納
+;
+	MOV.L	SP,[R2]         ; (SP) --> [_TASKSP+(R2)]
+;
+;	MOV.L	#_RUNTSK:32,R5  ;
+	MOV.L	R1,[R5]         ;次に動作するタスクNo(task No.)を[RUNTASK]にセット
+	SHLL	#2,R1           ;タスクNoの値を4倍する(TASKSP[]がDWORDサイズのため)
+
+	ADD	#_TASKSP:32,R1  ;タスクスタックポインタの先頭アドレスからインデックス分加算して
+                                ;次に動作するタスクのスタックポインタをR1に格納
+;
+	MOV.L	[R1],SP         ; [_TASKSP+(R1)] --> (SP)
+;
+	POP	R15
+	POP	R14
+	POP	R13
+	POP	R12
+	POP	R11
+	POP	R10
+	POP	R9
+	POP	R8
+	POP	R7
+	POP	R6
+	POP	R5
+	POP	R4
+	POP	R3
+	POP	R2
+	POP	R1
+	RTS
+;
+;
+;/*[]----------------------------------------------------------------------[]*/
+;/*| _TASKINIT                                                              |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| MODULE NAME  : _TASKINIT                                               |*/
+;/*| PARAMETER    : void                                                    |*/
+;/*| RETURN VALUE : void                                                    |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| Author       : A.Iiizumi                                               |*/
+;/*| Date         : 2011-12-26                                              |*/
+;/*[]------------------------------------- Copyright(C) 2001 AMANO Corp.---[]*/
+;
+_TASKINIT:
+;
+;;; ***** Stack RAM range EDh clear *****
+	MOV.L	#STK_RANGE_TOP,R1
+	MOV.L	#STK_RANGE_BTM,R2
+	MOV.L	#_TASKINIT10,R3
+	MOV.L	#STK_CLEAR_CODE,R4
+	MOV.L	#_stack_clear,R6
+	JMP	R6
+_TASKINIT10:
+;;; *************************************
+;
+;	*** Program Counter ***
+;
+	MOV.L	#(STACK0-4):32,R1
+	MOV.L	#_idletask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK1-4):32,R1
+	MOV.L	#_opetask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK2-4):32,R1
+	MOV.L	#_cnmtask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK3-4):32,R1
+	MOV.L	#_pritask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK4-4):32,R1
+	MOV.L	#_PktTask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK5-4):32,R1
+	MOV.L	#_flatask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK6-4):32,R1
+	MOV.L	#_ntnet_task:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK7-4):32,R1
+	MOV.L	#_remotedl_task:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK8-4):32,R1
+	MOV.L	#_cantask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK9-4):32,R1
+	MOV.L	#_FBtask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK10-4):32,R1
+	MOV.L	#_ksgtask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK11-4):32,R1
+	MOV.L	#_idle_subtask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK12-4):32,R1
+	MOV.L	#_piptask:32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#(STACK13-4):32,R1
+	MOV.L	#_rautask:32,R5
+	MOV.L	R5,[R1]
+
+;	*** Stack Pointer : _TASKSP[i] ***
+;スタックポインタの設定がSTACK0-(4*16)となるのはtaskchgでR1～R15の15個のレジスタを退避するため
+;4*(15+1)という計算になっています
+;
+	MOV.L	#_TASKSP:32,R1
+	MOV.L	#(STACK0-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK1-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK2-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK3-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK4-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK5-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK6-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK7-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK8-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK9-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK10-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK11-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK12-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK13-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	ADD	#4,R1
+	MOV.L	#(STACK14-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+	MOV.L	#STK_RANGE_BTM,R5
+	MOV.L	#_xSTK_RANGE_BTM,R1
+	MOV.L	R5,[R1]
+;
+	MOV.L	#_xSTACK_TBL:32,R1
+	MOV.L	#STK1SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK2SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK3SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK4SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK5SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK6SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK7SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK8SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK9SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK10SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK11SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK12SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK13SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	ADD		#2:32,R1
+	MOV.L	#STK14SZ:32,R5
+	MOV.W	R5,[R1]
+;
+	MOV.L	#_RUNTSK:32,R5
+	MOV.L	#1:32,[R5]
+	MOV.L	#STACK1:32,SP
+	MOV.L	#_opetask,R6
+	JMP	R6
+
+;
+;/*[]----------------------------------------------------------------------[]*/
+;/*|             Stack memory clear                                         |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*|          This routine is stack RAM using range check.                  |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| Argument :  R1 = Stack RAM top (lowest) address.                       |*/
+;/*|             R2 = Stack RAM bottom (highest+1) address.                 |*/
+;/*|             R3 = return Program address.                               |*/
+;/*|             R4 = initialize (clear) value (4byte)                      |*/
+;/*|             R5,R1 register will destroy.                               |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| Return   :                                                             |*/
+;/*[]----------------------------------------------------------------------[]*/
+;/*| Author      :  A.Iiizumi                                               |*/
+;/*| Date        :  2011-12-26                                              |*/
+;/*| Update      :                                                          |*/
+;/*[]------------------------------------- Copyright(C) 2002 AMANO Corp.---[]*/
+;
+_stack_clear:
+	MOV.L	R4,R5
+;
+_stkclr_10:
+	MOV.L	R5,[R1]
+	ADD	#4:32,R1
+	CMP	R2,R1
+	BNE	_stkclr_10
+;
+	JMP	R3	; This mean return;
+;
+;
+	.END

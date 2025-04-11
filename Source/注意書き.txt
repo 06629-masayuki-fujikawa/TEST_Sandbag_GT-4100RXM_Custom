@@ -1,0 +1,48 @@
+
+RX630は内蔵ROMが2MBで、ROM容量が拡張できない仕様である。
+そのため、コンパイルオプションでサイズ重視の最適化をかけている。
+
+しかし、最適化してはいけない処理もあるため、それらのファイルは個別に最適化をしない設定に変更している。
+
+●設定方法
+CubeSuite+上でファイル（*.c)を選択しマウスの右クリック
+⇒”プロパティ”
+⇒”ビルド設定”タブ内にある個別コンパイル・オプションを設定
+⇒”はい”に変更
+⇒個別コンパイルオプションのタブを選択し、最適化レベルを”0(-optimize=0)”とする
+
+●現状以下のファイルが最適化の対象外としている。
+
+Source\sys\cpu_init.c
+Source\sys\int_ram.c
+Source\sys\keyctrl.c
+Source\sys\idletask.c
+Source\sys\I2C_Arbitration_Manager.c
+Source\sys\bluetoothSci.c
+
+Source\cnm\cnmdrv.c
+
+Source\flp\toSsci.c
+
+Source\mnt\sysmntsci.c
+
+Source\fla\FlashSerial_RSPI.c
+Source\fla\FlashSerialSST.c
+
+Source\ope\logctrl2.c
+
+RX630の環境でビルドすると、pri\pri_edit.cで以下のエラーが発生する。
+
+Internal Error: 
+FILE: M:\make_load\ccrx_V.1.02.00.000_110826\adria_rx_PC\source\RXLOPT\MAIN\SH_stack.c
+LINE: 150
+Internal Error: <M:\make_load\ccrx_V.1.02.00.000_110826\adria_rx_PC\source\RXLOPT\MAIN\SH_stack.c:150>
+  pri\pri_edit.c(0) : C4098 Internal error
+
+これはコンパイラのバグなので、pri_edit.cで修正版がリリースされるまでの間暫定的な対処をするため
+個別に最適化のオプション「(1)-case=ifthen オプション」を指定する
+
+
+Source\pri\pri_edit.c
+
+

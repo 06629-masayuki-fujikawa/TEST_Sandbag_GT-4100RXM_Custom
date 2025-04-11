@@ -1,0 +1,88 @@
+;;;	Pending
+;********************************************************************************
+;*																				*
+;*	PowerON_Reset_PC															*
+;*	NonMaskableInterrupt														*
+;*																				*
+;*		本File内ではRX630のSFR操作は行わない為									*
+;*		RX630のiodefine.hをｱｾﾝﾌﾞﾗ定義した"RX630_iodef.INC"は使用しない			*
+;*		(現時点12/20では"RX630_iodef.INC"は未作成)								*
+;********************************************************************************
+;    .INCLUDE    "RX630_iodef.INC"
+	.GLB _syscr_init
+	.GLB _dog_init
+	.GLB _port_init
+	.GLB _nmiint_set
+	.GLB _port_nmi
+	.GLB _PowerON_Reset_PC
+	.GLB _NonMaskableInterrupt
+	.GLB _cpu_init
+	.GLB _TASKINIT
+	.GLB _ExSRam_clear
+	.GLB _C_INITSCT
+	.SECTION   PResetPRG,CODE
+;********************************************************
+;*	PowerOnReset時のRegisterの値						*
+;*		R0(SP) - R15	(不定?)							*
+;*		ISP 	(H'00000000)							*
+;*		USP 	(H'00000000)							*
+;*		INTB	(不定)									*
+;*		PC 		(resetVectorの値)						*
+;*		PSW 	(H'00000000)							*
+;*			I(b16)				AllINT(0/1 = DI/EI)		*
+;*			U(b17)				0/1 = ISP/USP			*
+;*			PM(b20)				0/1 = supperuser/user	*
+;*			IPL[3:0](b24-b27)	INT priority level		*
+;*		注意:											*
+;*			intbの設定はset_intb()を使用する為			*
+;*			cpu_init()で行う							*
+;********************************************************
+_PowerON_Reset_PC:
+	MVTC	#00000000h:32,PSW	; PSW  <- AllINT(DI), ISP, SupperUser
+	MOV.L   #00020000h:32,SP 	; SP <- InternalRam Bottum Address
+	MVTC	#00020000h:32,ISP	; ISP <- InternalRam Bottum Address
+	MVTC	#00000100h:32,FPSW	; FPSW <- Initial
+	;****************************
+	;*	Function				*
+	;****************************
+	MOV.L	#_syscr_init,R1
+	JSR		R1	    			; RAME, ...etc
+	MOV.L	#_cpu_init,R1
+	JSR		R1  				; MPC, Port
+	MOV.L	#_port_init,R1
+	JSR		R1  				; MPC, Port
+	MOV.L	#_ExSRam_clear,R1
+	JSR		R1
+	MOV.L	#_C_INITSCT,R1
+	JSR		R1
+	MOV.L	#_TASKINIT,R1
+	JMP		R1   				; initialize tasks
+;************************************
+;*									*
+;************************************
+;// 固定ベクタテーブルに配置されるプログラムをブートプログラムと同じ配置にするためにここで定義する
+	.SECTION   PNmiPRG,CODE
+_NonMaskableInterrupt:
+;;;	RTE
+	MVTC	#00000000h:32,PSW	; PSW  <- AllINT(DI), ISP, SupperUser
+	MOV.L   #00020000h:32,SP 	; SP <- InternalRam Bottum Address
+	MVTC	#00020000h:32,ISP	; ISP <- InternalRam Bottum Address
+	;****************************
+	;*	Function				*
+	;****************************
+	MOV.L	#_nmiint_set,R1
+	JSR		R1    				; nmi flg set
+	MOV.L	#_port_nmi,R1
+	JSR		R1     	 			; All port disable
+	MOV.L	#_dog_init,R1
+	JSR		R1     				; watch dog start
+	MOV.L	#_NMI100,R1
+_NMI100:
+	NOP
+	NOP
+	JMP		R1
+	NOP
+	NOP
+	JMP		R1
+
+    .END

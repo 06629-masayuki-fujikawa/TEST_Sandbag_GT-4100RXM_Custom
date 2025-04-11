@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<errors version="1.4">
+    <error enabled="true" id="CWARN.CONSTCOND.DO"/>
+    <error enabled="true" id="CWARN.CONSTCOND.IF"/>
+    <error enabled="true" id="CWARN.CONSTCOND.SWITCH"/>
+    <error enabled="true" id="CWARN.CONSTCOND.TERNARY"/>
+    <error enabled="true" id="CWARN.CONSTCOND.WHILE"/>
+    <error enabled="true" id="EFFECT"/>
+    <error enabled="true" id="PRECISION.LOSS"/>
+    <error enabled="true" id="PRECISION.LOSS.CALL"/>
+    <error enabled="true" id="INVARIANT_CONDITION.GEN"/>
+    <error enabled="true" id="CWARN.MEMSET.SIZEOF.PTR"/>
+</errors>
