@@ -67,6 +67,9 @@
 #define		S_SCA		35												/* Suica						*/
 #define		S_CEN		36												/* ｾﾝﾀｰｻｰﾊﾞｰ接続ﾊﾟﾗﾒｰﾀ設定	*/
 #define		S_CRE		38												/* クレジット設定 */
+// GM849100(S) 個別設定
+#define		S_SSS		40												// 個別設定
+// GM849100(E) 個別設定
 #define		S_MDL		41												/* 標準通信ﾓｼﾞｭｰﾙ				*/
 #define		S_LTM		46												/* 料金種別毎設定 */
 // MH810100(S) K.Onodera 2019/10/31 車番チケットレス（LCD通信）

@@ -12,10 +12,17 @@
 	.SECTION  B,DATA
 ;
 	.GLB	_RUNTSK   ; (DWORD)    : task No. (This task is running now)
-	.GLB	_TASKSP   ; (DWORD)* 8 : SP for task 0,1,2,3,4,5,6,7,8,9,10,11,12,13
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+
+;	.GLB	_TASKSP   ; (DWORD)* 8 : SP for task 0,1,2,3,4,5,6,7,8,9,10,11,12,13
+	.GLB	_TASKSP   ; (DWORD)* 8 : SP for task 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	.GLB	_xSTACK_TBL	; (USHORT)* 13 : STACK_SIZ_TBL
 	.GLB	_xSTK_RANGE_BTM ; (ULONG)  : STK_RANGE_BTM
 ;
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+STK15SZ .EQU    800h
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 STK14SZ .EQU    0A00h
 STK13SZ .EQU    100h
 STK12SZ .EQU    900h
@@ -47,7 +54,11 @@ STACK12 .EQU    STACK11-STK12SZ  ; idle_sub
 STACK13 .EQU    STACK12-STK13SZ  ; pip
 STACK14 .EQU    STACK13-STK14SZ  ; rau
 ;
-STK_RANGE_TOP   .EQU    STACK14
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+;STK_RANGE_TOP   .EQU    STACK14
+STACK15 .EQU    STACK14-STK15SZ  ; ntcom
+STK_RANGE_TOP   .EQU    STACK15
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 STK_RANGE_BTM   .EQU    STACK0
 STK_CLEAR_CODE  .EQU    0EDEDEDEDh
 ;
@@ -70,6 +81,9 @@ STK_CLEAR_CODE  .EQU    0EDEDEDEDh
 	.GLB	_idle_subtask
 	.GLB	_piptask
 	.GLB	_rautask
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	.GLB	_ntcomtask
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 ;
 	.GLB	_taskchg
 	.GLB	_TASKINIT
@@ -225,7 +239,12 @@ _TASKINIT10:
 	MOV.L	#(STACK13-4):32,R1
 	MOV.L	#_rautask:32,R5
 	MOV.L	R5,[R1]
-
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+;
+	MOV.L	#(STACK14-4):32,R1
+	MOV.L	#_ntcomtask:32,R5
+	MOV.L	R5,[R1]
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 ;	*** Stack Pointer : _TASKSP[i] ***
 ;スタックポインタの設定がSTACK0-(4*16)となるのはtaskchgでR1～R15の15個のレジスタを退避するため
 ;4*(15+1)という計算になっています
@@ -290,6 +309,12 @@ _TASKINIT10:
 	MOV.L	#(STACK14-(4*16)):32,R5
 	MOV.L	R5,[R1]
 ;
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	ADD	#4,R1
+	MOV.L	#(STACK15-(4*16)):32,R5
+	MOV.L	R5,[R1]
+;
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	MOV.L	#STK_RANGE_BTM,R5
 	MOV.L	#_xSTK_RANGE_BTM,R1
 	MOV.L	R5,[R1]
@@ -350,6 +375,12 @@ _TASKINIT10:
 	MOV.L	#STK14SZ:32,R5
 	MOV.W	R5,[R1]
 ;
+;// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+	ADD		#2:32,R1
+	MOV.L	#STK15SZ:32,R5
+	MOV.W	R5,[R1]
+;
+;// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 	MOV.L	#_RUNTSK:32,R5
 	MOV.L	#1:32,[R5]
 	MOV.L	#STACK1:32,SP

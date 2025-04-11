@@ -24,6 +24,10 @@
 #include	"fla_def.h"
 #include	"ntnet.h"
 #include	"ntnet_def.h"
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+#include	"ntcom.h"
+#include	"ntcomdef.h"
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 #include	"message.h"
 #include	"remote_dl.h"
 #include	"mnt_def.h"
@@ -62,7 +66,10 @@ const	ver_rec		VERSNO = {							/* ROM Table		 			*/
 //	'0',' ','G','G','1','2','9','0','0','3'				// GG129003部番（24/11/22)
 // GG132000(S) 部番変更
 //	'0',' ','G','G','1','2','9','0','0','4'				// GG129004部番（24/12/05)
-	'0',' ','G','G','1','3','2','0','0','0'				// GG132000部番（25/XX/XX)
+// GM849100(S) 部番変更
+//	'0',' ','G','G','1','3','2','0','0','0'				// GG132000部番（25/XX/XX)
+	'0',' ','G','M','8','4','9','1','0','0'				// GM849100部番（25/01/06)
+// GM849100(E) 部番変更
 // GG132000(E) 部番変更
 // GG129004(E) 部番変更
 // GG129003(E) 部番変更
@@ -667,7 +674,10 @@ const	struct	PRM_REC	cprm_rec[] = {
 // 仕様変更(E) K.Onodera 2016/11/08 振替過払い金(払戻し)追加
 // GG129000(S) M.Fujikawa 2023/09/28 ゲート式車番チケットレスシステム対応　QR駐車券のパラメータ設定
 	{   17, 56,      2 },	// QR駐車券のフォーマットRev
-	{   17, 57,      2 },	// QRコード発行条件
+// GM849100(S) M.Fujikawa 2025/01/17 名鉄協商コールセンター対応 設定デフォルト値変更
+//	{   17, 57,      2 },	// QRコード発行条件
+	{   17, 57,      3 },	// QRコード発行条件
+// GM849100(E) M.Fujikawa 2025/01/17 名鉄協商コールセンター対応 設定デフォルト値変更
 // GG129000(E) M.Fujikawa 2023/09/28 ゲート式車番チケットレスシステム対応　QR駐車券のパラメータ設定
 
 //======================================================
@@ -1299,6 +1309,30 @@ const	struct	PRM_REC	cprm_rec[] = {
 //======================================================
 //	３９：個別設定（リパーク個別設定）
 //======================================================
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（設定アドレス変更）
+//======================================================
+//	４０：個別設定２
+//======================================================
+	{	40,	 1,	     1	},	// NT-NET端末間通信（名鉄協商仕様）
+	{	40,	 2,	     1	},	// 従局
+	{	40,	 3,	     1	},	// 端末No=1
+	{	40,	 5,	    25	},	// ENQ送信後の応答待ち時間(t1)
+	{	40,	 6,	   500	},	// 受信データ最大時間(t2)
+	{	40,	 7,	   300	},	// テキスト送信後の応答待ち時間(t3)
+	{	40,	 8,	    35	},	// 次局とのインターバル時間(t4)
+	{	40,	 9,	     2	},	// 文字間タイマー(t5)
+	{	40,	10,	    50	},	// 同報ENQ後のデータ送信WAIT時間(t6)
+	{	40,	11,	   500	},	// 受信データ最大時間(t7)
+	{	40,	12,	   500	},	// 同報処理前のWAIT時間(t8)
+	{	40,	13,	     5	},	// 送信WAIT時間(t9)
+	{	40,	14,	     3	},	// データリトライ受信回数
+	{	40,	15,	    99	},	// ブロック送信単位
+	{	40,	16,	    60	},	// 通信回線監視タイマー
+	{	40,	17,	     3	},	// 無応答エラー判定
+	{	40,	18,	    20	},	// 無応答時スキップ周期
+	{	40,	19,	    20	},	// メインCPUからの応答待ち時間
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（設定アドレス変更）
 
 //======================================================
 //	４１：標準通信モジュール設定
@@ -1968,6 +2002,39 @@ ulong	ERR_LOCK_INFO[LOCK_MAX][4];				// 上昇/下降エラー情報
 /*--------------------------------------------------------------------------------------*/
 uchar	ref_coinsyu[4];
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+/*------------------------------------------------------------------------------*/
+#pragma	section	_NTDATA			/* "B":Uninitialized data area in external RAM1-1 */
+/*------------------------------------------------------------------------------*/
+// CS1:アドレス空間0x06090000-0x0609BFFF(16Kbyte)
+unsigned char		NTCom_memory_pass[10];					/* NTCom pass word */
+/* 通常データバッファ */
+T_NT_BUFFER			NTCom_SndBuf_Normal;					/* NTネットへの送信用 */
+T_NT_BUFFER			NTCom_RcvBuf_Normal;					/* NTネットからの受信用 */
+/* _z_NTCom_RcvBuf_Normal内の電文情報 */
+/* 最大8つの端末から受信したデータをFIFOでIBWに送信するため、下記データを使用してスケジューリングする */
+T_NT_TELEGRAM_LIST	NTCom_RcvTeleSchedule;
+/* 優先データバッファ */
+T_NT_BUFFER			NTCom_SndBuf_Prior;						/* #005 */
+T_NT_BUFFER			NTCom_RcvBuf_Prior;						/* NTネットからの受信用 */
+/* 同報データバッファ */
+T_NT_BUFFER			NTCom_SndBuf_Broadcast;					/* NTネットへの送信用 */
+T_NT_BUFFER			NTCom_RcvBuf_Broadcast;					/* NTネットからの受信用 */
+/* データバッファメモリプール */
+T_NT_BUFMEM_POOL	NTCom_BufMemPool;
+/* 停電保証制御データ */
+T_NT_FUKUDEN		NTCom_Fukuden;
+
+T_NT_TELEGRAM		normal_telegram;						// 通常データ電文情報
+T_NT_TELEGRAM		prior_telegram;							// 優先データ電文情報
+T_NT_TELEGRAM		*last_telegram;							// 最後に送った電文
+
+
+T_NTCOM_NORMAL_DATABUF	NTComOpeRecvNormalDataBuf;	// NTComタスク通常受信バッファ（対OPE層）
+T_NTCOM_PRIOR_DATABUF	NTComOpeRecvPriorDataBuf;	// NTComタスク優先受信バッファ（対OPE層）
+T_NTCOM_NORMAL_DATABUF	NTComOpeSendNormalDataBuf;	// NTComタスク通常送信バッファ（対OPE層）
+T_NTCOM_PRIOR_DATABUF	NTComOpeSendPriorDataBuf;	// NTComタスク優先送信バッファ（対OPE層）
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 /*------------------------------------------------------------------------------*/
 #pragma	section	_UNINIT1		/* "B":Uninitialized data area in external RAM1-1 */
 /*------------------------------------------------------------------------------*/
@@ -2093,6 +2160,9 @@ NTNET_AUTO_TRANCTRL	ntTranCtrl;
 NTNET_AUTO_TRANTIME	ntTranTime;
 short	NT_pcars_timer;
 uchar	Ntnet_Remote_Comm;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+uchar	Ntnet_Term_Comm;				// NT-NET(名鉄協商コールセンター)使用設定
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
 uchar	RAU_Credit_Enabale;				// クレジット使用設定
 
 uchar	SubcpuRtryCnt;									// SUBCPUロードリトライカウンタ
@@ -2234,6 +2304,9 @@ ulong	prn_job_id;						// ジョブID
 // GG120600(S) // Phase9 設定変更通知対応
 eFTP_REQ_TYPE 	g_PrmChgFlg;						// パラメータ変更有無
 // GG120600(E) // Phase9 設定変更通知対応
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+RECV_NTNET_TERM_DT RecvNtnetTermDt;					// 端末間通信用受信データバッファ
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
 
 /*--------------------------------------------------------------------------------------*/
 /* ﾊﾟｽﾜｰﾄﾞｴﾘｱ(このｴﾘｱはRAM1の最後尾に置く事)											*/
@@ -2489,6 +2562,10 @@ PRN_DAT_QUE	prn_dat_que;								// 印字データキュー
 struct	Err_log_rec		ERR_LOG_DAT;					// エラーログ印字バッファ
 struct	Arm_log_rec		ARM_LOG_DAT;					// アラームログ印字バッファ
 // GG129000(E) T.Nagai 2023/01/16 復電後にE0000が電子ジャーナルに記録される
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+uchar	NTNET_LogData[NTNET_LOG_WORK_SIZE];
+uchar	NTNET_NtLogData[NTNET_LOG_WORK_SIZE];
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
 
 // MH810103 (s) #5351 各セクションをまたぐときにエラーとなるようにチェック用セクションを追加する
 /*------------------------------------------------------------------------------*/
@@ -2616,6 +2693,9 @@ t_I2C_ERR_STS_EVENT		I2cErrStatus;
 
 volatile	ushort		SHTTER_CTRL;					/* ｼｬｯﾀｰ制御呼び出し			*/
 														/*								*/
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+ulong		LifeTimer1ms;								/*								*/
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 ulong		LifeTimer2ms;								/* 2ms積算ｶｳﾝﾀ(Use IFcom)		*/
 ushort		FBcom_2msT1;								/*								*/
 ushort		FBcom_20msT1;								/*								*/

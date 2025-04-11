@@ -503,6 +503,10 @@ ushort	Ope_Log_GetLogMaxCount( short id );
 #define	TOTALLOG_NTDATA_COUNT				8	// 集計ログから作成するNT-NETデータ種類(遠隔Phase2は6種類)
 void	Log_SetTotalLogNtSeqNo(short Lno, SYUKEI* pTotalLog);
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+static uchar LOG_TMP_BUF[RECODE_SIZE];			// ログ空読み用バッファ
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+
 /*[]----------------------------------------------------------------------[]*/
 /*| log登録                                                                |*/
 /*[]----------------------------------------------------------------------[]*/
@@ -758,7 +762,10 @@ void Log_regist( short Lno )
 			logCount = Ope_Log_UnreadCountGet(eLOG_MONEYMANAGE, eLOG_TARGET_REMOTE);
 			if(logCount > 0){
 				for(i=0; i<logCount; i++){
-					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+//					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, LOG_TMP_BUF, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
 				}
 			}
 			turi_kan.SeqNo = GetNtDataSeqNo();											// 金銭管理データのシーケンシャルNo.の設定
@@ -774,7 +781,10 @@ void Log_regist( short Lno )
 			logCount = Ope_Log_UnreadCountGet(eLOG_MONEYMANAGE, eLOG_TARGET_REMOTE);
 			if(logCount > 0){
 				for(i=0; i<logCount; i++){
-					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+//					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, LOG_TMP_BUF, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
 				}
 			}
 			turi_kan.SeqNo = GetNtDataSeqNo();											// 金銭管理データのシーケンシャルNo.の設定
@@ -788,7 +798,10 @@ void Log_regist( short Lno )
 			logCount = Ope_Log_UnreadCountGet(eLOG_MONEYMANAGE, eLOG_TARGET_REMOTE);
 			if(logCount > 0){
 				for(i=0; i<logCount; i++){
-					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+//					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, LOG_TMP_BUF, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
 				}
 			}
 			turi_kan.SeqNo = GetNtDataSeqNo();											// 金銭管理データのシーケンシャルNo.の設定
@@ -989,7 +1002,10 @@ void Log_regist( short Lno )
 			logCount = Ope_Log_UnreadCountGet(eLOG_MONEYMANAGE, eLOG_TARGET_REMOTE);
 			if(logCount > 0){
 				for(i=0; i<logCount; i++){
-					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
+//					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, RAU_LogData, eLOG_TARGET_REMOTE, TRUE );
+					Ope_Log_TargetDataGet( eLOG_MONEYMANAGE, LOG_TMP_BUF, eLOG_TARGET_REMOTE, TRUE );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（遠隔と端末間通信のバッファを別にする）
 				}
 			}
 			turi_kan.SeqNo = GetNtDataSeqNo();											// シーケンシャルNo.の設定
@@ -1753,112 +1769,332 @@ void	Log_CheckBufferFull(BOOL occur, short Lno, short target)
 	t_NtBufState	*ntbufst;
 	BOOL strage = Ope_Log_ManageKindGet(Lno);
 	
-	// 遠隔NT-NETのみ実装
-	switch(target) {
-	case eLOG_TARGET_REMOTE:							// 遠隔NT-NET
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//	// 遠隔NT-NETのみ実装
+//	switch(target) {
+//	case eLOG_TARGET_REMOTE:							// 遠隔NT-NET
+//		if(prm_get(COM_PRM, S_PAY, 24, 1, 1) != 2) {	// 遠隔NT-NET未使用
+//			return;										// チェックしない
+//		}
+//		break;
+//	default:
+//		return;											// チェックしない
+//	}
+//
+//	ntbufst = (t_NtBufState*)NTBUF_GetBufState();
+//	switch(Lno) {
+//// MH810100(S) K.Onodera  2019/11/15 車番チケットレス(RT精算データ対応)
+////	case eLOG_ENTER:									// 入庫
+////		if( prm_get(COM_PRM, S_NTN, 61, 1, 6) == 1 ){
+////			return;										// チェックしない
+////		}
+////		errorCode = ERR_RAU_ENTRY_BUFERFULL;
+////		pState = &ntbufst->car_in;
+////		break;
+//// MH810100(E) K.Onodera  2019/11/15 車番チケットレス(RT精算データ対応)
+//	case eLOG_PAYMENT:									// 精算
+//		if( prm_get(COM_PRM, S_NTN, 61, 1, 5) == 1 ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_PAYMENT_BUFERFULL;
+//		pState = &ntbufst->sale;
+//		break;
+//	case eLOG_TTOTAL:									// 集計
+//			if( prm_get(COM_PRM, S_NTN, 61, 1, 4) == 1 ){
+//				return;									// チェックしない
+//			}
+//		errorCode = ERR_RAU_TOTAL_BUFERFULL;
+//		pState = &ntbufst->ttotal;
+//		break;
+//	case eLOG_ERROR:									// エラー
+//		if( (prm_get(COM_PRM, S_NTN, 61, 1, 3) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 3) == 9) ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_ERROR_BUFERFULL;
+//		break;
+//	case eLOG_ALARM:									// アラーム
+//		if( (prm_get(COM_PRM, S_NTN, 61, 1, 2) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 4) == 9) ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_ALARM_BUFERFULL;
+//		break;
+//	case eLOG_MONITOR:									// モニタ
+//		if( (prm_get(COM_PRM, S_NTN, 61, 1, 1) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 1) == 9) ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_MONITOR_BUFERFULL;
+//		break;
+//	case eLOG_OPERATE:									// 操作
+//		if( (prm_get(COM_PRM, S_NTN, 62, 1, 6) == 1)|| (prm_get(COM_PRM, S_NTN, 37, 1, 2) == 9) ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_OPE_MONITOR_BUFERFULL;
+//		break;
+//	case eLOG_COINBOX:									// コイン金庫集計(ramのみ)
+//		if( prm_get(COM_PRM, S_NTN, 62, 1, 5) == 1 ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_COIN_BUFERFULL;
+//		pState = &ntbufst->coin;
+//		break;
+//	case eLOG_NOTEBOX:									// 紙幣金庫集計(ramのみ)
+//		if( prm_get(COM_PRM, S_NTN, 62, 1, 4) == 1 ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_NOTE_BUFERFULL;
+//		pState = &ntbufst->note;
+//		break;
+//	case eLOG_PARKING:									// 駐車台数データ
+//		if( prm_get(COM_PRM, S_NTN, 62, 1, 3) == 1 ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_PARK_CNT_BUFERFULL;
+//		break;
+//	case eLOG_MNYMNG_SRAM:								// 釣銭管理集計(ramのみ)
+//		if( prm_get(COM_PRM, S_NTN, 62, 1, 2) == 1 ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_TURI_BUFERFULL;
+//		break;
+//	case eLOG_GTTOTAL:									// GT集計
+//		if( prm_get(COM_PRM, S_NTN, 61, 1, 4) == 1 ){
+//			return;										// チェックしない
+//		}
+//		errorCode = ERR_RAU_GTTOTAL_BUFERFULL;
+//		break;
+//	case eLOG_REMOTE_MONITOR:
+//		// @todo 送信マスク設定が追加されたら、設定を参照すること
+//		errorCode = ERR_RAU_RMON_BUFERFULL;
+//		break;
+//// MH322917(S) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(ログ登録)
+//	case eLOG_LONGPARK_PWEB:
+//		errorCode = ERR_RAU_LONGPARK_BUFERFULL;
+//		break;
+//// MH322917(E) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(ログ登録)
+//	case eLOG_MONEYMANAGE:								// 金銭管理(バッファフルエラーコードなし)
+//	default:
+//		return;											// 上記以外はチェックしない
+//	}
+//	
+//	cnt = LOG_SECORNUM(Lno);
+//	lp = LOG_DAT+Lno;
+//	
+//	if(strage) {										// FROM+SRAMのログ
+//		if(occur == TRUE) {								// 発生チェック
+//			// FROMに書込む際に未送信データが上書きされる場合はバッファフル発生とする
+//			maxcnt = Ope_Log_GetLogMaxCount(Lno) - cnt;
+//			if((Ope_Log_TotalCountGet(Lno) - lp->unread[target]) >= maxcnt) {
+//				bufferfull = 1;
+//			}
+//		}
+//		else {											// 解除チェック
+//			if(lp->Fcount == FLT_Get_LogSectorCount(Lno)) {					// FROMが1周している
+//				if(lp->unread[target] > lp->count[lp->kind]) {				// FROMに送信済みデータがある
+//					if(cnt <= (lp->unread[target] - lp->count[lp->kind])) {	// 1セクタ分FROMに空きがある
+//						bufferfullRel = 1;
+//					}
+//				}
+//			}
+//			else {
+//				bufferfullRel = 1;
+//			}
+//		}
+//	}
+//	else {												// SRAMのみのログ
+//		if(occur == TRUE) {								// 発生チェック
+//			if(lp->f_unread[target] >= cnt) {
+//				bufferfull = 1;
+//			}
+//		}
+//		else {											// 解除チェック
+//			if(lp->f_unread[target] < cnt) {
+//				bufferfullRel = 1;
+//			}
+//		}
+//	}
+//	
+//	if(bufferfull) {
+//		RAU_err_chk(errorCode, 1, 0, 0, NULL);
+//		if(pState) {
+//			if(Lno == eLOG_PAYMENT) {
+//				// 精算データはニアフルも設定する
+//				*pState = (uchar)(NTBUF_BUFFER_FULL|NTBUF_BUFFER_NEAR_FULL); 
+//			}
+//			else {
+//				*pState = (uchar)NTBUF_BUFFER_FULL;
+//			}
+//		}
+//	}
+//	else if(bufferfullRel) {
+//		RAU_err_chk(errorCode, 0, 0, 0, NULL);
+//		if(pState) {
+//			*pState ^= (uchar)NTBUF_BUFFER_FULL;
+//		}
+//	}
+//	else {
+//		if(Lno == eLOG_PAYMENT) {					// 精算データ
+//			if(lp->unread[target] > lp->count[lp->kind]) {				// FROMに送信済みデータがある
+//				if(RAU_NTBUF_NEARFULL_COUNT <= (lp->unread[target] - lp->count[lp->kind])) {
+//					*pState ^= (uchar)NTBUF_BUFFER_NEAR_FULL;
+//				}
+//			}
+//		}
+//	}
+	if(target == eLOG_TARGET_REMOTE) {					// 遠隔NT-NET
 		if(prm_get(COM_PRM, S_PAY, 24, 1, 1) != 2) {	// 遠隔NT-NET未使用
 			return;										// チェックしない
 		}
-		break;
-	default:
+		ntbufst = (t_NtBufState*)NTBUF_GetBufState();
+		switch(Lno) {
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（入庫））
+//		case eLOG_ENTER:								// 入庫
+//			if( prm_get(COM_PRM, S_NTN, 61, 1, 6) == 1 ){
+//				return;										// チェックしない
+//			}
+//			errorCode = ERR_RAU_ENTRY_BUFERFULL;
+//			pState = &ntbufst->car_in;
+//			break;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（入庫））
+		case eLOG_PAYMENT:								// 精算
+			if( prm_get(COM_PRM, S_NTN, 61, 1, 5) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_PAYMENT_BUFERFULL;
+			pState = &ntbufst->sale;
+			break;
+		case eLOG_TTOTAL:								// 集計
+			if( prm_get(COM_PRM, S_NTN, 61, 1, 4) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_TOTAL_BUFERFULL;
+			pState = &ntbufst->ttotal;
+			break;
+		case eLOG_ERROR:								// エラー
+			if( (prm_get(COM_PRM, S_NTN, 61, 1, 3) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 3) == 9) ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_ERROR_BUFERFULL;
+			break;
+		case eLOG_ALARM:								// アラーム
+			if( (prm_get(COM_PRM, S_NTN, 61, 1, 2) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 4) == 9) ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_ALARM_BUFERFULL;
+			break;
+		case eLOG_MONITOR:								// モニタ
+			if( (prm_get(COM_PRM, S_NTN, 61, 1, 1) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 1) == 9) ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_MONITOR_BUFERFULL;
+			break;
+		case eLOG_OPERATE:								// 操作
+			if( (prm_get(COM_PRM, S_NTN, 62, 1, 6) == 1)|| (prm_get(COM_PRM, S_NTN, 37, 1, 2) == 9) ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_OPE_MONITOR_BUFERFULL;
+			break;
+		case eLOG_COINBOX:								// コイン金庫集計(ramのみ)
+			if( prm_get(COM_PRM, S_NTN, 62, 1, 5) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_COIN_BUFERFULL;
+			pState = &ntbufst->coin;
+			break;
+		case eLOG_NOTEBOX:								// 紙幣金庫集計(ramのみ)
+			if( prm_get(COM_PRM, S_NTN, 62, 1, 4) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_NOTE_BUFERFULL;
+			pState = &ntbufst->note;
+			break;
+		case eLOG_PARKING:								// 駐車台数データ
+			if( prm_get(COM_PRM, S_NTN, 62, 1, 3) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_PARK_CNT_BUFERFULL;
+			break;
+		case eLOG_MNYMNG_SRAM:							// 釣銭管理集計(ramのみ)
+			if( prm_get(COM_PRM, S_NTN, 62, 1, 2) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_TURI_BUFERFULL;
+			break;
+		case eLOG_GTTOTAL:								// GT集計
+			if( prm_get(COM_PRM, S_NTN, 61, 1, 4) == 1 ){
+				return;										// チェックしない
+			}
+			errorCode = ERR_RAU_GTTOTAL_BUFERFULL;
+			break;
+		case eLOG_REMOTE_MONITOR:
+			// @todo 送信マスク設定が追加されたら、設定を参照すること
+			errorCode = ERR_RAU_RMON_BUFERFULL;
+			break;
+// MH322917(S) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(ログ登録)
+		case eLOG_LONGPARK_PWEB:
+			errorCode = ERR_RAU_LONGPARK_BUFERFULL;
+			break;
+// MH322917(E) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(ログ登録)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（出庫））
+//// MH364300 GG119A34(S) 改善連絡表No.83対応
+//		case eLOG_LEAVE:								// 出庫
+//			if( prm_get(COM_PRM, S_NTN, 61, 1, 6) == 1 ){
+//				return;										// チェックしない
+//			}
+//			errorCode = ERR_RAU_LEAVE_BUFERFULL;
+//			pState = &ntbufst->car_out;
+//			break;
+//// MH364300 GG119A34(E) 改善連絡表No.83対応
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（出庫））
+		case eLOG_MONEYMANAGE:							// 金銭管理(バッファフルエラーコードなし)
+		default:
+			return;										// 上記以外はチェックしない
+		}
+	}
+	else if(target == eLOG_TARGET_NTNET) {				// NT-NET
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（設定アドレス変更）
+//		if(prm_get(COM_PRM, S_PAY, 24, 1, 1) != 1) {	// NT-NET未使用
+		if(prm_get(COM_PRM, S_SSS, 1, 1, 1) != 1) {		// 名鉄協商コールセンター対応未使用
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（設定アドレス変更）
+			return;										// チェックしない
+		}
+		ntbufst = (t_NtBufState*)NTBUF_GetBufState();
+
+		switch(Lno) {
+		case eLOG_PAYMENT:								// 精算
+			errorCode = ERR_NTNET_ID22_BUFFULL;
+			pState = &ntbufst->sale;
+			break;
+		case eLOG_TTOTAL:								// 集計
+			errorCode = ERR_NTNET_TTOTAL_BUFFULL;
+			pState = &ntbufst->ttotal;
+			break;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（入庫））
+//		case eLOG_ENTER:								// 入庫
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（入庫））
+		case eLOG_ERROR:								// エラー
+		case eLOG_ALARM:								// アラーム
+		case eLOG_MONITOR:								// モニタ
+		case eLOG_OPERATE:								// 操作
+		case eLOG_COINBOX:								// コイン金庫集計(ramのみ)
+		case eLOG_NOTEBOX:								// 紙幣金庫集計(ramのみ)
+		case eLOG_PARKING:								// 駐車台数データ
+		case eLOG_MNYMNG_SRAM:							// 釣銭管理集計(ramのみ)
+		case eLOG_GTTOTAL:								// GT集計
+		case eLOG_REMOTE_MONITOR:
+		case eLOG_MONEYMANAGE:							// 金銭管理(バッファフルエラーコードなし)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（出庫））
+//// MH364300 GG119A34(S) 改善連絡表No.83対応
+//		case eLOG_LEAVE:								// 出庫
+//// MH364300 GG119A34(E) 改善連絡表No.83対応
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（未使用ログ（出庫））
+		default:
+			return;										// 上記以外はチェックしない
+		}
+	}
+	else {
 		return;											// チェックしない
 	}
 
-	ntbufst = (t_NtBufState*)NTBUF_GetBufState();
-	switch(Lno) {
-// MH810100(S) K.Onodera  2019/11/15 車番チケットレス(RT精算データ対応)
-//	case eLOG_ENTER:									// 入庫
-//		if( prm_get(COM_PRM, S_NTN, 61, 1, 6) == 1 ){
-//			return;										// チェックしない
-//		}
-//		errorCode = ERR_RAU_ENTRY_BUFERFULL;
-//		pState = &ntbufst->car_in;
-//		break;
-// MH810100(E) K.Onodera  2019/11/15 車番チケットレス(RT精算データ対応)
-	case eLOG_PAYMENT:									// 精算
-		if( prm_get(COM_PRM, S_NTN, 61, 1, 5) == 1 ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_PAYMENT_BUFERFULL;
-		pState = &ntbufst->sale;
-		break;
-	case eLOG_TTOTAL:									// 集計
-			if( prm_get(COM_PRM, S_NTN, 61, 1, 4) == 1 ){
-				return;									// チェックしない
-			}
-		errorCode = ERR_RAU_TOTAL_BUFERFULL;
-		pState = &ntbufst->ttotal;
-		break;
-	case eLOG_ERROR:									// エラー
-		if( (prm_get(COM_PRM, S_NTN, 61, 1, 3) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 3) == 9) ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_ERROR_BUFERFULL;
-		break;
-	case eLOG_ALARM:									// アラーム
-		if( (prm_get(COM_PRM, S_NTN, 61, 1, 2) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 4) == 9) ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_ALARM_BUFERFULL;
-		break;
-	case eLOG_MONITOR:									// モニタ
-		if( (prm_get(COM_PRM, S_NTN, 61, 1, 1) == 1) || (prm_get(COM_PRM, S_NTN, 37, 1, 1) == 9) ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_MONITOR_BUFERFULL;
-		break;
-	case eLOG_OPERATE:									// 操作
-		if( (prm_get(COM_PRM, S_NTN, 62, 1, 6) == 1)|| (prm_get(COM_PRM, S_NTN, 37, 1, 2) == 9) ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_OPE_MONITOR_BUFERFULL;
-		break;
-	case eLOG_COINBOX:									// コイン金庫集計(ramのみ)
-		if( prm_get(COM_PRM, S_NTN, 62, 1, 5) == 1 ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_COIN_BUFERFULL;
-		pState = &ntbufst->coin;
-		break;
-	case eLOG_NOTEBOX:									// 紙幣金庫集計(ramのみ)
-		if( prm_get(COM_PRM, S_NTN, 62, 1, 4) == 1 ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_NOTE_BUFERFULL;
-		pState = &ntbufst->note;
-		break;
-	case eLOG_PARKING:									// 駐車台数データ
-		if( prm_get(COM_PRM, S_NTN, 62, 1, 3) == 1 ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_PARK_CNT_BUFERFULL;
-		break;
-	case eLOG_MNYMNG_SRAM:								// 釣銭管理集計(ramのみ)
-		if( prm_get(COM_PRM, S_NTN, 62, 1, 2) == 1 ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_TURI_BUFERFULL;
-		break;
-	case eLOG_GTTOTAL:									// GT集計
-		if( prm_get(COM_PRM, S_NTN, 61, 1, 4) == 1 ){
-			return;										// チェックしない
-		}
-		errorCode = ERR_RAU_GTTOTAL_BUFERFULL;
-		break;
-	case eLOG_REMOTE_MONITOR:
-		// @todo 送信マスク設定が追加されたら、設定を参照すること
-		errorCode = ERR_RAU_RMON_BUFERFULL;
-		break;
-// MH322917(S) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(ログ登録)
-	case eLOG_LONGPARK_PWEB:
-		errorCode = ERR_RAU_LONGPARK_BUFERFULL;
-		break;
-// MH322917(E) A.Iiizumi 2018/09/21 長期駐車検出機能の拡張対応(ログ登録)
-	case eLOG_MONEYMANAGE:								// 金銭管理(バッファフルエラーコードなし)
-	default:
-		return;											// 上記以外はチェックしない
-	}
-	
 	cnt = LOG_SECORNUM(Lno);
 	lp = LOG_DAT+Lno;
 	
@@ -1897,7 +2133,15 @@ void	Log_CheckBufferFull(BOOL occur, short Lno, short target)
 	}
 	
 	if(bufferfull) {
-		RAU_err_chk(errorCode, 1, 0, 0, NULL);
+		if(target == eLOG_TARGET_REMOTE) {					// 遠隔NT-NET
+			RAU_err_chk(errorCode, 1, 0, 0, NULL);
+		}
+		else if(target == eLOG_TARGET_NTNET) {				// NT-NET
+			err_chk( ERRMDL_NTNET, errorCode, NTERR_EMERGE, 0, 0 );
+		}
+		else {
+			return;
+		}
 		if(pState) {
 			if(Lno == eLOG_PAYMENT) {
 				// 精算データはニアフルも設定する
@@ -1909,7 +2153,15 @@ void	Log_CheckBufferFull(BOOL occur, short Lno, short target)
 		}
 	}
 	else if(bufferfullRel) {
-		RAU_err_chk(errorCode, 0, 0, 0, NULL);
+		if(target == eLOG_TARGET_REMOTE) {					// 遠隔NT-NET
+			RAU_err_chk(errorCode, 0, 0, 0, NULL);
+		}
+		else if(target == eLOG_TARGET_NTNET) {				// NT-NET
+			err_chk( ERRMDL_NTNET, errorCode, NTERR_RELEASE, 0, 0 );
+		}
+		else {
+			return;
+		}
 		if(pState) {
 			*pState ^= (uchar)NTBUF_BUFFER_FULL;
 		}
@@ -1917,12 +2169,13 @@ void	Log_CheckBufferFull(BOOL occur, short Lno, short target)
 	else {
 		if(Lno == eLOG_PAYMENT) {					// 精算データ
 			if(lp->unread[target] > lp->count[lp->kind]) {				// FROMに送信済みデータがある
-				if(RAU_NTBUF_NEARFULL_COUNT <= (lp->unread[target] - lp->count[lp->kind])) {
+				if(NTBUF_NEARFULL_COUNT <= (lp->unread[target] - lp->count[lp->kind])) {
 					*pState ^= (uchar)NTBUF_BUFFER_NEAR_FULL;
 				}
 			}
 		}
 	}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 }
 
 /*[]----------------------------------------------------------------------[]*/

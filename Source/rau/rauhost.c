@@ -2359,6 +2359,13 @@ short RAUhost_CreateTableDataPacket(void)
 							unreadCount++;
 							pRAUhost_SendIdInfo->send_data_count--;
 						}
+// GM849100(S) 名鉄協商コールセンター対応（E96XXを遠隔で送信しない）
+						else if(dataKind63->Errsyu == ERRMDL_ALARM) {		// E96XX
+							// E96XXは送信しない
+							unreadCount++;
+							pRAUhost_SendIdInfo->send_data_count--;
+						}
+// GM849100(E) 名鉄協商コールセンター対応（E96XXを遠隔で送信しない）
 						else {
 							if(dataKind63->Errlev >= RauConfig.error_send_level){
 								size = sizeof(DATA_KIND_63);

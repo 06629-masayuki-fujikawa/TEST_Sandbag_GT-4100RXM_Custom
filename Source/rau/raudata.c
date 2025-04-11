@@ -95,8 +95,10 @@ RAU_TIME_AREA			RAU_Tm_Ackwait;							// ã‚è‰ñü‚©‚çƒf[ƒ^‘—M‚·‚é‚Æ‚«‚Ì‚`‚b‚j‘
 RAU_TIME_AREA			RAU_Tm_Ackwait2;						// ‰º‚è‰ñü‚©‚çƒf[ƒ^‘—M‚·‚é‚Æ‚«‚Ì‚`‚b‚j‘Ò‚¿ƒ^ƒCƒ}
 uchar					RAU_uc_retrycnt_reconnect_h;			//	iHOST’ÊM‘¤jÄÚ‘±ƒŠƒgƒ‰ƒCƒJƒEƒ“ƒ^
 RAU_TIME_AREA			RAU_Tm_Ackwait_reconnect;				// ã‚è‰ñü‚©‚çƒf[ƒ^‘—M‚·‚é‚Æ‚«‚ÌÄÚ‘±‘Ò‚¿ƒ^ƒCƒ}
-t_DPA_Ctrl	DPA_Credit_SndCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚Ì‘—MƒLƒ…[
-t_DPA_Ctrl	DPA_Credit_RcvCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚ÌóMƒLƒ…[
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiSRAM—e—ÊŠm•Ûj
+//t_DPA_Ctrl	DPA_Credit_SndCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚Ì‘—MƒLƒ…[
+//t_DPA_Ctrl	DPA_Credit_RcvCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚ÌóMƒLƒ…[
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiSRAM—e—ÊŠm•Ûj
 
 uchar	Credit_Snd_Buf[RAU_BLKSIZE];			// (*T_SEND_DATA_ID_INFO)->pbuff_info.pc_AreaTop‚Éw’è‚·‚éêŠ
 uchar	Credit_Rcv_Buf[RAU_BLKSIZE];

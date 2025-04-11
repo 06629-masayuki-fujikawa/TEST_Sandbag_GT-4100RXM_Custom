@@ -138,16 +138,30 @@ void	idletask( void )
 // MH810100(E) K.Onodera 2020/04/07 車番チケットレス（Kasagoタスク負荷軽減）
 		taskchg( PRNTSKNO );										// Change to coin&note control task
 		WACDOG;
-		ntautoSendCtrl();
-// MH810100(S) K.Onodera  2019/12/20 車番チケットレス(フラップ式->ゲート式変更に伴う処理見直し)
-//		ntautoSendCtrl_pcarsWeb();									//Web用駐車台数データ要求
-// MH810100(E) K.Onodera  2019/12/20 車番チケットレス(フラップ式->ゲート式変更に伴う処理見直し)
-		WACDOG;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//		ntautoSendCtrl();
+//// MH810100(S) K.Onodera  2019/12/20 車番チケットレス(フラップ式->ゲート式変更に伴う処理見直し)
+////		ntautoSendCtrl_pcarsWeb();									//Web用駐車台数データ要求
+//// MH810100(E) K.Onodera  2019/12/20 車番チケットレス(フラップ式->ゲート式変更に伴う処理見直し)
+//		WACDOG;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 		if(tcb[CANTCBNO].event == MSG_SET || canevent() != 0){
 			taskchg(CANTSKNO);										// Change to can Send Receive task
 			WACDOG;
 		}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+		if(_is_ntnet_normal()) {
+			taskchg( NTCOMTSKNO );									// nt task(NT-NET通信処理部)
+			WACDOG;
+			taskchg( NTNETTSKNO );									// Change to NT-NET task
+			WACDOG;
+		}
+		
+		ntautoSendCtrl();
+		ntautoSendCtrl_pcarsWeb();									//Web用駐車台数データ要求
+		WACDOG;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 // MH810100(S) K.Onodera 2019/10/17 車番チケットレス（磁気リーダー非対応化）
 //		cr_snd();													// ﾘｰﾀﾞｰﾃﾞｰﾀ送信
 //
@@ -158,6 +172,13 @@ void	idletask( void )
 		if(_is_ntnet_remote() || RAU_Credit_Enabale != 0) {
 			taskchg(RAUTSKNO);											// rau task
 			WACDOG;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+			// CAN通信が正常に行われなくなる(?)仮対策として再度CANタスクを実行
+			if(tcb[CANTCBNO].event == MSG_SET || canevent() != 0){
+				taskchg(CANTSKNO);										// Change to can Send Receive task
+				WACDOG;
+			}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 		}
 // MH810100(S) K.Onodera 2020/04/07 車番チケットレス（Kasagoタスク負荷軽減）
 		taskchg(KSGTSKNO);
@@ -1024,6 +1045,37 @@ void	xPause_PRNTSK( ulong WaitTime )
 	}
 	xPauseStarting_PRNTSK = 0;
 }
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+/*[]----------------------------------------------------------------------[]*/
+/*| 指定時間ﾀｽｸをWAITさせる                                                |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : xPause                                                  |*/
+/*| PARAMETER    : WaitTime = 待ち時間 (1ms unit value)                    |*/
+/*| RETURN VALUE : void                                                    |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| Author       : akiba                                                   |*/
+/*| Date         : 2005-01-24                                              |*/
+/*[]------------------------------------- Copyright(C) 2005 AMANO Corp.---[]*/
+void	xPause1ms( ulong WaitTime )
+{
+	ulong	StartTime;
+
+	xPauseStarting = 1;
+	StartTime = LifeTim1msGet();
+	for( ;; ){
+		taskchg( IDLETSKNO );										// ﾀｽｸ切替
+		if( WaitTime == 0 ){	// 待ち時間が0msで指定された場合には、idletaskを１周したら処理を戻す。
+			break;
+		}
+		
+		if( WaitTime <= LifePastTim1msGet( StartTime ) ){
+			break;
+		}
+	}
+	xPauseStarting = 0;
+}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 /*[]----------------------------------------------------------------------[]*/
 /*| 指定時間ﾀｽｸをWAITさせる                                                |*/

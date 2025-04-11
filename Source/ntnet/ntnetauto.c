@@ -84,7 +84,10 @@ static	int		search_time_range_at_batch(struct clk_rec *clk, int interval, int ar
 static	int		get_next_pattern_at_batch(int cur, int interval,
 								uchar *phour, uchar *pmin, ushort *pint);
 
-extern 	char	z_NtRemoteAutoManual;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//extern 	char	z_NtRemoteAutoManual;
+char	z_NtRemoteAutoManual;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 
 /*--------------------------------------------------------------------------
 	function

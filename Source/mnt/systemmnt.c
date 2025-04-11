@@ -9484,6 +9484,9 @@ void RT_log_regist( void )
 /*[]------------------------------------- Copyright(C) 2005 AMANO Corp.----[]*/
 void	LogDataClr_CheckBufferFullRelease(ushort LogSyu )
 {
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+#if 0		// UT4000の処理を使用する
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	switch( LogSyu ){				// ログデータ種別？
 		case	LOG_ERROR:			// エラー情報
 			Log_CheckBufferFull(FALSE, eLOG_ERROR, eLOG_TARGET_REMOTE);	// バッファフル解除チェック
@@ -9595,4 +9598,179 @@ void	LogDataClr_CheckBufferFullRelease(ushort LogSyu )
 		default:								// その他（ログデータ種別エラー）
 			break;
 	}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+#endif
+	short	target;					// チェック対象
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+	short	targetList[NTNET_TARGET_MAX];
+	int		targetCount = 0;		// 対象ターゲット数
+	int		index = 0;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+	
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+//	if(_is_ntnet_normal()) {		// NT-NET
+//		target = eLOG_TARGET_NTNET;
+//	}
+//	else if(_is_ntnet_remote()) {	// 遠隔NT-NET
+//		target = eLOG_TARGET_REMOTE;
+//	}
+//	else {
+//		return;
+//	}
+	memset(targetList, 0, sizeof(targetList));
+	if(_is_ntnet_normal()) {		// NT-NET
+		targetList[targetCount] = eLOG_TARGET_NTNET;
+		++targetCount;
+	}
+
+	if(_is_ntnet_remote()) {		// 遠隔NT-NET
+		targetList[targetCount] = eLOG_TARGET_REMOTE;
+		++targetCount;
+	}
+
+	if(targetCount <= 0) {
+		// 端末間、遠隔共設定がないなら何もしない
+		return;
+	}
+
+	for(index = 0; index < targetCount; ++index) {
+		target = targetList[index];
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+	switch( LogSyu ){				// ログデータ種別？
+		case	LOG_ERROR:			// エラー情報
+			Log_CheckBufferFull(FALSE, eLOG_ERROR, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_ALARM:			// アラーム情報
+			Log_CheckBufferFull(FALSE, eLOG_ALARM, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_OPERATE:		// 操作情報
+			Log_CheckBufferFull(FALSE, eLOG_OPERATE, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_POWERON:		// 停復電情報
+			Log_CheckBufferFull(FALSE, eLOG_POWERON, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_TTOTAL:			// Ｔ合計情報
+			Log_CheckBufferFull(FALSE, eLOG_TTOTAL, target);				// バッファフル解除チェック
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+//			Log_CheckBufferFull(FALSE, eLOG_LCKTTL, target);				// バッファフル解除チェック
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+			break;
+
+		case	LOG_GTTOTAL:		// ＧＴ合計情報
+			Log_CheckBufferFull(FALSE, eLOG_GTTOTAL, target);				// バッファフル解除チェック
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+//// MH364300 GG119A17(S) // MH341110(S) A.Iiizumi 2017/12/20 前回T/GT合計で車室位置毎集計の印字が合わない不具合修正(GT用車室位置毎集計ログ追加) (共通改善№1392)
+//			Log_CheckBufferFull(FALSE, eLOG_GT_LCKTTL, target);				// バッファフル解除チェック
+//// MH364300 GG119A17(E) // MH341110(E) A.Iiizumi 2017/12/20 前回T/GT合計で車室位置毎集計の印字が合わない不具合修正(GT用車室位置毎集計ログ追加) (共通改善№1392)
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+			break;
+
+		case	LOG_COINBOX:		// コイン金庫情報
+			Log_CheckBufferFull(FALSE, eLOG_COINBOX, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_NOTEBOX:		// 紙幣金庫情報
+			Log_CheckBufferFull(FALSE, eLOG_NOTEBOX, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_MONEYMANAGE:	// 釣銭管理情報
+			Log_CheckBufferFull(FALSE, eLOG_MONEYMANAGE, target);			// バッファフル解除チェック
+			break;
+
+		case	LOG_PAYMENT:		// 個別精算情報
+			Log_CheckBufferFull(FALSE, eLOG_PAYMENT, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_ABNORMAL:		// 不正・強制出庫情報
+			Log_CheckBufferFull(FALSE, eLOG_ABNORMAL, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_MONITOR:		// モニタ情報
+			Log_CheckBufferFull(FALSE, eLOG_MONITOR, target);				// バッファフル解除チェック
+			break;
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100の処理に戻す）
+//// MH321801(S) 未了取引記録件数を増やす
+////		case	LOG_CREUSE:			// クレジット利用明細ログ
+////			Log_CheckBufferFull(FALSE, eLOG_CREUSE, target);				// バッファフル解除チェック
+////			break;
+//// MH321801(E) 未了取引記録件数を増やす
+		case	LOG_CREUSE:			// クレジット利用明細ログ
+			Log_CheckBufferFull(FALSE, eLOG_CREUSE, eLOG_TARGET_REMOTE);	// バッファフル解除チェック
+			break;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100の処理に戻す）
+
+// MH321800(S) Y.Tanizaki ICクレジット対応 不要機能削除(Edy)
+//		case	LOG_EDYARM:			// Edyアラーム取引ログ
+//			Log_CheckBufferFull(FALSE, eLOG_EDYARM, target);				// バッファフル解除チェック
+//			break;
+//
+//		case	LOG_EDYSHIME:			// Edy締め記録ログ
+//			Log_CheckBufferFull(FALSE, eLOG_EDYSHIME, target);				// バッファフル解除チェック
+//			break;
+// MH321800(E) Y.Tanizaki ICクレジット対応 不要機能削除(Edy)
+
+		case LOG_HOJIN_USE:
+			Log_CheckBufferFull(FALSE, eLOG_HOJIN_USE, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_NGLOG:						// 不正ログ
+			Log_CheckBufferFull(FALSE, eLOG_HOJIN_USE, target);				// バッファフル解除チェック
+			break;
+
+		case	LOG_REMOTE_SET:					// 遠隔料金設定ログ
+			Log_CheckBufferFull(FALSE, eLOG_REMOTE_SET, target);				// バッファフル解除チェック
+			break;
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+//		case	LOG_ENTER:						// 入庫ログ
+//			Log_CheckBufferFull(FALSE, eLOG_ENTER, target);					// バッファフル解除チェック
+//			break;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+		
+		case	LOG_PARKING:					// 駐車台数データ
+			Log_CheckBufferFull(FALSE, eLOG_PARKING, target);				// バッファフル解除チェック
+			break;
+		
+		case	LOG_LONGPARK:					// 長期駐車データ
+// MH322917(S) A.Iiizumi 2018/08/31 長期駐車検出機能の拡張対応(ログ登録)
+//			Log_CheckBufferFull(FALSE, eLOG_LONGPARK, target);				// バッファフル解除チェック
+			Log_CheckBufferFull(FALSE, eLOG_LONGPARK_PWEB, target);			// バッファフル解除チェック
+// MH322917(E) A.Iiizumi 2018/08/31 長期駐車検出機能の拡張対応(ログ登録)
+			break;
+		
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+//		case LOG_IOLOG:
+//			Log_CheckBufferFull(FALSE, eLOG_IOLOG, target);					// バッファフル解除チェック
+//			break;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+
+		case	LOG_MNYMNG_SRAM:				// 釣銭管理情報(SRAM)
+			Log_CheckBufferFull(FALSE, eLOG_MNYMNG_SRAM, target);					// バッファフル解除チェック
+			Log_CheckBufferFull(FALSE, eLOG_MONEYMANAGE, target);					// バッファフル解除チェック
+			break;
+
+		case	LOG_REMOTE_MONITOR:
+			Log_CheckBufferFull(FALSE, eLOG_REMOTE_MONITOR, target);	// バッファフル解除チェック
+			break;
+
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+//// MH364300 GG119A34(S) 改善連絡表No.83対応
+//		case	LOG_LEAVE:						// 出庫ログ
+//			Log_CheckBufferFull(FALSE, eLOG_LEAVE, target);					// バッファフル解除チェック
+//			break;
+//// MH364300 GG119A34(E) 改善連絡表No.83対応
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（GT-4100不要処理）
+
+		default:								// その他（ログデータ種別エラー）
+			break;
+	}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+	}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間と遠隔を併用する）
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 }

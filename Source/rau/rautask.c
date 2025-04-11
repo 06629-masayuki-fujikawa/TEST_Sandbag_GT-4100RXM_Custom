@@ -357,8 +357,10 @@ void	RAU_ConfigInit( void )
 }
 void	Credit_Init(void)
 {
-	memset(&DPA_Credit_SndCtrl, 0, sizeof(DPA_Credit_SndCtrl));	// クレジット回線の送信キュー
-	memset(&DPA_Credit_RcvCtrl, 0, sizeof(DPA_Credit_RcvCtrl));	// クレジット回線の受信キュー
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）
+//	memset(&DPA_Credit_SndCtrl, 0, sizeof(DPA_Credit_SndCtrl));	// クレジット回線の送信キュー
+//	memset(&DPA_Credit_RcvCtrl, 0, sizeof(DPA_Credit_RcvCtrl));	// クレジット回線の受信キュー
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（SRAM容量確保）
 	memset(&Credit_Snd_Buf, 0, sizeof(Credit_Snd_Buf));
 	memset(&Credit_Rcv_Buf, 0, sizeof(Credit_Rcv_Buf));
 	memset(&Credit_SndNtBlk, 0, sizeof(Credit_SndNtBlk));

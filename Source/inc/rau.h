@@ -282,9 +282,14 @@ extern		RAU_TIME_AREA			RAU_Tm_TCP_DISCNCT;				// TCPƒRƒlƒNƒVƒ‡ƒ“Ø’f‘Ò‚¿ƒ^ƒCƒ}
 
 extern		uchar	RAU_temp_data[970];								// Šeí’Ê’m—p‚Ìƒeƒ“ƒ|ƒ‰ƒŠƒoƒbƒtƒ@i‚PNTƒuƒƒbƒN•ªj
 extern uchar				RAU_LogData[RAU_LOG_BUFF_SIZE];
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
+extern		uchar	RAU_NtLogData[RAU_LOG_BUFF_SIZE];				// ƒƒO¨NTNETƒf[ƒ^•ÏŠ·ƒoƒbƒtƒ@
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiFT-4000NFMH364304—¬—pj
 
-extern	t_DPA_Ctrl	DPA_Credit_SndCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚Ì‘—MƒLƒ…[
-extern	t_DPA_Ctrl	DPA_Credit_RcvCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚ÌóMƒLƒ…[
+// GM849100(S) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiSRAM—e—ÊŠm•Ûj
+//extern	t_DPA_Ctrl	DPA_Credit_SndCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚Ì‘—MƒLƒ…[
+//extern	t_DPA_Ctrl	DPA_Credit_RcvCtrl;						// ƒNƒŒƒWƒbƒg‰ñü‚ÌóMƒLƒ…[
+// GM849100(E) –¼“S‹¦¤ƒR[ƒ‹ƒZƒ“ƒ^[‘Î‰iNT-NET’[––ŠÔ’ÊMjiSRAM—e—ÊŠm•Ûj
 
 extern	uchar	Credit_Snd_Buf[RAU_BLKSIZE];			// (*T_SEND_DATA_ID_INFO)->pbuff_info.pc_AreaTop‚Éw’è‚·‚éêŠ
 extern	uchar	Credit_Rcv_Buf[RAU_BLKSIZE];			// ‚PƒuƒƒbƒNƒTƒCƒY~‚SŒ•ª

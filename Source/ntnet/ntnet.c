@@ -66,13 +66,21 @@ void	NTNET_Init(uchar clr)
 {
 	z_NTNET_AtInitial = TRUE;
 	Ntnet_Remote_Comm = 0;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+	Ntnet_Term_Comm = 0;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
 
 	if (Ntnet_Remote_Comm == 0) {
 		Ntnet_Remote_Comm = (uchar)prm_get( COM_PRM,S_PAY,24,1,1 );
 	}
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
+	Ntnet_Term_Comm = (uchar)prm_get( COM_PRM, S_SSS, 1, 1, 1 );
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間通信は個別設定を参照する）
 	NTBUF_Init(clr);
-	NTUPR_Init(clr);
-	NTLWR_Init();
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//	NTUPR_Init(clr);
+//	NTLWR_Init();
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	NT_pcars_timer = -1;
 	if( (prm_get(COM_PRM,S_NTN,121,1,1)!=0) &&
 		(prm_get(COM_PRM,S_NTN,120,3,1)!=0) ) {
@@ -124,22 +132,27 @@ void	NTNET_Err(int errcode, int occur)
  *[]----------------------------------------------------------------------[]*/
 void	ntnet_task(void)
 {
-	MsgBuf *pmsg;
-	MsgBuf msg;
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//	MsgBuf *pmsg;
+//	MsgBuf msg;
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	
 	while (1) {
 		taskchg(IDLETSKNO);
 		
-		pmsg = GetMsg(NTNETTCBNO);
-		if (pmsg != NULL) {
-			memcpy(&msg, pmsg, sizeof(msg));
-			FreeBuf(pmsg);
-			pmsg = &msg;
-		}
-		
-		NTUPR_Main();
-		NTLWR_Main(pmsg);
-		ntautoSendCtrl();
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//		pmsg = GetMsg(NTNETTCBNO);
+//		if (pmsg != NULL) {
+//			memcpy(&msg, pmsg, sizeof(msg));
+//			FreeBuf(pmsg);
+//			pmsg = &msg;
+//		}
+//		
+//		NTUPR_Main();
+//		NTLWR_Main(pmsg);
+//		ntautoSendCtrl();
+		NTNET_Main();
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	}
 }
 

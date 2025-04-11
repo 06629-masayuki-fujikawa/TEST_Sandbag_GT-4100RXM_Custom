@@ -1764,27 +1764,29 @@ void Sci7Init( void )
 /****************************************************************************/
 void Sci9Init( void )
 {
-	volatile unsigned char	i;
-	volatile unsigned long	ist;			// 現在の割込受付状態
-
-	ist = _di2();
-	MSTP_SCI9 = 0;					// SCI9 module stop mode release(SYSTEM.MSTPCRC.BIT.MSTPC26)
-	SCI9.SEMR.BIT.ABCS = 0x01;		/* 調歩同期基本クロックセレクトBIT	*/
-	SCI9.SCR.BYTE = 0x00;			// SCI9 <- 0(割込み禁止)(TIE RIE TE RE MPIE TEIE CKE[1:0])
-	_ei2( ist );
-	SCI9.SMR.BIT.CM = 0;			// 調歩同期Modeで動作(CM CHR PE PM STOP MP CKS[1:0])
-	SCI9.SMR.BIT.MP = 0;			// Multi pro func : 0=Nouse, 1=Use
-	SCI9.SMR.BIT.CHR = 0;			// Data bits  : 0=8bit, 1=7bit
-	SCI9.SMR.BIT.PE = 1;			// Parity有無 : 0=None, 1=Use
-	SCI9.SMR.BIT.PM = 0;			// ParityType : 0=Even, 1=Odd
-	SCI9.SMR.BIT.STOP = 0;			// Stop bits  : 0=1bit, 1=2bit
-	SCI9.SMR.BIT.CKS = 0;			// Clock select : 0=分周なし, 1=分周/4
-	SCI9.BRR = SCI_38400BPS_n0;		// (BitRateRegister)
-	wait2us( 125L );				// 1bit time over wait
-	i = SCI9.SSR.BYTE;				// Dummy Read(b7, b6, ORER FER PER TEND MPB MPBT)
-	SCI9.SSR.BYTE = 0xC4;			// Status register <- 0
-	dummy_Read = SCI9.SSR.BYTE;		// Dummy Read
-	SCI9.SCR.BYTE = 0x70;			// RIE, TE, RE <- 1(EI)(TIE RIE TE RE MPIE TEIE CKE[1:0])
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+//	volatile unsigned char	i;
+//	volatile unsigned long	ist;			// 現在の割込受付状態
+//
+//	ist = _di2();
+//	MSTP_SCI9 = 0;					// SCI9 module stop mode release(SYSTEM.MSTPCRC.BIT.MSTPC26)
+//	SCI9.SEMR.BIT.ABCS = 0x01;		/* 調歩同期基本クロックセレクトBIT	*/
+//	SCI9.SCR.BYTE = 0x00;			// SCI9 <- 0(割込み禁止)(TIE RIE TE RE MPIE TEIE CKE[1:0])
+//	_ei2( ist );
+//	SCI9.SMR.BIT.CM = 0;			// 調歩同期Modeで動作(CM CHR PE PM STOP MP CKS[1:0])
+//	SCI9.SMR.BIT.MP = 0;			// Multi pro func : 0=Nouse, 1=Use
+//	SCI9.SMR.BIT.CHR = 0;			// Data bits  : 0=8bit, 1=7bit
+//	SCI9.SMR.BIT.PE = 1;			// Parity有無 : 0=None, 1=Use
+//	SCI9.SMR.BIT.PM = 0;			// ParityType : 0=Even, 1=Odd
+//	SCI9.SMR.BIT.STOP = 0;			// Stop bits  : 0=1bit, 1=2bit
+//	SCI9.SMR.BIT.CKS = 0;			// Clock select : 0=分周なし, 1=分周/4
+//	SCI9.BRR = SCI_38400BPS_n0;		// (BitRateRegister)
+//	wait2us( 125L );				// 1bit time over wait
+//	i = SCI9.SSR.BYTE;				// Dummy Read(b7, b6, ORER FER PER TEND MPB MPBT)
+//	SCI9.SSR.BYTE = 0xC4;			// Status register <- 0
+//	dummy_Read = SCI9.SSR.BYTE;		// Dummy Read
+//	SCI9.SCR.BYTE = 0x70;			// RIE, TE, RE <- 1(EI)(TIE RIE TE RE MPIE TEIE CKE[1:0])
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
 }
 
 /****************************************************************************/

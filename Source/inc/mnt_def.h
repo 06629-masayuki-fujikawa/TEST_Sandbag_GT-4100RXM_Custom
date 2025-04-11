@@ -360,7 +360,13 @@ extern void UsMnt_QR_DispTicQR(QR_TicketInfo *pTicQR, ushort updown_page);
 //#define		SYS_SW_MAX			3				/* システム切替 Menu　　　　　　*/
 #define		SYS_SW_MAX			2				/* システム切替 Menu　　　　　　*/
 // MH810100(E) K.Onodera 2019/10/17 車番チケットレス(メンテナンス)
-#define		FNTNET_CHK_MAX		3				/* NTNETチェックメニュー		*/
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//#define		FNTNET_CHK_MAX		3				/* NTNETチェックメニュー		*/
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間の追番クリアメニューを削除）
+//#define		FNTNET_CHK_MAX		2				/* NTNETチェックメニュー		*/
+#define		FNTNET_CHK_MAX		1				/* NTNETチェックメニュー		*/
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（端末間の追番クリアメニューを削除）
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 #define		PARA_SET_MAX		3				/* 								*/
 #define		BPARA_SET_MAX		3				/* 								*/
@@ -403,6 +409,9 @@ enum {
 	__realtime_check,	// リアルタイム通信チェック
 	__dc_net_check,		// DC-NET通信チェック
 // MH810100(E) Y.Yamauchi 20191003 車番チケットレス(メンテナンス)
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+	__ntn_check,		// ＮＴ－ＮＥＴチェック
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	__ver_check,	//バージョンチェック
 	FUN_CHK_MAX
 };
@@ -423,6 +432,9 @@ enum {
 	__centercom_check2,	//	センター通信チェック
 	__realtime_check2,	// リアルタイム通信チェック
 	__dc_net_check2,		// DC-NET通信チェック
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+	__ntn_check2,		// ＮＴ－ＮＥＴチェック
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 	__ver_check2,	//バージョンチェック
 	FUN_CHK_MAX2
 };
@@ -760,8 +772,11 @@ enum{
 
 /* Function Check 167-169 */
 #define	FNTNET1_CHK	167
-#define	FNTNET2_CHK	168
-#define	FNTNET3_CHK	169
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
+//#define	FNTNET2_CHK	168
+//#define	FNTNET3_CHK	169
+#define	CCOM_SEQCLR	168
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304参考）
 
 /* Log Files 171-181 */
 #define	ERR_LOG		171		// エラー情報

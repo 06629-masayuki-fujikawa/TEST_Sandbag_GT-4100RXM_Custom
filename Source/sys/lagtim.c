@@ -593,6 +593,48 @@ unsigned long	LifePastTimGet( unsigned long StartTime )
 	return PastTime;
 }
 
+// GM849100(S) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+/*[]----------------------------------------------------------------------[]*/
+/*| x1ms Life timer count get                                              |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : LifeTim1msGet                                           |*/
+/*| PARAMETER    : void                                                    |*/
+/*| RETURN VALUE : 現在のx1ms積算タイマ値                                  |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| Author       : M.Okuda                                                 |*/
+/*| Date         : 2002-07-30                                              |*/
+/*[]------------------------------------- Copyright(C) 2002 AMANO Corp.---[]*/
+unsigned long	LifeTim1msGet( void )
+{
+	return LifeTimer1ms;
+}
+
+/*[]----------------------------------------------------------------------[]*/
+/*| x1ms Life timer Past time cal                                          |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| MODULE NAME  : LifeTim1msGet                                           |*/
+/*| PARAMETER    : StartTime = タイマ開始時間 LifeTimGet()で得たもの       |*/
+/*| RETURN VALUE : StartTime時点からの経過時間(x1ms)を返す                 |*/
+/*[]----------------------------------------------------------------------[]*/
+/*| Author       : M.Okuda                                                 |*/
+/*| Date         : 2002-07-30                                              |*/
+/*[]------------------------------------- Copyright(C) 2002 AMANO Corp.---[]*/
+unsigned long	LifePastTim1msGet( unsigned long StartTime )
+{
+	unsigned long  NowTime;
+	unsigned long  PastTime;
+
+	NowTime = LifeTim1msGet();				/* 現在のx1ms積算かウント値get */
+	if( NowTime >= StartTime ){
+		PastTime = NowTime - StartTime;
+	}
+	else{
+		PastTime = NowTime + ((0xffffffffL - StartTime) + 1);
+	}
+	return PastTime;
+}
+// GM849100(E) 名鉄協商コールセンター対応（NT-NET端末間通信）（FT-4000N：MH364304流用）
+
 /*[]----------------------------------------------------------------------[]*/
 /*| x2ms Life timer count get                                              |*/
 /*[]----------------------------------------------------------------------[]*/
